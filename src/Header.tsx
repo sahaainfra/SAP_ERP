@@ -6,6 +6,7 @@ import {
   ISearch, IBell, IInbox, IHelp, IChevD, IUser, ILogout, IBuilding, IMenu, IChevR, ICheck,
   IPlus, ICart, ICalCheck, ILedger, IGavel, IHardhat, IReceipt,
 } from "./icons";
+import { PunchWidget } from "./modules/attn";
 
 const SunIcon = ({ size = 17 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
@@ -222,6 +223,9 @@ export default function Header({
           className="h-9 w-9 grid place-items-center rounded-lg text-ink-500 hover:bg-canvas active:scale-90 transition-all tip tip-r" data-tip={erp.dark ? "Switch to light mode" : "Switch to dark mode"}>
           {erp.dark ? <SunIcon /> : <MoonIcon />}
         </button>
+
+        {/* Universal attendance punch — every user */}
+        <PunchWidget />
 
         {/* Approvals inbox */}
         <button onClick={() => go("approvals")} className="relative h-9 w-9 grid place-items-center rounded-lg text-ink-500 hover:bg-canvas active:scale-90 transition-all tip tip-r" data-tip="Pending approvals">

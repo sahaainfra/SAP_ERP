@@ -152,7 +152,8 @@ const REPORTS = [
   { cat: "Financial", items: [["Cash Flow Statement", "cash"], ["Receivables Ageing", "ageing"], ["Project Profitability", "profit"]] },
   { cat: "Procurement", items: [["Vendor Performance", "vendor"], ["Purchase Analysis", "purchase"]] },
   { cat: "Material", items: [["Stock Register", "stock"], ["Consumption vs BOQ", "consumption"]] },
-  { cat: "HR", items: [["Attendance Summary", "attendance"], ["Payroll Register", "payroll"]] },
+  { cat: "HR", items: [["Attendance Summary", "attendance"], ["Monthly Attendance Register", "register"], ["Late Coming & Overtime", "lateot"], ["Payroll Register", "payroll"]] },
+  { cat: "Approvals", items: [["Pending Approval Ageing", "ageing-appr"], ["Approval Turnaround Time", "turnaround"], ["Rejection Analysis", "rejection"]] },
 ] as const;
 
 export function ReportsPage() {
@@ -165,6 +166,11 @@ export function ReportsPage() {
     if (name.includes("Stock")) return { head: ["Material", "Store", "On Hand", "Value (₹ Cr)"], rows: s.stock.map((x) => [x.material, x.store, `${x.onHand} ${x.unit}`, x.value]) };
     if (name.includes("Attendance")) return { head: ["Employee", "Project", "Hours", "OT", "Status"], rows: s.attendance.map((a) => [a.name, a.project, a.hours, a.ot, a.status]) };
     if (name.includes("Payroll")) return { head: ["Employee", "Gross", "Deductions", "Net"], rows: s.employees.map((e) => [e.name, e.base * 1.2, e.base * 0.12, e.base * 1.08]) };
+    if (name.includes("Register")) return { head: ["Employee", "Project", "P", "A", "L", "HD", "OT hrs"], rows: s.employees.map((e, i) => [e.name, e.project ?? "P" + ((i % 4) + 1), 22 - (i % 3), i % 3, i % 2, i % 2, (i % 4) * 3]) };
+    if (name.includes("Late Coming")) return { head: ["Employee", "Project", "Late days", "OT hrs", "Missing punch"], rows: s.employees.slice(0, 6).map((e, i) => [e.name, e.project ?? "P" + ((i % 4) + 1), (i * 7) % 4, (i * 5) % 12, i % 2]) };
+    if (name.includes("Ageing")) return { head: ["Request", "Type", "Pending with", "Age (hrs)"], rows: [["PR-0092", "Purchase Requisition", "Procurement Manager", 41], ["PO-1288", "Purchase Order", "Accounts Manager", 26], ["RA-0772", "RA Bill", "Commercial Manager", 52], ["PAY-3341", "Vendor Payment", "Director", 9]] };
+    if (name.includes("Turnaround")) return { head: ["Module", "Avg hrs", "SLA hrs", "Compliance %"], rows: [["Procurement", 6.4, 24, 94], ["Finance", 4.1, 12, 97], ["HR", 9.2, 24, 88], ["Billing", 14.6, 48, 91]] };
+    if (name.includes("Rejection")) return { head: ["Reason", "Count", "Share %"], rows: [["Duplicate request", 6, 35], ["Not budgeted", 5, 29], ["Specification mismatch", 4, 24], ["Incomplete details", 2, 12]] };
     if (name.includes("Vendor")) return { head: ["Vendor", "Open POs", "On-time %"], rows: [["UltraTech Cement", 2, 96], ["Tata Steel", 1, 92], ["Sika India", 1, 88]] };
     if (name.includes("Cash Flow")) return { head: ["Month", "Inflow", "Outflow", "Net"], rows: [["Nov", 28.4, 26.1, 2.3], ["Dec", 32.0, 29.4, 2.6], ["Jan", 24.8, 27.9, -3.1], ["Feb", 36.2, 30.1, 6.1], ["Mar", 41.5, 33.6, 7.9]] };
     return { head: ["Project", "Value (₹ Cr)", "Status"], rows: s.projects.map((p) => [p.name, p.contractValue, p.status]) };

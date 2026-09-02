@@ -21,6 +21,8 @@ import FinancePage from "./modules/finance";
 import { HRPage, AttendancePage, PayrollPage } from "./modules/hr";
 import { TendersPage, PlantPage, RmcPage } from "./modules/operations";
 import { CommercialPage, BillingPage } from "./modules/commercial";
+import { PRPage, POPage } from "./modules/prpo";
+import { ApprovalCentrePage } from "./modules/approvals2";
 import { ApprovalsPage, DocumentsPage, ReportsPage, AnalyticsPage, SettingsPage } from "./modules/system";
 import { Empty, IconBtn, Pop, Reveal, Select, Skel, ToastProvider, Widget, cx, useToast } from "./ui";
 import {
@@ -452,7 +454,7 @@ function ModuleRoute({ id, role, onBack }: { id: string; role: RoleId; onBack: (
       {parent === "tenders" && <TendersPage />}
       {parent === "commercial" && <CommercialPage />}
       {parent === "billing" && <BillingPage />}
-      {parent === "procurement" && <ProcurementPage />}
+      {parent === "procurement" && (id === "pro-pr" ? <PRPage /> : id === "pro-po" ? <POPage /> : <ProcurementPage />)}
       {parent === "materials" && <MaterialsPage />}
       {parent === "stores" && <MaterialsPage initialTab="stock" />}
       {parent === "plant" && <PlantPage />}
@@ -461,7 +463,7 @@ function ModuleRoute({ id, role, onBack }: { id: string; role: RoleId; onBack: (
       {parent === "hr" && <HRPage />}
       {parent === "finance" && <FinancePage />}
       {parent === "payroll" && <PayrollPage />}
-      {parent === "approvals" && <ApprovalsPage />}
+      {parent === "approvals" && <ApprovalCentrePage />}
       {parent === "reports" && <ReportsPage />}
       {parent === "analytics" && <AnalyticsPage />}
       {parent === "documents" && <DocumentsPage />}

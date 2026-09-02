@@ -1,7 +1,7 @@
-/* ── Meridian ERP · Central Print Template Engine ──────────────
-   Professional A4/A3 printable documents with preview, company
-   header, meta block, ruled tables with repeating headers,
-   grand totals and a four-party signature section.            */
+/* ── Meridian ERP · Central Print Template Engine v2 ─────────────
+   Professional A4/A3 printable documents: preview, company header,
+   meta block, ruled tables with repeating headers, totals, amount
+   in words, terms & conditions, signature + acceptance sections.   */
 import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { cx } from "./ui";
@@ -15,13 +15,43 @@ export interface PrintDoc {
   period?: string;
   rev?: string;
   orientation?: "portrait" | "landscape";
+  paper?: "a4" | "a3";
   meta?: [string, string][];
   cols: PrintCol[];
   rows: (string | number)[][];
   totalsLabel?: string;
   totals?: (string | number)[];
+  inWords?: number;            /* absolute ₹ value rendered in words */
+  purpose?: string;
+  remarks?: string;
+  terms?: string[];            /* numbered terms & conditions */
+  signatures?: string[];       /* default 4-party block */
+  acceptance?: boolean;        /* vendor acceptance section */
   note?: string;
   generatedBy: string;
+}
+
+/* Indian amount-in-words (absolute rupees) */
+export function inrWords(num: number): string {
+  const a = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
+  const b = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+  const two = (n: number): string => (n < 20 ? a[n] : b[Math.floor(n / 10)] + (n % 10 ? " " + a[n % 10] : ""));
+  const three = (n: number): string => {
+    const h = Math.floor(n / 100), r = n % 100;
+    return (h ? a[h] + " Hundred" + (r ? " " : "") : "") + (r ? two(r) : "");
+  };
+  let n = Math.round(Math.abs(num));
+  const paise = Math.round((Math.abs(num) - Math.floor(Math.abs(num))) * 100);
+  const cr = Math.floor(n / 1e7); n %= 1e7;
+  const lk = Math.floor(n / 1e5); n %= 1e5;
+  const th = Math.floor(n / 1e3); n %= 1e3;
+  const parts: string[] = [];
+  if (cr) parts.push(two(cr) + " Crore");
+  if (lk) parts.push(two(lk) + " Lakh");
+  if (th) parts.push(two(th) + " Thousand");
+  if (n) parts.push(three(n));
+  const body = parts.length ? parts.join(" ") : "Zero";
+  return "Rupees " + body + " Only" + (paise ? " and Paise " + two(paise) : "");
 }
 
 const fmtCell = (v: string | number) => (typeof v === "number" ? v.toLocaleString("en-IN") : v);
@@ -38,6 +68,7 @@ export function printDocument(doc: PrintDoc) {
 
 function Preview({ doc, onClose }: { doc: PrintDoc; onClose: () => void }) {
   const [orient, setOrient] = useState<"portrait" | "landscape">(doc.orientation ?? "portrait");
+  const [paper, setPaper] = useState<"a4" | "a3">(doc.paper ?? "a4");
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -46,20 +77,21 @@ function Preview({ doc, onClose }: { doc: PrintDoc; onClose: () => void }) {
     return () => { window.removeEventListener("keydown", h); document.body.classList.remove("print-preview-open"); };
   }, [onClose]);
 
-  const sheetW = orient === "portrait" ? "w-[210mm]" : "w-[297mm]";
+  const sheetW = paper === "a3" ? "w-[420mm]" : orient === "portrait" ? "w-[210mm]" : "w-[297mm]";
+  const sigs = doc.signatures ?? ["Prepared By", "Checked By", "Recommended By", "Approved By"];
 
   return (
     <div className="fixed inset-0 z-[200] bg-[#0a1218]/80 backdrop-blur-sm overflow-auto">
-      <style>{`@page{size:A4 ${orient};margin:10mm}`}</style>
+      <style>{`@page{size:${paper === "a3" ? "A3" : "A4"} ${paper === "a3" ? "landscape" : orient};margin:10mm}`}</style>
 
       {/* Toolbar — hidden on paper */}
-      <div className="print-toolbar sticky top-0 z-10 flex items-center gap-2 px-4 h-13 py-2.5 bg-[#101b24]/95 backdrop-blur border-b border-[#2b3f4f]">
+      <div className="print-toolbar sticky top-0 z-10 flex items-center gap-2 px-4 py-2.5 bg-[#101b24]/95 backdrop-blur border-b border-[#2b3f4f]">
         <p className="text-[12.5px] font-semibold text-[#e7edf3] mr-auto truncate">Print preview · <span className="text-[#8fa6b8] font-normal">{doc.title} · {doc.docNo}</span></p>
         <div className="flex items-center gap-1 bg-[#1a2933] border border-[#2b3f4f] rounded-md p-0.5">
-          {(["portrait", "landscape"] as const).map((o) => (
-            <button key={o} onClick={() => setOrient(o)}
-              className={cx("h-7 px-2.5 rounded text-[11px] font-bold uppercase tracking-wide transition-all", orient === o ? "bg-[#0e8070] text-white" : "text-[#8fa6b8] hover:text-white")}>
-              {o === "portrait" ? "A4" : "A4 ⤢"}
+          {([["a4", "portrait", "A4"], ["a4", "landscape", "A4 ⤢"], ["a3", "landscape", "A3 ⤢"]] as const).map(([p, o, l]) => (
+            <button key={l} onClick={() => { setPaper(p); setOrient(o); }}
+              className={cx("h-7 px-2.5 rounded text-[11px] font-bold uppercase tracking-wide transition-all", paper === p && (p === "a3" || orient === o) ? "bg-[#0e8070] text-white" : "text-[#8fa6b8] hover:text-white")}>
+              {l}
             </button>
           ))}
         </div>
@@ -82,7 +114,8 @@ function Preview({ doc, onClose }: { doc: PrintDoc; onClose: () => void }) {
               </span>
               <div className="min-w-0">
                 <p className="text-[17px] font-extrabold tracking-tight leading-none" style={{ fontFamily: "Sora, sans-serif" }}>SAHAA INFRA <span className="text-[#0c7264]">LTD.</span></p>
-                <p className="text-[9px] text-[#5c6b78] mt-1 leading-snug">Meridian Tower, Baner Road, Pune 411045 · GSTIN 27AAACS1429F1Z8 · CIN U45200MH2009PLC194410</p>
+                <p className="text-[9px] text-[#5c6b78] mt-1 leading-snug">Meridian Tower, Baner Road, Pune 411045 · +91 20 6721 4400 · accounts@sahaainfra.in</p>
+                <p className="text-[9px] text-[#5c6b78] leading-snug">GSTIN 27AAACS1429F1Z8 · CIN U45200MH2009PLC194410 · PAN AAACS1429F</p>
               </div>
             </div>
             <div className="text-right shrink-0">
@@ -114,9 +147,9 @@ function Preview({ doc, onClose }: { doc: PrintDoc; onClose: () => void }) {
             <tbody>
               {doc.rows.map((r, i) => (
                 <tr key={i} className={i % 2 ? "bg-[#f3f6f8]" : "bg-white"}>
-                  <td className="px-2 py-[5px] border border-[#d8dee4] text-[#5c6b78]" style={{ fontFamily: "IBM Plex Mono", fontSize: 9.5 }}>{i + 1}</td>
+                  <td className="px-2 py-[5px] border border-[#d8dee4] text-[#5c6b78] align-top" style={{ fontFamily: "IBM Plex Mono", fontSize: 9.5 }}>{i + 1}</td>
                   {r.map((c, j) => (
-                    <td key={j} className={cx("px-2 py-[5px] border border-[#d8dee4]", alignCls(doc.cols[j]?.align), typeof c === "number" && "font-semibold")}
+                    <td key={j} className={cx("px-2 py-[5px] border border-[#d8dee4] align-top", alignCls(doc.cols[j]?.align), typeof c === "number" && "font-semibold")}
                       style={typeof c === "number" ? { fontFamily: "IBM Plex Mono", fontSize: 9.5 } : undefined}>{fmtCell(c)}</td>
                   ))}
                 </tr>
@@ -136,27 +169,71 @@ function Preview({ doc, onClose }: { doc: PrintDoc; onClose: () => void }) {
             </tbody>
           </table>
 
-          {doc.note && <p className="mt-2.5 text-[9.5px] text-[#5c6b78] leading-snux leading-snug border-l-2 border-[#0c7264] pl-2">{doc.note}</p>}
+          {doc.inWords !== undefined && (
+            <p className="mt-2 text-[10px] italic text-[#1a2733]">
+              <span className="font-bold not-italic uppercase text-[9px] text-[#5c6b78] tracking-wide">Amount (in words): </span>{inrWords(doc.inWords)}
+            </p>
+          )}
+
+          {doc.purpose && (
+            <div className="mt-2.5"><p className="text-[9px] font-extrabold uppercase tracking-wide text-[#5c6b78]">Requirement / Purpose</p>
+              <p className="text-[10px] mt-0.5 leading-snug border-b border-dotted border-[#9aa8b4] pb-1.5">{doc.purpose}</p></div>
+          )}
+          {doc.remarks && (
+            <div className="mt-2"><p className="text-[9px] font-extrabold uppercase tracking-wide text-[#5c6b78]">Remarks</p>
+              <p className="text-[10px] mt-0.5 leading-snug border-b border-dotted border-[#9aa8b4] pb-1.5">{doc.remarks}</p></div>
+          )}
+
+          {doc.note && <p className="mt-2.5 text-[9.5px] text-[#5c6b78] leading-snug border-l-2 border-[#0c7264] pl-2">{doc.note}</p>}
+
+          {/* Terms & Conditions */}
+          {doc.terms && doc.terms.length > 0 && (
+            <div className="mt-4">
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.1em] text-[#0c7264] border-b border-[#d8dee4] pb-1">Terms &amp; Conditions</p>
+              <ol className="mt-1.5 space-y-[3px]">
+                {doc.terms.map((t, i) => (
+                  <li key={i} className="flex gap-2 text-[9.5px] leading-snug text-[#33424f]">
+                    <span className="font-bold shrink-0 w-[18px]" style={{ fontFamily: "IBM Plex Mono" }}>{i + 1}.</span><span>{t}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
 
           {/* Signature section */}
-          <div className="grid grid-cols-4 gap-6 mt-[22mm]">
-            {["Prepared By", "Checked By", "Recommended By", "Approved By"].map((s, i) => (
-              <div key={s} className="text-center">
-                <div className="h-[14mm]" />
+          <div className={cx("grid gap-6 mt-[16mm]", sigs.length >= 4 ? "grid-cols-4" : "grid-cols-3")}>
+            {sigs.map((slabel, i) => (
+              <div key={slabel} className="text-center">
+                <div className="h-[13mm]" />
                 <div className="border-t border-[#1a2733] pt-1">
-                  <p className="text-[9.5px] font-extrabold uppercase tracking-wide">{s}</p>
+                  <p className="text-[9.5px] font-extrabold uppercase tracking-wide">{slabel}</p>
                   <p className="text-[8.5px] text-[#5c6b78] mt-0.5">Name &amp; Designation</p>
                   <p className="text-[8.5px] text-[#5c6b78]">Date: ____ / ____ / ________</p>
                 </div>
-                {i === 3 && <p className="text-[8px] text-[#5c6b78] mt-1">(Authorised Signatory)</p>}
+                {i === sigs.length - 1 && <p className="text-[8px] text-[#5c6b78] mt-1">(Authorised Signatory)</p>}
               </div>
             ))}
           </div>
 
+          {/* Vendor acceptance */}
+          {doc.acceptance && (
+            <div className="mt-[8mm] border border-[#10231f] rounded-sm p-3">
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.1em] text-[#0c7264]">Vendor Acceptance</p>
+              <p className="text-[9px] text-[#5c6b78] mt-0.5">We hereby accept the terms, rates and delivery schedule of this order.</p>
+              <div className="grid grid-cols-2 gap-x-10 gap-y-2 mt-3 text-[10px]">
+                <p className="border-b border-dotted border-[#9aa8b4] pb-1"><span className="font-bold">Accepted By: </span></p>
+                <p className="border-b border-dotted border-[#9aa8b4] pb-1"><span className="font-bold">Company: </span></p>
+                <p className="border-b border-dotted border-[#9aa8b4] pb-1"><span className="font-bold">Name: </span></p>
+                <p className="border-b border-dotted border-[#9aa8b4] pb-1"><span className="font-bold">Date: </span></p>
+              </div>
+              <p className="text-[9.5px] font-bold mt-4">Signature &amp; Seal</p>
+            </div>
+          )}
+
           {/* Footer */}
-          <div className="flex items-center justify-between mt-[10mm] pt-2 border-t border-[#d8dee4] text-[8.5px] text-[#5c6b78]" style={{ fontFamily: "IBM Plex Mono" }}>
-            <span>Generated {new Date().toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })} by {doc.generatedBy}</span>
-            <span>Meridian ERP · SAHAA INFRA LTD. · System document — uncontrolled when printed</span>
+          <div className="flex items-center justify-between mt-[8mm] pt-2 border-t border-[#d8dee4] text-[8.5px] text-[#5c6b78]" style={{ fontFamily: "IBM Plex Mono" }}>
+            <span>System generated · {new Date().toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })} by {doc.generatedBy}</span>
+            <span>Meridian ERP · SAHAA INFRA LTD. · Ref {doc.docNo}</span>
             <span>Page 1 of 1</span>
           </div>
         </div>

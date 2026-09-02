@@ -68,6 +68,53 @@ const defaultPerms = (): Perms => {
 
 const seed = () => ({
   projects: PROJECTS as Project[],
+  prs: [
+    { id: "pr1", no: "PR-0093", date: dStr(-1), project: "P1", dept: "Project Execution", site: "Site Office — Pachgaon", by: "Vikas Thorat", need: dStr(9), priority: "Critical", purpose: "Urgent requirement for pier cap concreting — piling sequence slips if steel is not on site within a week.", costCentre: "CC-P1-MAT", status: "Under Approval", ts: Date.now() - 864e5, lines: [
+      { id: "l1", code: "MAT-014", desc: "TMT Steel Fe-550D", spec: "IS 1786:2008, CRS ribbed, bend tested", brand: "Tata / JSW", unit: "MT", boqRef: "BOQ-P1", boqNo: "2.4", qty: 42, rate: 61500, remarks: "MTC mandatory" },
+      { id: "l2", code: "MAT-021", desc: "Binding Wire", spec: "20 gauge annealed", brand: "Any approved", unit: "kg", boqRef: "BOQ-P1", boqNo: "2.6", qty: 900, rate: 78, remarks: "" },
+    ], history: [{ ts: Date.now() - 864e5, action: "Submitted", by: "Vikas Thorat" }, { ts: Date.now() - 82000e3, action: "Forwarded to Procurement Manager", by: "Sunita Deshmukh" }] },
+    { id: "pr2", no: "PR-0092", date: dStr(-2), project: "P4", dept: "Project Execution", site: "Site Office — Wagholi", by: "Amit Bhosale", need: dStr(14), priority: "Urgent", purpose: "Retaining wall concreting planned for next fortnight; cement and admixture to reach store before 20th.", costCentre: "CC-P4-MAT", status: "Submitted", ts: Date.now() - 1.7e8, lines: [
+      { id: "l1", code: "MAT-002", desc: "OPC 53 Cement", spec: "IS 12269, fresh stock < 30 days", brand: "UltraTech / ACC", unit: "Bag", boqRef: "BOQ-P4", boqNo: "3.1", qty: 1200, rate: 390, remarks: "Silos preferred" },
+      { id: "l2", code: "MAT-031", desc: "Admixture (PCE)", spec: "IS 9103, retarder cum plasticiser", brand: "Sika / BASF", unit: "Ltr", boqRef: "BOQ-P4", boqNo: "3.4", qty: 400, rate: 92, remarks: "Lab trial done" },
+    ], history: [{ ts: Date.now() - 1.7e8, action: "Submitted", by: "Amit Bhosale" }] },
+    { id: "pr3", no: "PR-0091", date: dStr(0), project: "P2", dept: "Plant & Machinery", site: "Central Store — Chakan", by: "Dinesh Pawar", need: dStr(21), priority: "Normal", purpose: "Formwork material for deck slab cycle 2; plywood sheets as per approved formwork drawings.", costCentre: "CC-P2-PLT", status: "Draft", ts: Date.now() - 3.6e6, lines: [
+      { id: "l1", code: "MAT-042", desc: "Plywood Formwork", spec: "18 mm, film-faced, WBP grade", brand: "GreenPly", unit: "Sheet", boqRef: "BOQ-P2", boqNo: "5.2", qty: 260, rate: 1850, remarks: "8×4 ft size" },
+    ], history: [{ ts: Date.now() - 3.6e6, action: "Saved as Draft", by: "Dinesh Pawar" }] },
+    { id: "pr4", no: "PR-0089", date: dStr(-6), project: "P3", dept: "Project Execution", site: "Site Office — Talegaon", by: "Sunita Deshmukh", need: dStr(3), priority: "Urgent", purpose: "Final stretch bituminous works — M-Sand consumption higher than planned due to sub-base correction.", costCentre: "CC-P3-MAT", status: "Approved", ts: Date.now() - 5.2e8, lines: [
+      { id: "l1", code: "MAT-008", desc: "M-Sand", spec: "Zone II, < 3% fines, washed", brand: "Deccan", unit: "Cu.M", boqRef: "BOQ-P3", boqNo: "7.3", qty: 350, rate: 1450, remarks: "In 2 equal lots" },
+    ], history: [{ ts: Date.now() - 5.2e8, action: "Submitted", by: "Sunita Deshmukh" }, { ts: Date.now() - 5e8, action: "Approved", by: "Imran Shaikh" }] },
+    { id: "pr5", no: "PR-0086", date: dStr(-15), project: "P1", dept: "RMC Operations", site: "RMC Plant — Kharadi", by: "Sandeep Kulkarni", need: dStr(-5), priority: "Normal", purpose: "Monthly replenishment of admixture stock against production plan.", costCentre: "CC-RMC-MAT", status: "Fully Converted", ts: Date.now() - 1.3e9, lines: [
+      { id: "l1", code: "MAT-031", desc: "Admixture (PCE)", spec: "IS 9103", brand: "Sika", unit: "Ltr", boqRef: "BOQ-RMC", boqNo: "1.8", qty: 800, rate: 92, remarks: "" },
+    ], history: [{ ts: Date.now() - 1.3e9, action: "Approved", by: "Imran Shaikh" }, { ts: Date.now() - 1.2e9, action: "Converted to PO-1276", by: "Imran Shaikh" }] },
+    { id: "pr6", no: "PR-0084", date: dStr(-19), project: "P5", dept: "Project Execution", site: "Site Office — Hadapsar", by: "Vikas Thorat", need: dStr(-8), priority: "Normal", purpose: "Site consumables replenishment.", costCentre: "CC-P5-MAT", status: "Rejected", ts: Date.now() - 1.6e9, lines: [
+      { id: "l1", code: "MAT-055", desc: "Safety Net", spec: "HDPE braided, green", brand: "Any", unit: "Sq.M", boqRef: "—", boqNo: "—", qty: 600, rate: 22, remarks: "" },
+    ], history: [{ ts: Date.now() - 1.6e9, action: "Rejected — duplicate of PR-0082", by: "Imran Shaikh" }] },
+  ] as PRDoc[],
+  pos: [
+    { id: "po1", no: "PO-1288", date: dStr(-1), vendor: "UltraTech Cement", vendorAddr: "Birla Bhavan, M.P. Nagar, Mumbai 400021", gst: "27AAACU1901R1ZK", contact: "Rohit Salunkhe", email: "r.salunkhe@ultratech.com", phone: "+91 98220 44120", project: "P3", site: "Talegaon Batching Plant", costCentre: "CC-P3-MAT", prRef: "PR-0089", rfqRef: "RFQ-0412", quotRef: "UTC/Q/8841", quotDate: dStr(-4), negoRef: "Negotiated on 12 Mar — 2% off list", lines: [
+      { id: "l1", code: "MAT-008", desc: "M-Sand", spec: "Zone II, washed, < 3% fines", brand: "Deccan (via UTC)", unit: "Cu.M", boqRef: "BOQ-P3", boqNo: "7.3", qty: 350, prevQty: 0, rate: 1420, disc: 1, gst: 5, schedule: "Lot 1 — 175 Cu.M by 18 Mar; Lot 2 by 25 Mar" },
+    ], freight: 18000, loading: 4000, other: 0, terms: ["t1", "t2", "t4", "t6", "t7", "t9", "t12"].map((id) => TERMS_LIBRARY.find((t) => t.id === id)!.text), termsLocked: false, status: "Pending Approval", ts: Date.now() - 864e5 },
+    { id: "po2", no: "PO-1287", date: dStr(-5), vendor: "Tata Steel", vendorAddr: "Bombay House, 24 Homi Mody St, Mumbai 400001", gst: "27AAACT2727Q1ZW", contact: "Priya Nair", email: "priya.nair@tatasteel.com", phone: "+91 98333 71210", project: "P1", site: "Pachgaon Yard", costCentre: "CC-P1-MAT", prRef: "PR-0093", rfqRef: "RFQ-0409", quotRef: "TS/EST/4471", quotDate: dStr(-9), negoRef: "L1 — base rate as quoted", lines: [
+      { id: "l1", code: "MAT-014", desc: "TMT Steel Fe-550D", spec: "IS 1786:2008 CRS, 12–25 mm mix as per BBS", brand: "Tata Tiscon", unit: "MT", boqRef: "BOQ-P1", boqNo: "2.4", qty: 42, prevQty: 18, rate: 61500, disc: 0, gst: 18, schedule: "Single lot — 10 days from PO" },
+      { id: "l2", code: "MAT-021", desc: "Binding Wire", spec: "20 gauge annealed, 5 kg coils", brand: "Tata", unit: "kg", boqRef: "BOQ-P1", boqNo: "2.6", qty: 900, prevQty: 300, rate: 78, disc: 2, gst: 18, schedule: "Along with steel lot" },
+    ], freight: 0, loading: 0, other: 6000, terms: ["t1", "t3", "t4", "t5", "t7", "t10", "t12"].map((id) => TERMS_LIBRARY.find((t) => t.id === id)!.text), termsLocked: true, status: "Approved", ts: Date.now() - 4.3e8, acceptedBy: "Priya Nair · Tata Steel · " + dStr(-3) },
+    { id: "po3", no: "PO-1284", date: dStr(-24), vendor: "UltraTech Cement", vendorAddr: "Birla Bhavan, M.P. Nagar, Mumbai 400021", gst: "27AAACU1901R1ZK", contact: "Rohit Salunkhe", email: "r.salunkhe@ultratech.com", phone: "+91 98220 44120", project: "P4", site: "Wagholi Store", costCentre: "CC-P4-MAT", prRef: "PR-0088", rfqRef: "RFQ-0401", quotRef: "UTC/Q/8620", quotDate: dStr(-28), negoRef: "—", lines: [
+      { id: "l1", code: "MAT-002", desc: "OPC 53 Cement", spec: "IS 12269, 50 kg bags", brand: "UltraTech", unit: "Bag", boqRef: "BOQ-P4", boqNo: "3.1", qty: 1500, prevQty: 3200, rate: 390, disc: 0, gst: 18, schedule: "300 bags weekly" },
+    ], freight: 22000, loading: 0, other: 0, terms: ["t1", "t2", "t7", "t12"].map((id) => TERMS_LIBRARY.find((t) => t.id === id)!.text), termsLocked: true, status: "Closed", ts: Date.now() - 2.1e9, acceptedBy: "Rohit Salunkhe · UltraTech · " + dStr(-23) },
+  ] as PODoc[],
+  punches: [
+    { id: "pu1", user: "Sunita Deshmukh", date: dStr(-1), inAt: "09:02", outAt: "18:24", method: "GPS punch", project: "P4", status: "Present" },
+    { id: "pu2", user: "Sunita Deshmukh", date: dStr(-2), inAt: "09:41", outAt: "18:05", method: "Web punch", project: "P4", status: "Late" },
+    { id: "pu3", user: "Sunita Deshmukh", date: dStr(-3), inAt: "08:55", outAt: "20:10", method: "GPS punch", project: "P4", status: "Present" },
+    { id: "pu4", user: "Imran Shaikh", date: dStr(0), inAt: "09:12", outAt: undefined, method: "Web punch", project: "Head Office", status: "Present" },
+  ] as Punch[],
+  matrix: [
+    { id: "m1", doc: "Purchase Requisition", levels: [{ role: "Site Engineer", limit: "Up to ₹5 L", backup: "Project Manager" }, { role: "Project Manager", limit: "Up to ₹25 L", backup: "Procurement Manager" }, { role: "Procurement Manager", limit: "All values", backup: "Accounts Manager" }] },
+    { id: "m2", doc: "Purchase Order", levels: [{ role: "Procurement Manager", limit: "Up to ₹25 L", backup: "Commercial Manager" }, { role: "Accounts Manager", limit: "Up to ₹50 L", backup: "Commercial Manager" }, { role: "Commercial Manager", limit: "Up to ₹2 Cr", backup: "Director" }, { role: "Director", limit: "Above ₹2 Cr", backup: "Managing Director" }] },
+    { id: "m3", doc: "Payment", levels: [{ role: "Accounts Executive", limit: "Up to ₹2 L", backup: "Accounts Manager" }, { role: "Accounts Manager", limit: "Up to ₹50 L", backup: "Director" }, { role: "Director", limit: "All values", backup: "Managing Director" }] },
+    { id: "m4", doc: "Attendance", levels: [{ role: "Reporting Manager", limit: "Own team", backup: "Project Manager" }, { role: "HR Manager", limit: "Final lock", backup: "Super Admin" }] },
+    { id: "m5", doc: "RA Bill", levels: [{ role: "Site Engineer", limit: "Measurement", backup: "Project Manager" }, { role: "Project Manager", limit: "Certification", backup: "Commercial Manager" }, { role: "Commercial Manager", limit: "Up to ₹5 Cr", backup: "Director" }, { role: "Management", limit: "Above ₹5 Cr", backup: "—" }] },
+  ] as MatrixRow[],
   tenders: [
     { id: "t1", no: "TND-2026-014", authority: "NHAI — RO Pune", nit: "NIT/2025-26/1189", value: 214, emd: 2.1, fee: 0.5, deadline: dStr(-6), opening: dStr(-8), stage: 8, status: "Bid Submitted", docs: { NIT: true, BOQ: true, Drawings: true, Specifications: true, "Eligibility Docs": true, "Pre-bid Queries": true } },
     { id: "t2", no: "TND-2026-015", authority: "MSRDC", nit: "NIT/2025-26/1244", value: 86, emd: 0.86, fee: 0.25, deadline: dStr(-3), opening: dStr(-5), stage: 6, status: "Rate Analysis", docs: { NIT: true, BOQ: true, Drawings: true, Specifications: false, "Eligibility Docs": true, "Pre-bid Queries": false } },
@@ -300,6 +347,55 @@ const seed = () => ({
   ] as Notif[],
 });
 
+/* ── PR / PO / Attendance / Approval-matrix domain ──────────── */
+
+export type PRStatus = "Draft" | "Submitted" | "Under Approval" | "Approved" | "Partially Converted" | "Fully Converted" | "Closed" | "Rejected" | "Returned";
+export interface PRLine { id: string; code: string; desc: string; spec: string; brand: string; unit: string; boqRef: string; boqNo: string; qty: number; rate: number; remarks: string }
+export interface PRDoc {
+  id: string; no: string; date: string; project: string; dept: string; site: string; by: string;
+  need: string; priority: "Normal" | "Urgent" | "Critical"; purpose: string; costCentre: string;
+  lines: PRLine[]; status: PRStatus; ts: number; history: { ts: number; action: string; by: string }[];
+}
+
+export type POStatus = "Draft" | "Pending Approval" | "Approved" | "Dispatched" | "Closed";
+export interface POLine { id: string; code: string; desc: string; spec: string; brand: string; unit: string; boqRef: string; boqNo: string; qty: number; prevQty: number; rate: number; disc: number; gst: number; schedule: string }
+export interface PODoc {
+  id: string; no: string; date: string; vendor: string; vendorAddr: string; gst: string; contact: string; email: string; phone: string;
+  project: string; site: string; costCentre: string; prRef: string; rfqRef: string; quotRef: string; quotDate: string; negoRef: string;
+  lines: POLine[]; freight: number; loading: number; other: number; terms: string[]; termsLocked: boolean;
+  status: POStatus; ts: number; acceptedBy?: string;
+}
+
+export interface Punch { id: string; user: string; date: string; inAt?: string; outAt?: string; breakStart?: string; breakEnd?: string; method: string; project: string; status: "Present" | "Late" | "Half Day" | "On Leave" | "Holiday" }
+
+export interface MatrixLevel { role: string; limit: string; backup: string }
+export interface MatrixRow { id: string; doc: string; levels: MatrixLevel[] }
+
+/* last purchase memory — used for vendor & rate suggestions */
+export const PURCHASE_MEMORY: Record<string, { vendor: string; rate: number; po: string; date: string }> = {
+  "OPC 53 Cement": { vendor: "UltraTech Cement", rate: 390, po: "PO-1284", date: "22 Jan 2026" },
+  "TMT Steel Fe-550D": { vendor: "Tata Steel", rate: 61500, po: "PO-1281", date: "14 Jan 2026" },
+  "M-Sand": { vendor: "Deccan Aggregates", rate: 1450, po: "PO-1279", date: "08 Jan 2026" },
+  "Admixture (PCE)": { vendor: "Sika India", rate: 92, po: "PO-1276", date: "19 Dec 2025" },
+  "Binding Wire": { vendor: "Sudarshan Traders", rate: 78, po: "PO-1274", date: "12 Dec 2025" },
+  "Plywood Formwork": { vendor: "GreenPly Industries", rate: 1850, po: "PO-1271", date: "02 Dec 2025" },
+};
+
+export const TERMS_LIBRARY: { id: string; scope: string; text: string }[] = [
+  { id: "t1", scope: "Standard", text: "Prices are firm and inclusive of all taxes unless stated; any statutory change in GST after PO date shall be adjusted on actuals with documentary proof." },
+  { id: "t2", scope: "Standard", text: "Delivery within the schedule stated against each line item; delay beyond 7 days attracts liquidated damages of 0.5% of delayed value per week, capped at 5%." },
+  { id: "t3", scope: "Standard", text: "Delivery at project site, unloaded, stacked and secured as directed by the Site In-charge. Transit insurance to be arranged by the vendor." },
+  { id: "t4", scope: "Quality", text: "Material must conform to the referenced IS codes / approved make list; Mill Test Certificates and batch-wise QC records to accompany each consignment." },
+  { id: "t5", scope: "Quality", text: "Company reserves the right to test material at NABL-accredited labs; material failing test shall be replaced within 72 hours at vendor's cost including re-testing." },
+  { id: "t6", scope: "Standard", text: "Quantity tolerance ±3% for bulk materials; short/ excess supply will be reconciled at site measurement and settled on actuals." },
+  { id: "t7", scope: "Payment", text: "Payment within 30 days from receipt of original tax invoice, GRN copy and e-way bill, subject to deduction of advances and recoveries." },
+  { id: "t8", scope: "Payment", text: "No interest shall be payable on delayed payments beyond the agreed credit period." },
+  { id: "t9", scope: "Standard", text: "Rejected material shall be removed from site within 48 hours at vendor's risk and cost; failing which Company may dispose it off on behalf of the vendor." },
+  { id: "t10", scope: "Compliance", text: "Vendor shall comply with all statutory obligations (GST, EPF, ESI, Labour Laws) and safety norms of the site; violations are at vendor's sole risk." },
+  { id: "t11", scope: "Standard", text: "Company may cancel unexecuted balance with 15 days' notice without liability; Force Majeure events shall be settled as per Contract Act." },
+  { id: "t12", scope: "Legal", text: "Subject to Pune jurisdiction. This PO is governed by the General Terms (Rev 4) available at Company's vendor portal." },
+];
+
 export type ERPState = ReturnType<typeof seed>;
 
 /* ── context ─────────────────────────────────────────────────── */
@@ -333,7 +429,7 @@ export function ERPProvider({ role, children }: { role: RoleId; children: ReactN
   const [s, setS] = useState<ERPState>(() => {
     try {
       const raw = localStorage.getItem(LS_KEY);
-      if (raw) { const p = JSON.parse(raw); if (p && p.v === 3 && p.data) return p.data as ERPState; }
+      if (raw) { const p = JSON.parse(raw); if (p && p.v === 4 && p.data) return p.data as ERPState; }
     } catch { /* fall through to seed */ }
     return seed();
   });
@@ -342,7 +438,7 @@ export function ERPProvider({ role, children }: { role: RoleId; children: ReactN
   const idRef = useRef(1000);
 
   useEffect(() => {
-    try { localStorage.setItem(LS_KEY, JSON.stringify({ v: 3, data: s })); } catch { /* storage full — ignore */ }
+    try { localStorage.setItem(LS_KEY, JSON.stringify({ v: 4, data: s })); } catch { /* storage full — ignore */ }
   }, [s]);
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);

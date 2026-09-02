@@ -24,8 +24,8 @@ export const ACCESS: Record<RoleId, ModuleId[]> = {
   STORE: ["dashboard", "materials", "stores", "reports"],
   COMMERCIAL: ["dashboard", "projects", "tenders", "commercial", "billing", "finance", "approvals", "reports"],
   RMC: ["dashboard", "rmc", "materials", "plant", "reports"],
-  SITE_ENG: ["dashboard", "projects", "attendance", "materials", "reports", "documents"],
-  EMPLOYEE: ["dashboard", "attendance", "payroll", "hr"],
+  SITE_ENG: ["dashboard", "projects", "procurement", "attendance", "materials", "approvals", "reports", "documents"],
+  EMPLOYEE: ["dashboard", "attendance", "payroll", "hr", "approvals"],
 };
 
 export interface RoleInfo { id: RoleId; label: string; person: string; title: string; dept: string }
@@ -276,7 +276,7 @@ export const NAV: NavItem[] = [
   { id: "projects", label: "Projects", icon: "hardhat", children: [{ id: "prj-all", label: "All Projects" }, { id: "prj-dash", label: "Project Dashboard" }, { id: "prj-wbs", label: "WBS & BOQ" }] },
   { id: "tenders", label: "Tender Management", icon: "gavel", roles: ["SUPER_ADMIN", "MD", "COMMERCIAL"] },
   { id: "commercial", label: "Commercial & Contracts", icon: "contract", roles: ["SUPER_ADMIN", "MD", "COMMERCIAL", "ACCOUNTS"], children: [{ id: "com-contracts", label: "Contracts" }, { id: "com-variation", label: "Variations" }, { id: "com-claims", label: "Claims" }] },
-  { id: "procurement", label: "Procurement", icon: "cart", roles: ["SUPER_ADMIN", "MD", "PROCUREMENT", "ACCOUNTS"], children: [{ id: "pro-pr", label: "Purchase Requisitions" }, { id: "pro-rfq", label: "RFQ & Quotations" }, { id: "pro-po", label: "Purchase Orders" }, { id: "pro-vendor", label: "Vendors" }] },
+  { id: "procurement", label: "Procurement", icon: "cart", roles: ["SUPER_ADMIN", "MD", "PROCUREMENT", "ACCOUNTS", "SITE_ENG", "PM"], children: [{ id: "pro-pr", label: "Purchase Requisitions" }, { id: "pro-rfq", label: "RFQ & Quotations" }, { id: "pro-po", label: "Purchase Orders" }, { id: "pro-vendor", label: "Vendors" }] },
   { id: "materials", label: "Materials", icon: "cube", children: [{ id: "mat-master", label: "Material Masters" }, { id: "mat-grn", label: "Goods Receipt" }] },
   { id: "stores", label: "Store Management", icon: "warehouse", roles: ["SUPER_ADMIN", "MD", "STORE", "PROCUREMENT", "PM"], children: [{ id: "st-stock", label: "Stock Overview" }, { id: "st-mr", label: "Material Requests" }, { id: "st-recon", label: "Reconciliation" }] },
   { id: "plant", label: "Plant & Machinery", icon: "crane", roles: ["SUPER_ADMIN", "MD", "PM", "RMC"] },
