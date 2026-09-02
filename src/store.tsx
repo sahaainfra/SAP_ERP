@@ -55,7 +55,7 @@ const defaultPerms = (): Perms => {
       const has = ACCESS[r.id].includes(m);
       p[r.id][m] = {
         view: has,
-        create: has && r.id !== "EMPLOYEE" && r.id !== "STORE" ? true : r.id === "STORE" ? has && (m === "materials" || m === "store") : has && m === "attendance",
+        create: has && r.id !== "EMPLOYEE" && r.id !== "STORE" ? true : r.id === "STORE" ? has && (m === "materials" || m === "stores") : has && m === "attendance",
         edit: has && ["SUPER_ADMIN", "MD", "ACCOUNTS", "PROCUREMENT", "HR", "COMMERCIAL", "RMC", "PM"].includes(r.id) && mgr.includes(r.id),
         delete: r.id === "SUPER_ADMIN" && has,
         approve: has && mgr.includes(r.id) && r.id !== "PM" ? true : r.id === "PM" && ["approvals", "attendance", "billing"].includes(m),
@@ -313,6 +313,7 @@ interface ERP {
   notify: (type: Notif["type"], text: string) => void;
   markRead: (id?: string) => void;
   setS: React.Dispatch<React.SetStateAction<ERPState>>;
+  perms: Perms; setPerms: React.Dispatch<React.SetStateAction<Perms>>;
   nextCode: (prefix: string) => string;
   intent: { route: string; kind: string } | null;
   setIntent: (i: { route: string; kind: string } | null) => void;
@@ -349,18 +350,17 @@ export function ERPProvider({ role, children }: { role: RoleId; children: ReactN
   }, [dark]);
 
   const roleInfo = ROLES.find((r) => r.id === role) ?? ROLES[0];
-  const permsRef = useRef<Perms>(defaultPerms());
-  // merge persisted perms lazily
-  if (!permsRef.current.__init) {
+  const [perms, setPerms] = useState<Perms>(() => {
     try {
       const raw = localStorage.getItem("mer.perms.v3");
-      if (raw) permsRef.current = { ...defaultPerms(), ...(JSON.parse(raw) as Perms), __init: true } as Perms;
-      else permsRef.current = { ...permsRef.current, __init: true } as Perms;
-    } catch { permsRef.current = { ...permsRef.current, __init: true } as Perms; }
-  }
+      if (raw) return JSON.parse(raw) as Perms;
+    } catch { /* ignore corrupted storage */ }
+    return defaultPerms();
+  });
+  useEffect(() => { try { localStorage.setItem("mer.perms.v3", JSON.stringify(perms)); } catch { /* ignore */ } }, [perms]);
 
   const can = (mod: string, perm: keyof Perms[string][string]) =>
-    role === "SUPER_ADMIN" ? ACCESS.SUPER_ADMIN.includes(mod as ModuleId) : !!permsRef.current[role]?.[mod]?.[perm];
+    role === "SUPER_ADMIN" ? ACCESS.SUPER_ADMIN.includes(mod as ModuleId) : !!perms[role]?.[mod]?.[perm];
 
   const nextCode = (prefix: string) => {
     idRef.current += 1;
@@ -383,7 +383,7 @@ export function ERPProvider({ role, children }: { role: RoleId; children: ReactN
 
   const value = useMemo<ERP>(() => ({
     s, role, user: { name: roleInfo.person, title: roleInfo.title, dept: roleInfo.dept },
-    dark, setDark: setDarkState, can, log, notify, markRead, setS, nextCode, intent, setIntent, resetAll,
+    dark, setDark: setDarkState, can, log, notify, markRead, setS, perms, setPerms, nextCode, intent, setIntent, resetAll,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [s, role, dark, intent]);
 

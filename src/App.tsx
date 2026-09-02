@@ -9,9 +9,19 @@ import {
 } from "./widgets";
 import { AgingDonut, BudgetActualChart, CashFlowChart, PlannedActualChart, RevenueExpenseChart } from "./charts";
 import {
-  ACTIVITIES, APPROVALS, DATE_RANGES, DEPARTMENTS, KPI_LIB, NAV, PROJECTS, ROLE_KPIS, ROLE_WIDGETS,
+  ACCESS, ACTIVITIES, APPROVALS, DATE_RANGES, DEPARTMENTS, KPI_LIB, NAV, ROLE_KPIS, ROLE_WIDGETS,
   ROLES, RoleId, fmtNum, projectById,
 } from "./data";
+import type { ModuleId } from "./data";
+import { ERPProvider, useERP } from "./store";
+import ProjectsPage from "./modules/projects";
+import ProcurementPage from "./modules/procurement";
+import MaterialsPage from "./modules/materials";
+import FinancePage from "./modules/finance";
+import { HRPage, AttendancePage, PayrollPage } from "./modules/hr";
+import { TendersPage, PlantPage, RmcPage } from "./modules/operations";
+import { CommercialPage, BillingPage } from "./modules/commercial";
+import { ApprovalsPage, DocumentsPage, ReportsPage, AnalyticsPage, SettingsPage } from "./modules/system";
 import { Empty, IconBtn, Pop, Reveal, Select, Skel, ToastProvider, Widget, cx, useToast } from "./ui";
 import {
   IDownload, IPrinter, ILayout, IRefresh, IFilter, ISave, IX, ICheck, IChevU, IChevD,
@@ -32,16 +42,26 @@ interface LayoutState { order: string[]; hidden: string[] }
 export default function App() {
   return (
     <ToastProvider>
-      <Shell />
+      <Root />
     </ToastProvider>
   );
 }
 
-function Shell() {
+function Root() {
+  const [role, setRoleState] = useState<RoleId>(() => ls.get<RoleId>("mer.role", "MD"));
+  return (
+    <ERPProvider role={role}>
+      <Shell role={role} setRole={setRoleState} />
+    </ERPProvider>
+  );
+}
+
+function Shell({ role, setRole }: { role: RoleId; setRole: (r: RoleId) => void }) {
   const toast = useToast();
+  const erp = useERP();
+  const PROJECTS = erp.s.projects;
 
   /* ── core state ── */
-  const [role, setRole] = useState<RoleId>(() => ls.get<RoleId>("mer.role", "MD"));
   const [collapsed, setCollapsed] = useState(() => ls.get("mer.side", false));
   const [mobileNav, setMobileNav] = useState(false);
   const [active, setActive] = useState("dashboard");
@@ -172,7 +192,13 @@ function Shell() {
 
       <div className="flex-1 min-w-0 flex flex-col print-full">
         <Header role={role} onRoleChange={changeRole} onMenu={() => (window.innerWidth >= 1024 ? setCollapsed((c) => !c) : setMobileNav(true))}
-          approvalsCount={pendingCount} onOpenApprovals={scrollToApprovals} project={project} onProject={setProject} fy={fy} onFy={(v) => { setFy(v); ls.set("mer.fy", v); }} />
+          onNavigate={(route, kind) => {
+            setActive(route);
+            if (kind) erp.setIntent({ route, kind });
+            window.scrollTo({ top: 0, behavior: "smooth" });
+            setMobileNav(false);
+          }}
+          project={project} onProject={setProject} fy={fy} onFy={(v) => { setFy(v); ls.set("mer.fy", v); }} />
 
         <main className="flex-1 px-3 md:px-5 py-4 md:py-5 max-w-[1560px] w-full mx-auto">
           {/* Breadcrumb + title */}
@@ -191,16 +217,18 @@ function Shell() {
                   : "Module workspace"}
               </p>
             </div>
-            <div className="flex items-center gap-1.5 no-print">
-              <IconBtn label="Refresh data" onClick={refresh}><IRefresh size={14} /></IconBtn>
-              <IconBtn label="Export PDF" onClick={() => toast("info", "PDF export queued — check your downloads shortly")}><IFiles size={14} /></IconBtn>
-              <IconBtn label="Export Excel" onClick={exportExcel}><IDownload size={14} /></IconBtn>
-              <IconBtn label="Print (⌘P)" onClick={() => window.print()}><IPrinter size={14} /></IconBtn>
-              <button onClick={() => setCustomOpen(true)}
-                className="ml-1 h-8 px-3 rounded-lg bg-brand-600 text-white text-[12px] font-semibold inline-flex items-center gap-1.5 hover:bg-brand-700 active:scale-[0.97] transition-all shadow-card">
-                <ILayout size={14} /> Customize
-              </button>
-            </div>
+            {onDashboard && (
+              <div className="flex items-center gap-1.5 no-print">
+                <IconBtn label="Refresh data" onClick={refresh}><IRefresh size={14} /></IconBtn>
+                <IconBtn label="Export PDF" onClick={() => window.print()}><IFiles size={14} /></IconBtn>
+                <IconBtn label="Export Excel" onClick={exportExcel}><IDownload size={14} /></IconBtn>
+                <IconBtn label="Print (⌘P)" onClick={() => window.print()}><IPrinter size={14} /></IconBtn>
+                <button onClick={() => setCustomOpen(true)}
+                  className="ml-1 h-8 px-3 rounded-lg bg-brand-600 text-white text-[12px] font-semibold inline-flex items-center gap-1.5 hover:bg-brand-700 active:scale-[0.97] transition-all shadow-card">
+                  <ILayout size={14} /> Customize
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Filter bar */}
@@ -255,7 +283,7 @@ function Shell() {
           {loading ? (
             <DashboardSkeleton />
           ) : !onDashboard ? (
-            <ModulePlaceholder name={activeNav?.label ?? active} onBack={() => setActive("dashboard")} />
+            <ModuleRoute id={active} role={role} onBack={() => setActive("dashboard")} />
           ) : (
             <div className="grid grid-cols-12 gap-3.5 md:gap-4">
               {visibleOrder.map((id, i) => {
@@ -391,30 +419,53 @@ function DashboardSkeleton() {
   );
 }
 
-/* ── Module placeholder ──────────────────────────────────────── */
-function ModulePlaceholder({ name, onBack }: { name: string; onBack: () => void }) {
-  return (
-    <Reveal>
-      <div className="bg-surface border border-line rounded-[10px] shadow-card p-6">
-        <div className="max-w-md">
-          <span className="inline-flex items-center gap-2 h-6 px-2.5 rounded-full bg-steel-100 text-steel-600 text-[10.5px] font-bold uppercase tracking-wide">
-            <IInbox size={12} /> Module workspace
+/* ── Module router (RBAC-gated) ──────────────────────────────── */
+function ModuleRoute({ id, role, onBack }: { id: string; role: RoleId; onBack: () => void }) {
+  const parent =
+    NAV.find((n) => n.id === id)?.id ??
+    NAV.find((n) => n.children?.some((c) => c.id === id))?.id ??
+    id;
+
+  if (!ACCESS[role].includes(parent as ModuleId)) {
+    return (
+      <Reveal>
+        <div className="bg-surface border border-line rounded-[10px] shadow-card p-8 max-w-lg">
+          <span className="inline-flex items-center gap-2 h-6 px-2.5 rounded-full bg-danger-100 text-danger-600 text-[10.5px] font-bold uppercase tracking-wide">
+            <IInbox size={12} /> Access restricted
           </span>
-          <h2 className="font-display text-[20px] font-bold text-ink-900 mt-3">{name}</h2>
+          <h2 className="font-display text-[20px] font-bold text-ink-900 mt-3">Module not available for your role</h2>
           <p className="text-[13px] text-ink-500 leading-relaxed mt-2">
-            The {name} workspace opens here in the full suite — transactional screens, entry forms and registers
-            connect to the same live data powering this dashboard. Role-based access is already applied to the menu.
+            Role-based access control blocks this workspace for <b>{ROLES.find((r) => r.id === role)?.label}</b>.
+            A Super Admin can grant module permissions in Settings → Roles &amp; Permissions.
           </p>
-          <div className="flex gap-2 mt-5">
-            <button onClick={onBack} className="h-9 px-4 rounded-lg bg-brand-600 text-white text-[12.5px] font-semibold hover:bg-brand-700 active:scale-[0.98] transition-all">
-              Back to Dashboard
-            </button>
-            <button onClick={onBack} className="h-9 px-4 rounded-lg border border-line text-[12.5px] font-semibold text-ink-500 hover:bg-canvas active:scale-[0.98] transition-all inline-flex items-center gap-1.5">
-              <IColumns size={13} /> View registers
-            </button>
-          </div>
+          <button onClick={onBack} className="mt-5 h-9 px-4 rounded-lg bg-brand-600 text-white text-[12.5px] font-semibold hover:bg-brand-700 active:scale-[0.98] transition-all">
+            Back to Dashboard
+          </button>
         </div>
-      </div>
-    </Reveal>
+      </Reveal>
+    );
+  }
+
+  return (
+    <div key={parent + (parent === "stores" ? ":stock" : "") + role}>
+      {parent === "projects" && <ProjectsPage />}
+      {parent === "tenders" && <TendersPage />}
+      {parent === "commercial" && <CommercialPage />}
+      {parent === "billing" && <BillingPage />}
+      {parent === "procurement" && <ProcurementPage />}
+      {parent === "materials" && <MaterialsPage />}
+      {parent === "stores" && <MaterialsPage initialTab="stock" />}
+      {parent === "plant" && <PlantPage />}
+      {parent === "rmc" && <RmcPage />}
+      {parent === "attendance" && <AttendancePage />}
+      {parent === "hr" && <HRPage />}
+      {parent === "finance" && <FinancePage />}
+      {parent === "payroll" && <PayrollPage />}
+      {parent === "approvals" && <ApprovalsPage />}
+      {parent === "reports" && <ReportsPage />}
+      {parent === "analytics" && <AnalyticsPage />}
+      {parent === "documents" && <DocumentsPage />}
+      {parent === "settings" && <SettingsPage />}
+    </div>
   );
 }

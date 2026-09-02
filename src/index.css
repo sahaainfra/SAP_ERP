@@ -1,5 +1,49 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ── Dark theme: token overrides flip the whole system ─────── */
+.dark {
+  color-scheme: dark;
+  --color-canvas: #0c1116;
+  --color-surface: #131b22;
+  --color-line: #22303c;
+  --color-line-strong: #324555;
+  --color-ink-900: #e7edf3;
+  --color-ink-700: #c0ccd7;
+  --color-ink-500: #8ba0b1;
+  --color-ink-400: #71879a;
+  --color-ink-300: #566e80;
+  --color-ink-200: #3c505f;
+  --color-ink-100: #2a3a47;
+  --color-brand-50: #0e2622;
+  --color-brand-100: #143732;
+  --color-brand-200: #1d4b43;
+  --color-brand-300: #2a665b;
+  --color-brand-600: #0e8070;
+  --color-brand-700: #3cb3a0;
+  --color-brand-800: #63c7b6;
+  --color-ok-100: #12301e;
+  --color-ok-500: #2f9d63;
+  --color-ok-600: #5cc08a;
+  --color-warn-100: #37301a;
+  --color-warn-500: #e0a33b;
+  --color-warn-600: #e8b45c;
+  --color-warn-700: #f0c67e;
+  --color-danger-100: #3a1d20;
+  --color-danger-500: #d05252;
+  --color-danger-600: #e07b7b;
+  --color-steel-100: #22303c;
+  --color-steel-300: #3c5468;
+  --color-steel-600: #9db4c6;
+  --color-steel-800: #c6d6e2;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --shadow-lift: 0 12px 28px -14px rgba(0, 0, 0, 0.65);
+  --shadow-pop: 0 20px 48px -16px rgba(0, 0, 0, 0.7);
+}
+.dark ::-webkit-scrollbar-thumb { background: #324555; }
+.dark .tip::after { background: #0b1117; border-color: #324555; }
+
 @theme {
   --font-display: "Sora", ui-sans-serif, sans-serif;
   --font-body: "IBM Plex Sans", ui-sans-serif, sans-serif;

@@ -8,7 +8,7 @@ export type RoleId =
 /** Module keys used for RBAC gating + routes */
 export const MODULES = [
   "dashboard", "projects", "tenders", "commercial", "procurement", "materials",
-  "store", "plant", "rmc", "attendance", "hr", "finance", "billing", "payroll",
+  "stores", "plant", "rmc", "attendance", "hr", "finance", "billing", "payroll",
   "approvals", "reports", "analytics", "documents", "settings",
 ] as const;
 export type ModuleId = (typeof MODULES)[number];
@@ -17,11 +17,11 @@ export type ModuleId = (typeof MODULES)[number];
 export const ACCESS: Record<RoleId, ModuleId[]> = {
   SUPER_ADMIN: [...MODULES],
   MD: ["dashboard", "projects", "tenders", "commercial", "procurement", "materials", "finance", "billing", "approvals", "reports", "analytics", "documents"],
-  PM: ["dashboard", "projects", "materials", "store", "plant", "attendance", "hr", "billing", "approvals", "reports", "documents"],
+  PM: ["dashboard", "projects", "materials", "stores", "plant", "attendance", "hr", "billing", "approvals", "reports", "documents"],
   HR: ["dashboard", "attendance", "hr", "payroll", "approvals", "reports"],
   ACCOUNTS: ["dashboard", "projects", "procurement", "materials", "finance", "billing", "approvals", "reports", "analytics"],
-  PROCUREMENT: ["dashboard", "procurement", "materials", "store", "approvals", "reports"],
-  STORE: ["dashboard", "materials", "store", "reports"],
+  PROCUREMENT: ["dashboard", "procurement", "materials", "stores", "approvals", "reports"],
+  STORE: ["dashboard", "materials", "stores", "reports"],
   COMMERCIAL: ["dashboard", "projects", "tenders", "commercial", "billing", "finance", "approvals", "reports"],
   RMC: ["dashboard", "rmc", "materials", "plant", "reports"],
   SITE_ENG: ["dashboard", "projects", "attendance", "materials", "reports", "documents"],
@@ -130,6 +130,8 @@ export const ROLE_KPIS: Record<RoleId, string[]> = {
   STORE: ["stockValue", "lowStockItems", "inwardToday", "pendingMR", "productionToday", "plantUtil", "pendingPR", "manpowerOnsite"],
   COMMERCIAL: ["contractValue", "variationsValue", "certifiedValue", "pendingRA", "receivables", "monthRevenue", "marginPct", "cashFlow"],
   RMC: ["productionToday", "dispatchToday", "plantUtil", "prodCost", "mixerFleet", "lowStockItems", "pendingMR", "stockValue"],
+  SITE_ENG: ["activeProjects", "progressAvg", "manpowerOnsite", "attendanceToday", "costUtil", "pendingMR", "openIssues", "stockValue"],
+  EMPLOYEE: ["attendanceToday", "overtimeHrs", "onLeave", "trainingDue", "payrollProgress", "manpowerOnsite", "openIssues", "pendingMR"],
 };
 
 /* ── Approvals ───────────────────────────────────────────────── */
@@ -303,6 +305,8 @@ export const ROLE_WIDGETS: Record<RoleId, string[]> = {
   STORE: ["kpis", "stock", "approvals", "alerts", "activity"],
   COMMERCIAL: ["kpis", "contracts", "aging", "approvals", "revexp", "performance", "alerts"],
   RMC: ["kpis", "production", "stock", "approvals", "alerts", "activity"],
+  SITE_ENG: ["kpis", "projects", "planned", "siteissues", "approvals", "activity"],
+  EMPLOYEE: ["kpis", "activity", "approvals", "alerts"],
 };
 
 /* ── Helpers ─────────────────────────────────────────────────── */
