@@ -44,6 +44,23 @@
 .dark ::-webkit-scrollbar-thumb { background: #324555; }
 .dark .tip::after { background: #0b1117; border-color: #324555; }
 
+/* ── Print Template Engine ─────────────────────────────────── */
+@media print {
+  body.print-preview-open #root { display: none !important; }
+  .print-toolbar { display: none !important; }
+  .print-host { display: block !important; }
+  .print-sheet {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+  .print-sheet table thead { display: table-header-group; }
+  .print-sheet tr { break-inside: avoid; }
+  .print-sheet { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
 @theme {
   --font-display: "Sora", ui-sans-serif, sans-serif;
   --font-body: "IBM Plex Sans", ui-sans-serif, sans-serif;

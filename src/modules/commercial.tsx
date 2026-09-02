@@ -5,6 +5,7 @@ import { Pill, Widget, useToast, cx } from "../ui";
 import { PageHead, Seg, FilterBar, DataTable, Drawer, Field, inputCls, selectCls, Btn, Stat, AddBtn } from "./shell";
 import type { Col } from "./shell";
 import { IChevD } from "../icons";
+import { printDocument } from "../print";
 
 /* ═══ Commercial & Contracts ══════════════════════════════════ */
 export function CommercialPage() {
@@ -180,6 +181,23 @@ export function BillingPage() {
               ))}
             </div>
             <p className="text-[11px] text-ink-400 bg-canvas border border-line rounded-md px-3 py-2">Linked invoice: INV-C vs {detail.no} · receivable tracks payment in Finance → Receivables.</p>
+            <div className="flex justify-end gap-2">
+              <Btn onClick={() => setDetail(null)}>Close</Btn>
+              <Btn kind="primary" onClick={() => printDocument({
+                title: "Running Account Bill", docNo: detail.no, date: detail.date, project: `${detail.project} — ${detail.client}`,
+                meta: [["Bill Type", "Running Account"], ["Currency", "INR (₹ Cr)"]],
+                cols: [{ label: "Particulars" }, { label: "Amount (₹ Cr)", align: "right" }],
+                rows: [
+                  ["Previous bill (cumulative)", detail.prev], ["Current period work done", detail.current],
+                  ["Gross work done", detail.gross], ["Less: Retention @ 5%", -detail.retention],
+                  ["Less: Security deposit @ 2.5%", -detail.sd], ["Less: Mobilisation advance", -detail.adv],
+                  ["Less: GST @ 18%", -detail.gst], ["Less: Other recoveries", -detail.other],
+                ],
+                totalsLabel: "Net Payable", totals: [detail.net],
+                note: "Subject to client certification. Deductions as per contract agreement; retention release on defect-liability completion.",
+                generatedBy: user.name,
+              })}>Print RA Bill</Btn>
+            </div>
           </div>
         )}
       </Drawer>

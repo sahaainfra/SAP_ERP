@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { cx, useToast, Empty } from "../ui";
 import { IChevD, IColumns, IDownload, ISearch, IX, ICheck, IPlus } from "../icons";
+import { printDocument } from "../print";
+import { useERP } from "../store";
 
 export const inputCls = "h-8 px-2.5 rounded-md border border-line bg-surface text-[12.5px] text-ink-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition-all placeholder:text-ink-300 w-full";
 export const selectCls = inputCls + " appearance-none pr-7 bg-no-repeat cursor-pointer";
@@ -165,12 +167,14 @@ export function DataTable({ pageKey, rows, cols, idKey = "id", pageSize = 8, sel
   onRow?: (r: any) => void; empty?: { title: string; note: string };
 }) {
   const toast = useToast();
+  const { user } = useERP();
   const [sort, setSort] = useState<{ k: string; d: 1 | -1 } | null>(null);
   const [page, setPage] = useState(0);
   const [sel, setSel] = useState<string[]>([]);
   const [hidden, setHidden] = useState<string[]>(() => { try { return JSON.parse(localStorage.getItem("mer.cols." + pageKey) || "[]"); } catch { return []; } });
 
   const visCols = cols.filter((c) => !hidden.includes(c.key));
+  const printCols = visCols.filter((c) => c.key !== "act" && c.key !== "");
   const sorted = useMemo(() => {
     if (!sort) return rows;
     const col = cols.find((c) => c.key === sort.k);
@@ -180,6 +184,20 @@ export function DataTable({ pageKey, rows, cols, idKey = "id", pageSize = 8, sel
       return (va < vb ? -1 : va > vb ? 1 : 0) * sort.d;
     });
   }, [rows, sort, cols]);
+
+  const doPrint = () => printDocument({
+    title: pageKey.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" "),
+    docNo: pageKey.toUpperCase().replace(/-/g, "") + "-" + new Date().toISOString().slice(0, 10).replace(/-/g, ""),
+    date: new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }),
+    orientation: printCols.length > 6 ? "landscape" : "portrait",
+    cols: printCols.map((c) => ({ label: c.label, align: c.align ?? "left" })),
+    rows: sorted.map((r) => printCols.map((c) => {
+      const v = c.csv ? c.csv(r) : c.sort ? c.sort(r) : r[c.key];
+      return typeof v === "number" ? v : typeof v === "string" ? v : String(v ?? "");
+    })),
+    generatedBy: user.name,
+    note: "Filters applied at generation time are reflected in this document. Figures in ₹ as per the active financial year.",
+  });
 
   const pages = Math.max(1, Math.ceil(sorted.length / pageSize));
   const safePage = Math.min(page, pages - 1);
@@ -255,7 +273,7 @@ export function DataTable({ pageKey, rows, cols, idKey = "id", pageSize = 8, sel
         <p className="text-[11px] text-ink-400 num">{sorted.length === 0 ? "0 results" : `${safePage * pageSize + 1}–${Math.min((safePage + 1) * pageSize, sorted.length)} of ${sorted.length}`}</p>
         <div className="ml-auto flex items-center gap-1.5">
           <Btn sm onClick={() => { exportCSV("meridian-" + pageKey, visCols, sorted); toast("success", `Exported ${sorted.length} rows to Excel (CSV)`); }} disabled={!canExport(rows)}><IDownload size={12} /> Excel</Btn>
-          <Btn sm onClick={() => window.print()}><IDownload size={12} /> PDF / Print</Btn>
+          <Btn sm onClick={doPrint}><IDownload size={12} /> PDF / Print</Btn>
           <div className="relative">
             <ColBtn hidden={hidden} cols={cols} onToggle={toggleCol} />
           </div>
