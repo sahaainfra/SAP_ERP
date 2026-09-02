@@ -2,7 +2,31 @@
 
 export type RoleId =
   | "SUPER_ADMIN" | "MD" | "PM" | "HR" | "ACCOUNTS"
-  | "PROCUREMENT" | "STORE" | "COMMERCIAL" | "RMC";
+  | "PROCUREMENT" | "STORE" | "COMMERCIAL" | "RMC"
+  | "SITE_ENG" | "EMPLOYEE";
+
+/** Module keys used for RBAC gating + routes */
+export const MODULES = [
+  "dashboard", "projects", "tenders", "commercial", "procurement", "materials",
+  "store", "plant", "rmc", "attendance", "hr", "finance", "billing", "payroll",
+  "approvals", "reports", "analytics", "documents", "settings",
+] as const;
+export type ModuleId = (typeof MODULES)[number];
+
+/** Module-level menu access per role */
+export const ACCESS: Record<RoleId, ModuleId[]> = {
+  SUPER_ADMIN: [...MODULES],
+  MD: ["dashboard", "projects", "tenders", "commercial", "procurement", "materials", "finance", "billing", "approvals", "reports", "analytics", "documents"],
+  PM: ["dashboard", "projects", "materials", "store", "plant", "attendance", "hr", "billing", "approvals", "reports", "documents"],
+  HR: ["dashboard", "attendance", "hr", "payroll", "approvals", "reports"],
+  ACCOUNTS: ["dashboard", "projects", "procurement", "materials", "finance", "billing", "approvals", "reports", "analytics"],
+  PROCUREMENT: ["dashboard", "procurement", "materials", "store", "approvals", "reports"],
+  STORE: ["dashboard", "materials", "store", "reports"],
+  COMMERCIAL: ["dashboard", "projects", "tenders", "commercial", "billing", "finance", "approvals", "reports"],
+  RMC: ["dashboard", "rmc", "materials", "plant", "reports"],
+  SITE_ENG: ["dashboard", "projects", "attendance", "materials", "reports", "documents"],
+  EMPLOYEE: ["dashboard", "attendance", "payroll", "hr"],
+};
 
 export interface RoleInfo { id: RoleId; label: string; person: string; title: string; dept: string }
 
@@ -16,6 +40,8 @@ export const ROLES: RoleInfo[] = [
   { id: "STORE", label: "Store Keeper", person: "Dinesh Pawar", title: "Store In-charge — Pune", dept: "Store Management" },
   { id: "COMMERCIAL", label: "Commercial Manager", person: "Meera Krishnan", title: "Commercial Manager", dept: "Commercial & Contracts" },
   { id: "RMC", label: "RMC Plant Manager", person: "Sandeep Kulkarni", title: "Plant Manager — RMC-1", dept: "RMC Operations" },
+  { id: "SITE_ENG", label: "Site Engineer", person: "Rohan Bhosale", title: "Site Engineer — P2", dept: "Project Execution" },
+  { id: "EMPLOYEE", label: "Employee / Labour", person: "Ravi Kumar", title: "Mason — Grade II", dept: "Site Workforce" },
 ];
 
 export type ProjectStatus = "On Track" | "Delayed" | "Attention Required" | "Completed";
