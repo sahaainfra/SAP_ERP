@@ -288,7 +288,7 @@ function Shell() {
           )}
 
           <footer className="mt-6 pb-20 lg:pb-2 flex flex-wrap items-center justify-between gap-2 text-[11px] text-ink-300 num">
-            <span>Meridian ERP v4.2.1 · Ridgeline Infrastructure Ltd.</span>
+            <span>Meridian ERP v4.2.1 · Sahaa Infra Ltd.</span>
             <span>Last sync {new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })} IST · All figures unaudited</span>
           </footer>
         </main>

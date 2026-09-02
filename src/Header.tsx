@@ -17,7 +17,7 @@ function BrandMark({ small }: { small?: boolean }) {
       {!small && (
         <span className="leading-none min-w-0">
           <span className="block font-display font-bold text-[15px] tracking-tight text-ink-900">Meridian <span className="text-brand-600">ERP</span></span>
-          <span className="block text-[9.5px] uppercase tracking-[0.14em] text-ink-400 mt-[3px] font-semibold">Ridgeline Infrastructure</span>
+          <span className="block text-[9.5px] uppercase tracking-[0.14em] text-ink-400 mt-[3px] font-semibold">Sahaa Infra</span>
         </span>
       )}
     </div>
