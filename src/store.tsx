@@ -48,6 +48,14 @@ export interface PODoc {
 }
 
 export interface Punch { id: string; user: string; date: string; inAt?: string; outAt?: string; breakStart?: string; breakEnd?: string; method: string; project: string; status: "Present" | "Late" | "Half Day" | "On Leave" | "Holiday" }
+export interface Msg {
+  id: string; ch: string; user: string; role: string; ts: string;
+  kind: "text" | "update" | "issue" | "file";
+  text: string;
+  meta?: { work?: string; manpower?: string; issues?: string; plan?: string; file?: string };
+  reactions: Record<string, number>;
+  replyTo?: string; pinned?: boolean;
+}
 export interface MatrixLevel { role: string; limit: string; backup: string }
 export interface MatrixRow { id: string; doc: string; levels: MatrixLevel[] }
 
@@ -420,6 +428,18 @@ const seed = () => ({
     { id: "A-5235", ts: dISO(330), user: "Rohan Bhosale", role: "Site Engineer", module: "Attendance", action: "Punch Verified", entity: "P2 roster", detail: "38 punches verified for morning shift", ip: "10.20.9.44" },
     { id: "A-5234", ts: dISO(410), user: "Arvind Nair", role: "Super Admin", module: "Settings", action: "Permissions Changed", entity: "STORE role", detail: "Export disabled on Finance module", ip: "10.20.4.02" },
   ] as AuditEntry[],
+  messages: [
+    { id: "mg1", ch: "all", user: "Rajesh Malhotra", role: "Managing Director", ts: new Date(Date.now() - 26 * 36e5).toISOString(), kind: "text", text: "Team — Safety Week starts Monday. Every site to run toolbox talks daily and log observations in the Safety module. Zero-harm is non-negotiable.", reactions: { "👍": 12, "✅": 6 }, pinned: true },
+    { id: "mg2", ch: "all", user: "Anjali Verma", role: "HR Manager", ts: new Date(Date.now() - 22 * 36e5).toISOString(), kind: "text", text: "Reminder: April attendance locks Friday 6 PM. Site supervisors, please clear pending corrections before then.", reactions: { "👍": 7 } },
+    { id: "mg3", ch: "P1", user: "Rohan Bhosale", role: "Site Engineer", ts: new Date(Date.now() - 19 * 36e5).toISOString(), kind: "issue", text: "Formwork alignment rework needed at pier cap P4-P5 — staging certified, but cover blocks short by 80 nos.", reactions: { "⚠️": 3 } },
+    { id: "mg4", ch: "P1", user: "Sunita Deshmukh", role: "Project Manager", ts: new Date(Date.now() - 18.4 * 36e5).toISOString(), kind: "text", text: "Noted. @Dinesh Pawar can Store release 100 cover blocks from Reserve Stock tomorrow 7 AM? Log an MR against BOQ 2.4.", reactions: { "✅": 2 }, replyTo: "mg3" },
+    { id: "mg5", ch: "P1", user: "Dinesh Pawar", role: "Store Keeper", ts: new Date(Date.now() - 17.8 * 36e5).toISOString(), kind: "text", text: "Yes — MR-1187 raised, will issue at gate 2. Batch CB-09 has test certificate attached.", reactions: { "👍": 4 }, replyTo: "mg4" },
+    { id: "mg6", ch: "P1", user: "Sunita Deshmukh", role: "Project Manager", ts: new Date(Date.now() - 15 * 36e5).toISOString(), kind: "update", text: "Daily update — Pier Cap PC-114 concreting completed 16:40, cube samples to lab.", meta: { work: "PC-114 concreting 96 Cu.M (M40) · de-shuttering PC-109 · rebar for PC-115 at 60%", manpower: "342 present · 12 bar benders short for night shift", issues: "Cover block shortage (resolved via MR-1187) · pump line wear flagged", plan: "Start PC-115 rebar tomorrow 6 AM · MB entry for PC-109 · cube test results by 4 PM" }, reactions: { "👍": 9, "✅": 3 } },
+    { id: "mg7", ch: "P1", user: "Rohan Bhosale", role: "Site Engineer", ts: new Date(Date.now() - 5 * 36e5).toISOString(), kind: "file", text: "Revised GFC for junction widening received from client.", meta: { file: "GFC-118_RevD_junction-widening.pdf" }, reactions: {} },
+    { id: "mg8", ch: "Procurement", user: "Meera Kulkarni", role: "Procurement Manager", ts: new Date(Date.now() - 8 * 36e5).toISOString(), kind: "text", text: "Tata Steel quoted ₹61,500/MT for Fe-550D (valid 15 days). Comparative statement CS-0231 ready — L1 confirmed, requesting approval to raise PO.", reactions: { "✅": 2 } },
+    { id: "mg9", ch: "Procurement", user: "Prakash Rao", role: "Accounts Manager", ts: new Date(Date.now() - 7.2 * 36e5).toISOString(), kind: "text", text: "Payment terms 30-day credit confirmed with vendor. Budget head CC-P1-MAT has ₹14.2 L free — cleared from accounts side.", reactions: { "👍": 3 }, replyTo: "mg8" },
+    { id: "mg10", ch: "RMC", user: "Sandeep Kulkarni", role: "RMC Plant Manager", ts: new Date(Date.now() - 3 * 36e5).toISOString(), kind: "update", text: "Morning shift closed — 312 Cu.M batched.", meta: { work: "M40 for P1 pier caps 192 Cu.M · M25 PCC for P3 120 Cu.M", manpower: "18 plant crew · 14 mixers on road", issues: "Mixer TM-06 hydraulic hose seepage — mechanic dispatched", plan: "Night batch 96 Cu.M for P1 deck slab starting 22:00" }, reactions: { "👍": 5 } },
+  ] as Msg[],
   notifs: [
     { id: "n1", ts: dISO(12), type: "approval", text: "PO-1288 (₹5.2 L — UltraTech) awaiting your approval", read: false },
     { id: "n2", ts: dISO(38), type: "stock", text: "OPC 53 Cement below reorder level at Store A — Pune", read: false },

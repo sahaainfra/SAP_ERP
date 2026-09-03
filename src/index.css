@@ -77,6 +77,10 @@ body { font-family: var(--font-sans); background: var(--color-canvas); color: va
 .animate-pulse-dot { animation: var(--animate-pulse-dot); }
 .animate-pulse-soft { animation: pulsesoft 2.2s ease-in-out infinite; }
 @keyframes pulsesoft { 0%, 100% { box-shadow: 0 0 0 4px rgba(12,114,100,0.12); } 50% { box-shadow: 0 0 0 7px rgba(12,114,100,0.05); } }
+.msg-in { animation: msgin 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.2); }
+@keyframes msgin { from { opacity: 0; transform: translateY(10px) scale(0.96); } to { opacity: 1; transform: none; } }
+.typing-dot { animation: typingdot 1s ease-in-out infinite; }
+@keyframes typingdot { 0%, 60%, 100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-4px); opacity: 1; } }
 
 ::-webkit-scrollbar { width: 9px; height: 9px; }
 ::-webkit-scrollbar-thumb { background: #c3ced8; border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }

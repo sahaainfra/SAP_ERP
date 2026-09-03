@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { RoleId, ACCESS } from "./data";
 import { ERPProvider, useERP } from "./store";
-import { ToastProvider } from "./ui";
+import { ToastProvider, cx } from "./ui";
 import { Sidebar, Header, visibleNav } from "./shell";
 import type { Route } from "./shell";
 import { RoleDashboard, HeadOffice, SiteDash } from "./dash";
@@ -20,6 +20,7 @@ import AccountsPage from "./modules/accounts";
 import { PFPage, PeopleOpsPage, QualityPage, SafetyPage, PlantOpsPage, VendorsPage, AuditPage } from "./modules/p2";
 import { Seg } from "./modules/core";
 import Launchpad from "./launchpad";
+import { ChatPanel, useChatUnread, IChat } from "./chat";
 import { IGrid, ITasks, IStamp, ISig, IBuilding, ICalCheck, IMenu } from "./icons";
 
 const ls = {
@@ -68,7 +69,16 @@ function Shell({ role, setRole, dark, setDark }: { role: RoleId; setRole: (r: Ro
   const [collapsed, setCollapsed] = useState(() => ls.get("mer.side", false));
   const [mobileNav, setMobileNav] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [chatOpen, setChatOpen] = useState(false);
   const erp = useERP();
+  const chatUnread = useChatUnread();
+
+  /* open chat from anywhere via the header icon or launcher */
+  useEffect(() => {
+    const h = () => setChatOpen(true);
+    window.addEventListener("mer.chat", h);
+    return () => window.removeEventListener("mer.chat", h);
+  }, []);
 
   useEffect(() => { ls.set("mer.side", collapsed); }, [collapsed]);
   useEffect(() => {
@@ -159,6 +169,16 @@ function Shell({ role, setRole, dark, setDark }: { role: RoleId; setRole: (r: Ro
           </footer>
         </main>
       </div>
+
+      {/* Floating team-chat launcher */}
+      {!chatOpen && (
+        <button onClick={() => setChatOpen(true)} aria-label="Open team chat"
+          className={cx("no-print fixed z-40 right-4 bottom-16 lg:bottom-5 h-13 w-13 h-[52px] w-[52px] rounded-full bg-brand-600 text-white grid place-items-center shadow-pop hover:bg-brand-700 active:scale-90 transition-all", chatUnread > 0 && "animate-pulse-soft")}>
+          <IChat size={21} />
+          {chatUnread > 0 && <span className="absolute -top-0.5 -right-0.5 min-w-[19px] h-[19px] px-1 rounded-full bg-danger-500 text-white text-[10px] font-bold num grid place-items-center border-2 border-canvas">{chatUnread > 9 ? "9+" : chatUnread}</span>}
+        </button>
+      )}
+      <ChatPanel open={chatOpen} onClose={() => setChatOpen(false)} />
 
       {/* Mobile quick actions — Home · Tasks · Approvals · Punch · More */}
       <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-surface border-t border-line grid grid-cols-5 no-print">

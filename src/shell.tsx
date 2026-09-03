@@ -8,6 +8,7 @@ import {
   ILedger, IReceipt, INote, IStamp, IChart, ITrend, IFiles, ICog, IChevD, IUser, ILogout, IBuilding,
   IMenu, ISearch, IBell, IHelp, ISun, IMoon, ITasks, ISig, IShield, ICollapse, IX, IInbox, IClock, ILock,
 } from "./icons";
+import { IChat as IChatIcon, useChatUnread } from "./chat";
 
 export type Route =
   | "dashboard" | "workspace" | "headoffice" | "site" | "projects" | "tenders" | "commercial" | "billing"
@@ -219,6 +220,7 @@ export function Header({
   const me = ROLES.find((r) => r.id === role)!;
   const pending = usePendingCount();
   const unread = s.notifs.filter((n) => !n.read).length;
+  const chatUnread = useChatUnread();
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); inputRef.current?.focus(); } };
@@ -322,6 +324,12 @@ export function Header({
         <button onClick={() => onNav("approvals")} className="relative h-9 w-9 grid place-items-center rounded-lg text-ink-500 hover:bg-canvas active:scale-90 transition-all" aria-label="Approvals">
           <IInbox size={18} />
           {pending > 0 && <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-brand-600 text-white text-[9.5px] font-bold num grid place-items-center">{pending}</span>}
+        </button>
+
+        {/* Team chat */}
+        <button onClick={() => window.dispatchEvent(new CustomEvent("mer.chat"))} className="relative h-9 w-9 grid place-items-center rounded-lg text-ink-500 hover:bg-canvas transition-all active:scale-90" aria-label="Team chat">
+          <IChatIcon size={18} />
+          {chatUnread > 0 && <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-danger-500 text-white text-[9.5px] font-bold num grid place-items-center">{chatUnread > 9 ? "9+" : chatUnread}</span>}
         </button>
 
         {/* Notifications */}
