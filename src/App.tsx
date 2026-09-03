@@ -7,12 +7,44 @@ import type { Route } from "./shell";
 import { RoleDashboard, HeadOffice, SiteDash } from "./dash";
 import { Workspace, ApprovalCentre, SignaturePage, AccessPage } from "./work";
 import ProjectsPage from "./modules/projects";
+import { PRPage, POPage } from "./modules/procurement";
+import ProcurementPage from "./modules/procurement";
+import MaterialsPage from "./modules/materials";
+import FinancePage from "./modules/finance";
+import { TenderPage, PlantPage, RmcPage } from "./modules/ops";
+import CommercialPage from "./modules/commercial";
+import BillingPage from "./modules/billingpg";
+import { AttendancePage, HRPage, PayrollPage } from "./modules/hrpages";
+import { ReportsPage, AnalyticsPage, DocumentsPage, SettingsPage } from "./modules/system";
+import { Seg } from "./modules/core";
 import { IGrid, ITasks, IStamp, ISig, IBuilding } from "./icons";
 
 const ls = {
   get<T>(k: string, fb: T): T { try { const v = localStorage.getItem(k); return v ? (JSON.parse(v) as T) : fb; } catch { return fb; } },
   set(k: string, v: unknown) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* noop */ } },
 };
+
+/* Procurement tool hub — PR, full chain, and PO registers under one module */
+function ProcurementHub() {
+  const [view, setView] = useState<"pr" | "chain" | "po">("pr");
+  return (
+    <div className="fade-up">
+      <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
+        <div>
+          <p className="text-[10.5px] font-bold uppercase tracking-[0.14em] text-ink-300">Meridian / Supply Chain / Procurement</p>
+          <h1 className="font-display text-[19px] font-bold text-ink-900 tracking-tight mt-1">Procurement Management</h1>
+          <p className="text-[12px] text-ink-400 mt-0.5">PR → RFQ → Comparative → PO → GRN → Invoice → Payment, all on one connected ledger.</p>
+        </div>
+        <Seg value={view} onChange={setView} options={[
+          { k: "pr" as const, l: "Purchase Requisitions" }, { k: "chain" as const, l: "Procurement Chain" }, { k: "po" as const, l: "Purchase Orders" },
+        ]} />
+      </div>
+      {view === "pr" && <PRPage />}
+      {view === "chain" && <ProcurementPage />}
+      {view === "po" && <POPage />}
+    </div>
+  );
+}
 
 export default function App() {
   const [role, setRole] = useState<RoleId>(() => ls.get<RoleId>("mer.role", "MD"));
@@ -64,9 +96,25 @@ function Shell({ role, setRole, dark, setDark }: { role: RoleId; setRole: (r: Ro
     case "headoffice": page = <HeadOffice go={nav} />; break;
     case "site": page = <SiteDash go={nav} />; break;
     case "projects": page = <ProjectsPage />; break;
+    case "tenders": page = <TenderPage />; break;
+    case "commercial": page = <CommercialPage />; break;
+    case "billing": page = <BillingPage />; break;
+    case "procurement": page = <ProcurementHub />; break;
+    case "materials": page = <MaterialsPage />; break;
+    case "stores": page = <MaterialsPage initialTab="stock" />; break;
+    case "plant": page = <PlantPage />; break;
+    case "rmc": page = <RmcPage />; break;
+    case "attendance": page = <AttendancePage />; break;
+    case "hr": page = <HRPage />; break;
+    case "finance": page = <FinancePage />; break;
+    case "payroll": page = <PayrollPage />; break;
     case "approvals": page = <ApprovalCentre />; break;
     case "signature": page = <SignaturePage />; break;
+    case "reports": page = <ReportsPage />; break;
+    case "analytics": page = <AnalyticsPage />; break;
+    case "documents": page = <DocumentsPage />; break;
     case "access": page = <AccessPage />; break;
+    case "settings": page = <SettingsPage />; break;
     default: page = <RoleDashboard go={nav} />;
   }
 

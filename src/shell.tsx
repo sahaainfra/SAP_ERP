@@ -10,7 +10,9 @@ import {
 } from "./icons";
 
 export type Route =
-  | "dashboard" | "workspace" | "headoffice" | "site" | "projects" | "approvals" | "signature" | "access" | "settings";
+  | "dashboard" | "workspace" | "headoffice" | "site" | "projects" | "tenders" | "commercial" | "billing"
+  | "procurement" | "materials" | "stores" | "plant" | "rmc" | "attendance" | "hr" | "finance" | "payroll"
+  | "approvals" | "signature" | "reports" | "analytics" | "documents" | "access" | "settings";
 
 /* ── nav model ─────────────────────────────────────────────── */
 export interface NavItem { id: Route; label: string; icon: (p: { size?: number; className?: string }) => ReactNode; roles?: RoleId[] }
@@ -27,16 +29,46 @@ export const NAV: NavGroup[] = [
     ],
   },
   {
-    title: "Operations",
+    title: "Projects & Commercial",
     items: [
       { id: "projects", label: "Projects", icon: IHardhat },
+      { id: "tenders", label: "Tenders", icon: IGavel, roles: ["SUPER_ADMIN", "MD", "COMMERCIAL"] },
+      { id: "commercial", label: "Commercial & Contracts", icon: IContract, roles: ["SUPER_ADMIN", "MD", "COMMERCIAL", "ACCOUNTS", "PM"] },
+      { id: "billing", label: "Billing & RA Bills", icon: IReceipt, roles: ["SUPER_ADMIN", "MD", "ACCOUNTS", "COMMERCIAL", "PM"] },
+    ],
+  },
+  {
+    title: "Supply Chain",
+    items: [
+      { id: "procurement", label: "Procurement", icon: ICart, roles: ["SUPER_ADMIN", "MD", "PROCUREMENT", "ACCOUNTS", "PM", "SITE_ENG"] },
+      { id: "materials", label: "Materials", icon: ICube },
+      { id: "stores", label: "Stores & Inventory", icon: IWarehouse, roles: ["SUPER_ADMIN", "MD", "STORE", "PROCUREMENT", "PM", "RMC"] },
+    ],
+  },
+  {
+    title: "Site Operations",
+    items: [
+      { id: "plant", label: "Plant & Machinery", icon: ICrane, roles: ["SUPER_ADMIN", "MD", "PM", "RMC", "SITE_ENG"] },
+      { id: "rmc", label: "RMC Plant", icon: IMixer, roles: ["SUPER_ADMIN", "MD", "RMC", "STORE", "SITE_ENG"] },
+      { id: "attendance", label: "Attendance", icon: ICalCheck },
+    ],
+  },
+  {
+    title: "People & Finance",
+    items: [
+      { id: "hr", label: "HR & People", icon: IUsers, roles: ["SUPER_ADMIN", "MD", "HR", "PM", "EMPLOYEE"] },
+      { id: "finance", label: "Finance & Accounts", icon: ILedger, roles: ["SUPER_ADMIN", "MD", "ACCOUNTS", "COMMERCIAL"] },
+      { id: "payroll", label: "Payroll", icon: INote, roles: ["SUPER_ADMIN", "MD", "HR", "ACCOUNTS", "EMPLOYEE"] },
     ],
   },
   {
     title: "Control",
     items: [
-      { id: "approvals", label: "Approvals", icon: IStamp },
+      { id: "approvals", label: "Approval Centre", icon: IStamp },
       { id: "signature", label: "Digital Signatures", icon: ISig },
+      { id: "reports", label: "Reports", icon: IChart },
+      { id: "analytics", label: "Analytics", icon: ITrend, roles: ["SUPER_ADMIN", "MD", "COMMERCIAL", "ACCOUNTS"] },
+      { id: "documents", label: "Documents", icon: IFiles },
       { id: "access", label: "Access & Permissions", icon: IShield, roles: ["SUPER_ADMIN"] },
       { id: "settings", label: "Settings", icon: ICog, roles: ["SUPER_ADMIN", "MD"] },
     ],
