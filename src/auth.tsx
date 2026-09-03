@@ -1,9 +1,10 @@
 /* Meridian ERP · Identity — individual secure login, temp-password, lockout, sessions */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useERP, demoHash } from "./store";
-import type { LoginRec, SessionRec } from "./store";
+import type { LoginRec, SessionRec, UserRec } from "./store";
+import { ROLES } from "./data";
 import { Brand } from "./shell";
-import { cx } from "./ui";
+import { cx, useToast } from "./ui";
 import { ILock, IUser, ISun, IMoon, IAlert, ICheck, IChevD } from "./icons";
 
 const SESSION_KEY = "mer.session";
@@ -68,11 +69,13 @@ export function LoginScreen({ onLogin }: { onLogin: (userId: string) => void }) 
 
   const fail = (msg: string) => { setErr(msg); setShake(true); window.setTimeout(() => setShake(false), 450); };
 
-  const submit = (e?: React.FormEvent) => {
+  const submit = (e?: React.FormEvent, ou?: string, op?: string) => {
     e?.preventDefault();
     setErr("");
-    if (!user.trim() || !pass) return fail("Enter your username / email and password.");
-    const u = s.users.find((x) => x.email.toLowerCase() === user.trim().toLowerCase() || (s.creds[x.id]?.username ?? "").toLowerCase() === user.trim().toLowerCase());
+    const uname = ou ?? user;
+    const pw = op ?? pass;
+    if (!uname.trim() || !pw) return fail("Enter your username / email and password.");
+    const u = s.users.find((x) => x.email.toLowerCase() === uname.trim().toLowerCase() || (s.creds[x.id]?.username ?? "").toLowerCase() === uname.trim().toLowerCase());
     if (!u) return fail("No account found for that username or email.");
     const c = s.creds[u.id];
     if (!c) return fail("Account not provisioned. Contact your administrator.");
@@ -81,7 +84,7 @@ export function LoginScreen({ onLogin }: { onLogin: (userId: string) => void }) 
       setLockLeft(Math.ceil((c.lockedUntil - Date.now()) / 1000));
       return fail("Account locked after repeated failures. Try again shortly.");
     }
-    if (demoHash(pass) !== c.hash) {
+    if (demoHash(pw) !== c.hash) {
       const failed = c.failed + 1;
       const locked = failed >= 5;
       setS((p) => ({ ...p, creds: { ...p.creds, [u.id]: { ...c, failed, lockedUntil: locked ? Date.now() + 30000 : undefined, status: locked ? "Locked" : c.status } } }));
@@ -204,21 +207,7 @@ export function LoginScreen({ onLogin }: { onLogin: (userId: string) => void }) 
               <button onClick={() => fail("A password reset link has been sent to your registered email (demo).")}
                 className="mt-3 text-[12px] font-semibold text-brand-700 hover:text-brand-800 underline-offset-2 hover:underline">Forgot password?</button>
 
-              <div className="mt-7 pt-5 border-t border-line">
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-300 mb-2.5">Demo accounts — one-tap sign in</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {quick.map((u) => (
-                    <button key={u.id} onClick={() => { setUser(u.email); setPass("Welcome@123"); setErr(""); }}
-                      className="flex items-center gap-2.5 rounded-lg border border-line bg-surface px-3 py-2.5 hover:border-brand-300 hover:bg-brand-50/40 active:scale-[0.98] transition-all text-left">
-                      <span className="h-7 w-7 rounded-full grid place-items-center text-[10px] font-bold bg-brand-600 text-white shrink-0">{u.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}</span>
-                      <span className="min-w-0">
-                        <span className="block text-[11.5px] font-bold text-ink-900 truncate">{u.name}</span>
-                        <span className="block text-[9.5px] text-ink-400 uppercase tracking-wide font-semibold">{u.role.replace("_", " ")}</span>
-                      </span>
-                    </button>))}
-                </div>
-                <p className="mt-3 text-[10.5px] text-ink-300 num">Tip: <b>rohan.b</b> / <b>Welcome@123</b> · new joiner <b>aarav.j</b> / <b>Temp@90210</b> (forces password change)</p>
-              </div>
+              <DemoAccess quick={quick} onOneTap={(u) => submit(undefined, u.email, u.id === "u12" ? "Temp@90210" : "Welcome@123")} all={s.users} />
             </>
           ) : (
             /* forced password change */
@@ -301,6 +290,57 @@ export function SessionManager({ compact }: { compact?: boolean }) {
             <button onClick={revokeAll} className="h-7 px-2.5 rounded-md bg-danger-500 text-white text-[11px] font-bold hover:opacity-90 active:scale-95 transition-all">Yes, log out all</button>
           </div>
         </div>)}
+    </div>
+  );
+}
+
+/* ── Demo access: one-tap sign in + full credential directory ── */
+function DemoAccess({ quick, onOneTap, all }: { quick: UserRec[]; onOneTap: (u: UserRec) => void; all: UserRec[] }) {
+  const toast = useToast();
+  const [open, setOpen] = useState(false);
+  const cred = (u: UserRec) => u.id === "u12" ? "Temp@90210" : "Welcome@123";
+  const uname = (u: UserRec) => u.email.split("@")[0];
+  const copy = (text: string) => {
+    navigator.clipboard?.writeText(text).catch(() => {});
+    toast("success", "Copied to clipboard: " + text);
+  };
+  return (
+    <div className="mt-7 pt-5 border-t border-line">
+      <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-300 mb-2.5">Demo accounts — one-tap sign in</p>
+      <div className="grid grid-cols-2 gap-2">
+        {quick.map((u) => (
+          <button key={u.id} onClick={() => onOneTap(u)}
+            className="flex items-center gap-2.5 rounded-lg border border-line bg-surface px-3 py-2.5 hover:border-brand-300 hover:bg-brand-50/40 hover:-translate-y-px active:scale-[0.98] transition-all text-left">
+            <span className="h-7 w-7 rounded-full grid place-items-center text-[10px] font-bold bg-brand-600 text-white shrink-0">{u.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}</span>
+            <span className="min-w-0">
+              <span className="block text-[11.5px] font-bold text-ink-900 truncate">{u.name}</span>
+              <span className="block text-[9.5px] text-ink-400 uppercase tracking-wide font-semibold">{u.role.replace("_", " ")}</span>
+            </span>
+          </button>))}
+      </div>
+      <button onClick={() => setOpen((v) => !v)} className="mt-3 w-full flex items-center justify-between text-[10.5px] font-bold uppercase tracking-[0.12em] text-brand-700 hover:text-brand-800 transition-colors">
+        <span>All demo user IDs & passwords</span>
+        <IChevD size={12} className={cx("transition-transform duration-200", open && "rotate-180")} />
+      </button>
+      {open && (
+        <div className="mt-2.5 rounded-lg border border-line bg-canvas/50 overflow-hidden fade-up">
+          <div className="grid grid-cols-[1fr_auto_auto] items-center gap-x-3 px-3 py-1.5 border-b border-line bg-surface text-[9px] font-bold uppercase tracking-[0.1em] text-ink-400">
+            <span>User ID · Role</span><span>Password</span><span></span>
+          </div>
+          <ul className="max-h-[200px] overflow-auto">
+            {all.map((u) => (
+              <li key={u.id} className="grid grid-cols-[1fr_auto_auto] items-center gap-x-3 px-3 py-2 border-b border-line/60 last:border-0 hover:bg-brand-50/30 transition-colors group">
+                <div className="min-w-0">
+                  <p className="text-[11.5px] font-semibold text-ink-900 num">{uname(u)}</p>
+                  <p className="text-[9.5px] text-ink-400 truncate">{ROLES.find((r) => r.id === u.role)?.label}{u.id === "u12" ? " · new joiner (must change)" : ""}</p>
+                </div>
+                <span className={cx("text-[11px] font-semibold num", u.id === "u12" ? "text-amber-600" : "text-ink-700")}>{cred(u)}</span>
+                <button onClick={() => copy(`${uname(u)} / ${cred(u)}`)}
+                  className="h-6 px-2 rounded-md border border-line text-[9.5px] font-bold text-ink-400 opacity-0 group-hover:opacity-100 hover:text-brand-700 hover:border-brand-300 transition-all active:scale-95">Copy</button>
+              </li>))}
+          </ul>
+        </div>)}
+      <p className="mt-2.5 text-[10px] text-ink-300 num leading-relaxed">Tap any account to sign in instantly. <b className="text-ink-500">aarav.j</b> uses the temporary password and is routed through the first-login password change.</p>
     </div>
   );
 }
