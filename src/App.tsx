@@ -55,22 +55,18 @@ function ProcurementHub() {
 export default function App() {
   const [role, setRole] = useState<RoleId>(() => ls.get<RoleId>("mer.role", "MD"));
   const [dark, setDark] = useState<boolean>(() => ls.get("mer.dark", false));
-  const [sess, setSess] = useState<ReturnType<typeof readSession>>(() => readSession());
   useEffect(() => { ls.set("mer.role", role); }, [role]);
   useEffect(() => { ls.set("mer.dark", dark); document.documentElement.classList.toggle("dark", dark); }, [dark]);
-  const logout = () => { clearSession(); setSess(null); };
   return (
     <ToastProvider>
       <ERPProvider role={role}>
-        {sess
-          ? <Shell role={role} setRole={setRole} dark={dark} setDark={setDark} sess={sess} onLogout={logout} />
-          : <LoginScreen onLogin={() => setSess(readSession())} />}
+        <Shell role={role} setRole={setRole} dark={dark} setDark={setDark} />
       </ERPProvider>
     </ToastProvider>
   );
 }
 
-function Shell({ role, setRole, dark, setDark, sess, onLogout }: { role: RoleId; setRole: (r: RoleId) => void; dark: boolean; setDark: (v: boolean) => void; sess: { userId: string; ts: number; device: string }; onLogout: () => void }) {
+function Shell({ role, setRole, dark, setDark }: { role: RoleId; setRole: (r: RoleId) => void; dark: boolean; setDark: (v: boolean) => void }) {
   const [route, setRoute] = useState<Route>("dashboard");
   const [collapsed, setCollapsed] = useState(() => ls.get("mer.side", false));
   const [mobileNav, setMobileNav] = useState(false);
@@ -78,13 +74,6 @@ function Shell({ role, setRole, dark, setDark, sess, onLogout }: { role: RoleId;
   const [chatOpen, setChatOpen] = useState(false);
   const erp = useERP();
   const chatUnread = useChatUnread();
-
-  /* sign the role in as the logged-in user's role (once per session) */
-  useEffect(() => {
-    const u = erp.s.users.find((x) => x.id === sess.userId);
-    if (u) setRole(u.role);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sess.userId]);
 
   /* open chat from anywhere via the header icon or launcher */
   useEffect(() => {
@@ -175,7 +164,7 @@ function Shell({ role, setRole, dark, setDark, sess, onLogout }: { role: RoleId;
     <div className="min-h-dvh flex bg-canvas">
       <Sidebar route={route} onNav={nav} collapsed={collapsed} onToggle={() => setCollapsed((c) => !c)} mobileOpen={mobileNav} onCloseMobile={() => setMobileNav(false)} />
       <div className="flex-1 min-w-0 flex flex-col print-full">
-        <Header route={route} onNav={nav} onMenu={() => (window.innerWidth >= 1024 ? setCollapsed((c) => !c) : setMobileNav(true))} onRole={setRole} onLogout={onLogout} />
+        <Header route={route} onNav={nav} onMenu={() => (window.innerWidth >= 1024 ? setCollapsed((c) => !c) : setMobileNav(true))} onRole={setRole} />
         <main className="flex-1 px-3 md:px-5 py-4 md:py-5 max-w-[1560px] w-full mx-auto">
           {loading ? <PageSkeleton /> : page}
           <footer className="mt-6 pb-16 lg:pb-2 flex flex-wrap items-center justify-between gap-2 text-[11px] text-ink-300 num">
