@@ -75,6 +75,8 @@ body { font-family: var(--font-sans); background: var(--color-canvas); color: va
 .fade-up { animation: var(--animate-fadeup); }
 .drawer-in { animation: var(--animate-drawer); }
 .animate-pulse-dot { animation: var(--animate-pulse-dot); }
+.animate-pulse-soft { animation: pulsesoft 2.2s ease-in-out infinite; }
+@keyframes pulsesoft { 0%, 100% { box-shadow: 0 0 0 4px rgba(12,114,100,0.12); } 50% { box-shadow: 0 0 0 7px rgba(12,114,100,0.05); } }
 
 ::-webkit-scrollbar { width: 9px; height: 9px; }
 ::-webkit-scrollbar-thumb { background: #c3ced8; border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }

@@ -23,7 +23,7 @@ export const NAV: NavGroup[] = [
   {
     title: "Overview",
     items: [
-      { id: "dashboard", label: "My Dashboard", icon: IGrid },
+      { id: "dashboard", label: "Launchpad", icon: IGrid },
       { id: "workspace", label: "My Workspace", icon: ITasks },
       { id: "headoffice", label: "Head Office", icon: IBuilding, roles: ["SUPER_ADMIN", "MD", "ACCOUNTS", "COMMERCIAL", "HR", "PROCUREMENT"] },
       { id: "site", label: "Site Office", icon: IHardhat, roles: ["SUPER_ADMIN", "MD", "PM", "SITE_ENG", "STORE", "RMC", "EMPLOYEE"] },

@@ -19,6 +19,7 @@ import { ReportsPage, AnalyticsPage, DocumentsPage, SettingsPage } from "./modul
 import AccountsPage from "./modules/accounts";
 import { PFPage, PeopleOpsPage, QualityPage, SafetyPage, PlantOpsPage, VendorsPage, AuditPage } from "./modules/p2";
 import { Seg } from "./modules/core";
+import Launchpad from "./launchpad";
 import { IGrid, ITasks, IStamp, ISig, IBuilding, ICalCheck, IMenu } from "./icons";
 
 const ls = {
@@ -89,11 +90,26 @@ function Shell({ role, setRole, dark, setDark }: { role: RoleId; setRole: (r: Ro
     void allowed;
   }, [role, route]);
 
-  const nav = (r: Route) => { setRoute(r); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  const nav = (r: Route) => {
+    setRoute(r);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    try {
+      const rec = JSON.parse(localStorage.getItem("mer.recent") || "[]") as { id: string; ts: number }[];
+      localStorage.setItem("mer.recent", JSON.stringify([{ id: r, ts: Date.now() }, ...rec.filter((x) => x.id !== r && x.id !== "dashboard")].slice(0, 6)));
+    } catch { /* noop */ }
+  };
+
+  /* Global navigation — object pages & cross-module actions dispatch "mer.nav" */
+  useEffect(() => {
+    const h = (e: Event) => nav((e as CustomEvent).detail as Route);
+    window.addEventListener("mer.nav", h);
+    return () => window.removeEventListener("mer.nav", h);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   let page: React.ReactNode;
   switch (route) {
-    case "dashboard": page = <RoleDashboard go={nav} />; break;
+    case "dashboard": page = <Launchpad go={nav} />; break;
     case "workspace": page = <Workspace go={nav} />; break;
     case "headoffice": page = <HeadOffice go={nav} />; break;
     case "site": page = <SiteDash go={nav} />; break;

@@ -7,13 +7,14 @@ import { Bar, Pill, Widget, cx, useToast } from "../ui";
 import { PageHead, FilterBar, DataTable, Drawer, Field, inputCls, selectCls, Btn, Stat, AddBtn, TrafficLight } from "./core";
 import type { Col } from "./core";
 import { IChevD, IHardhat } from "../icons";
+import ProjectObjectPage from "../projectop";
 
 export default function ProjectsPage() {
   const { s, setS, can, log, user } = useERP();
   const toast = useToast();
   const [q, setQ] = useState("");
   const [fStatus, setFStatus] = useState("");
-  const [view, setView] = useState<Project | null>(null);
+  const [obj, setObj] = useState<Project | null>(null);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({ code: "", name: "", client: "", location: "", contractValue: "", pm: "Sunita Deshmukh", end: "Dec 2027" });
 
@@ -58,6 +59,8 @@ export default function ProjectsPage() {
     setForm({ code: "", name: "", client: "", location: "", contractValue: "", pm: "Sunita Deshmukh", end: "Dec 2027" });
   };
 
+  if (obj) return <ProjectObjectPage p={s.projects.find((x) => x.id === obj.id) ?? obj} onBack={() => setObj(null)} />;
+
   return (
     <div className="fade-up">
       <PageHead title="Project Management" crumbs={["Meridian", "Projects"]}
@@ -72,13 +75,8 @@ export default function ProjectsPage() {
       <Widget title="Project Master" subtitle={`${rows.length} projects · click a row for WBS, BOQ, billing and site reports`}>
         <FilterBar pageKey="projects" q={q} onQ={setQ}
           filters={[{ key: "status", label: "Status", value: fStatus, options: ["On Track", "Delayed", "Attention Required", "Completed"], onChange: setFStatus }]} />
-        <DataTable pageKey="projects" rows={rows} cols={cols} onRow={(p) => setView(p)} pageSize={8} />
+        <DataTable pageKey="projects" rows={rows} cols={cols} onRow={(p) => setObj(p)} pageSize={8} />
       </Widget>
-
-      {/* Dossier */}
-      <Drawer wide open={!!view} onClose={() => setView(null)} title={view?.name ?? ""} sub={view ? `${view.code} · ${view.client} · PM ${view.pm}` : ""}>
-        {view && <Dossier p={s.projects.find((x) => x.id === view.id) ?? view} onUser={user.name} />}
-      </Drawer>
 
       {/* Create */}
       <Drawer open={creating} onClose={() => setCreating(false)} title="New Project" sub="Registers cost centres and BOQ shell on save">
