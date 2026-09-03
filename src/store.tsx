@@ -487,6 +487,11 @@ const seed = () => ({
     { period: "Feb 2026", lockedBy: "Kavita Iyer", ts: new Date(Date.now() - 12 * 864e5).toISOString(), reason: "Monthly close — payroll processed" },
     { period: "Jan 2026", lockedBy: "Kavita Iyer", ts: new Date(Date.now() - 42 * 864e5).toISOString(), reason: "Monthly close — payroll processed" },
   ] as AttLock[],
+  attRules: {
+    workHrs: 9, breakHrs: 1, graceMin: 15, lateAfter: "09:15", halfDayBelow: 4.5, otAfter: 9,
+    weeklyOff: "Sunday", gpsRadius: 300, lockDay: 5, cutoff: "23:59",
+    methods: { "Web punch": true, "Mobile punch": true, "QR code": true, "GPS punch": true, "Biometric": true, "Manual": false },
+  },
   workflows: [
     { id: "w1", name: "Purchase Requisition", module: "Procurement", levels: "PM → Procurement Head → MD (>₹25 L)", basis: "Amount-tiered", active: true },
     { id: "w2", name: "Purchase Order", module: "Procurement", levels: "Procurement → Accounts → MD (>₹50 L)", basis: "Amount-tiered", active: true },
@@ -651,7 +656,7 @@ export function ERPProvider({ role, children }: { role: RoleId; children: ReactN
   const [s, setS] = useState<ERPState>(() => {
     try {
       const raw = localStorage.getItem(LS_KEY);
-      if (raw) { const p = JSON.parse(raw); if (p && p.v === 7 && p.data) return p.data as ERPState; }
+      if (raw) { const p = JSON.parse(raw); if (p && p.v === 8 && p.data) return p.data as ERPState; }
     } catch { /* fall through to seed */ }
     return seed();
   });
@@ -660,7 +665,7 @@ export function ERPProvider({ role, children }: { role: RoleId; children: ReactN
   const [intent, setIntent] = useState<{ route: string; kind?: string } | null>(null);
 
   useEffect(() => {
-    try { localStorage.setItem(LS_KEY, JSON.stringify({ v: 6, data: s })); } catch { /* storage full — ignore */ }
+    try { localStorage.setItem(LS_KEY, JSON.stringify({ v: 8, data: s })); } catch { /* storage full — ignore */ }
   }, [s]);
 
   useEffect(() => {
