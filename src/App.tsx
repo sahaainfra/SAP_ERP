@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { RoleId, ACCESS } from "./data";
 import { ERPProvider, useERP } from "./store";
 import { ToastProvider, cx } from "./ui";
@@ -55,18 +55,48 @@ function ProcurementHub() {
 export default function App() {
   const [role, setRole] = useState<RoleId>(() => ls.get<RoleId>("mer.role", "MD"));
   const [dark, setDark] = useState<boolean>(() => ls.get("mer.dark", false));
+  const [sess, setSess] = useState<ReturnType<typeof readSession>>(() => readSession());
   useEffect(() => { ls.set("mer.role", role); }, [role]);
   useEffect(() => { ls.set("mer.dark", dark); document.documentElement.classList.toggle("dark", dark); }, [dark]);
+  const logout = () => { clearSession(); setSess(null); };
   return (
     <ToastProvider>
       <ERPProvider role={role}>
-        <Shell role={role} setRole={setRole} dark={dark} setDark={setDark} />
+        {sess
+          ? <Shell role={role} setRole={setRole} dark={dark} setDark={setDark} sess={sess} onLogout={logout} />
+          : <LoginBoundary onLogin={(uid) => setSess(readSession() ?? { userId: uid, ts: Date.now(), device: "Browser" })} />}
       </ERPProvider>
     </ToastProvider>
   );
 }
 
-function Shell({ role, setRole, dark, setDark }: { role: RoleId; setRole: (r: RoleId) => void; dark: boolean; setDark: (v: boolean) => void }) {
+/* Safety wrapper — a login-screen fault can never brick the app */
+class LoginBoundary extends React.Component<{ onLogin: (uid: string) => void }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  render() {
+    if (this.state.failed) {
+      const reset = () => {
+        try {
+          Object.keys(localStorage).filter((k) => k.startsWith("mer.") || k.startsWith("meridian.")).forEach((k) => localStorage.removeItem(k));
+        } catch { /* noop */ }
+        window.location.reload();
+      };
+      return (
+        <div className="min-h-dvh grid place-items-center bg-canvas p-6">
+          <div className="max-w-[400px] bg-surface border border-line rounded-2xl shadow-lift p-7 text-center">
+            <p className="font-display text-[20px] font-bold text-ink-900">Sign-in hit a snag</p>
+            <p className="text-[12.5px] text-ink-400 mt-2 leading-relaxed">Stored demo data looks incompatible. Reset local data and sign in fresh — nothing on the server is affected.</p>
+            <button onClick={reset} className="mt-5 h-10 px-5 rounded-xl bg-brand-600 text-white text-[13px] font-bold hover:bg-brand-700 active:scale-[0.98] transition-all">Reset &amp; reload</button>
+          </div>
+        </div>
+      );
+    }
+    return <LoginScreen onLogin={this.props.onLogin} />;
+  }
+}
+
+function Shell({ role, setRole, dark, setDark, sess, onLogout }: { role: RoleId; setRole: (r: RoleId) => void; dark: boolean; setDark: (v: boolean) => void; sess: { userId: string; ts: number; device: string }; onLogout: () => void }) {
   const [route, setRoute] = useState<Route>("dashboard");
   const [collapsed, setCollapsed] = useState(() => ls.get("mer.side", false));
   const [mobileNav, setMobileNav] = useState(false);
@@ -74,6 +104,19 @@ function Shell({ role, setRole, dark, setDark }: { role: RoleId; setRole: (r: Ro
   const [chatOpen, setChatOpen] = useState(false);
   const erp = useERP();
   const chatUnread = useChatUnread();
+
+  /* adopt the signed-in user's role (once per session) */
+  useEffect(() => {
+    const u = erp.s.users.find((x) => x.id === sess.userId);
+    if (u) setRole(u.role);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sess.userId]);
+
+  /* security policy — auto sign-out when the 8-hour session expires */
+  useEffect(() => {
+    const t = window.setInterval(() => { if (Date.now() - sess.ts > 8 * 36e5) onLogout(); }, 60000);
+    return () => window.clearInterval(t);
+  }, [sess.ts, onLogout]);
 
   /* open chat from anywhere via the header icon or launcher */
   useEffect(() => {
@@ -164,7 +207,7 @@ function Shell({ role, setRole, dark, setDark }: { role: RoleId; setRole: (r: Ro
     <div className="min-h-dvh flex bg-canvas">
       <Sidebar route={route} onNav={nav} collapsed={collapsed} onToggle={() => setCollapsed((c) => !c)} mobileOpen={mobileNav} onCloseMobile={() => setMobileNav(false)} />
       <div className="flex-1 min-w-0 flex flex-col print-full">
-        <Header route={route} onNav={nav} onMenu={() => (window.innerWidth >= 1024 ? setCollapsed((c) => !c) : setMobileNav(true))} onRole={setRole} />
+        <Header route={route} onNav={nav} onMenu={() => (window.innerWidth >= 1024 ? setCollapsed((c) => !c) : setMobileNav(true))} onRole={setRole} onLogout={onLogout} />
         <main className="flex-1 px-3 md:px-5 py-4 md:py-5 max-w-[1560px] w-full mx-auto">
           {loading ? <PageSkeleton /> : page}
           <footer className="mt-6 pb-16 lg:pb-2 flex flex-wrap items-center justify-between gap-2 text-[11px] text-ink-300 num">

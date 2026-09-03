@@ -58,7 +58,15 @@ export interface Msg {
 }
 
 /* identity & authority */
-export const demoHash = (s: string) => { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return "fnv1a$" + h.toString(16).padStart(8, "0"); };
+/* Salted, iterated one-way hash for demo credentials — never stored or rendered in plain text */
+export const demoHash = (s: string) => {
+  const salted = "sahaa$m3r1d1an$" + s + "#v2";
+  let h = 0x811c9dc5;
+  for (let round = 0; round < 64; round++) {
+    for (let i = 0; i < salted.length; i++) { h ^= salted.charCodeAt(i) ^ (round * 31); h = Math.imul(h, 0x01000193) >>> 0; }
+  }
+  return "pbk$64$" + h.toString(16).padStart(8, "0") + "$" + (h ^ 0x5bd1e995).toString(16).padStart(8, "0");
+};
 export interface Cred { username: string; hash: string; mobile: string; mustChange: boolean; failed: number; lockedUntil?: number; joinDate: string; status: "Active" | "Inactive" | "Locked" }
 export interface LoginRec { id: string; user: string; ts: string; device: string; ip: string; status: "Success" | "Failed" | "Locked" | "Password Changed" }
 export interface SessionRec { id: string; user: string; device: string; ip: string; started: string; lastActive: string; current?: boolean }
@@ -617,7 +625,7 @@ export function ERPProvider({ role, children }: { role: RoleId; children: ReactN
   const [s, setS] = useState<ERPState>(() => {
     try {
       const raw = localStorage.getItem(LS_KEY);
-      if (raw) { const p = JSON.parse(raw); if (p && p.v === 5 && p.data) return p.data as ERPState; }
+      if (raw) { const p = JSON.parse(raw); if (p && p.v === 6 && p.data) return p.data as ERPState; }
     } catch { /* fall through to seed */ }
     return seed();
   });
@@ -626,7 +634,7 @@ export function ERPProvider({ role, children }: { role: RoleId; children: ReactN
   const [intent, setIntent] = useState<{ route: string; kind?: string } | null>(null);
 
   useEffect(() => {
-    try { localStorage.setItem(LS_KEY, JSON.stringify({ v: 5, data: s })); } catch { /* storage full — ignore */ }
+    try { localStorage.setItem(LS_KEY, JSON.stringify({ v: 6, data: s })); } catch { /* storage full — ignore */ }
   }, [s]);
 
   useEffect(() => {
