@@ -14,7 +14,7 @@ export type Route =
   | "dashboard" | "workspace" | "headoffice" | "site" | "projects" | "tenders" | "commercial" | "billing"
   | "procurement" | "materials" | "stores" | "plant" | "rmc" | "attendance" | "hr" | "finance" | "payroll"
   | "approvals" | "signature" | "reports" | "analytics" | "documents" | "access" | "settings"
-  | "boq" | "contracts" | "vendors" | "leave" | "pf" | "peopleops" | "quality" | "safety" | "accounts" | "tasks" | "audit" | "users" | "chain";
+  | "boq" | "contracts" | "vendors" | "leave" | "pf" | "peopleops" | "quality" | "safety" | "accounts" | "tasks" | "audit" | "users" | "chain" | "sourcing";
 
 /* ── nav model ─────────────────────────────────────────────── */
 export interface NavItem { id: Route; label: string; icon: (p: { size?: number; className?: string }) => ReactNode; roles?: RoleId[] }
@@ -44,6 +44,7 @@ export const NAV: NavGroup[] = [
     title: "Supply Chain",
     items: [
       { id: "procurement", label: "Procurement", icon: ICart, roles: ["SUPER_ADMIN", "MD", "PROCUREMENT", "ACCOUNTS", "PM", "SITE_ENG"] },
+      { id: "sourcing", label: "Sourcing & RFQ", icon: IGavel, roles: ["SUPER_ADMIN", "MD", "PROCUREMENT", "COMMERCIAL", "ACCOUNTS"] },
       { id: "vendors", label: "Vendors", icon: IUsers, roles: ["SUPER_ADMIN", "MD", "PROCUREMENT", "ACCOUNTS"] },
       { id: "materials", label: "Materials", icon: ICube },
       { id: "stores", label: "Stores & Inventory", icon: IWarehouse, roles: ["SUPER_ADMIN", "MD", "STORE", "PROCUREMENT", "PM", "RMC"] },

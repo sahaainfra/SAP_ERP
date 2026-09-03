@@ -47,6 +47,19 @@ export interface PODoc {
   status: POStatus; ts: number; acceptedBy?: string;
 }
 
+/* SAP-style Materials Management · Inventory · Sourcing */
+export interface StoreMaster { id: string; code: string; name: string; type: string; project: string; site: string; incharge: string; capacity: string; used: number; zones: number; bins: number; status: "Active" | "Inactive" }
+export type StockCat = "Unrestricted" | "Quality" | "Blocked" | "Reserved" | "Transit" | "Scrap";
+export interface StockBatch { id: string; material: string; store: string; bin: string; batch: string; qty: number; unit: string; cat: StockCat; value: number; expiry?: string }
+export interface Movement { id: string; date: string; material: string; doc: string; docType: "Opening" | "GRN" | "Issue" | "Return" | "Transfer" | "Adjustment"; project: string; receipt: number; issue: number; transferIn: number; transferOut: number; adjust: number; opening: number; closing: number; by: string }
+export interface MatRequest { id: string; no: string; date: string; project: string; site: string; by: string; material: string; qty: number; unit: string; available: number; reserved: number; shortfall: number; need: string; priority: "Normal" | "Urgent" | "Critical"; status: "Pending" | "Issued" | "Converted to PR" | "Rejected"; boq?: string }
+export interface GRNRec { id: string; no: string; date: string; po: string; vendor: string; project: string; store: string; dc: string; vehicle: string; material: string; ordered: number; received: number; accepted: number; rejected: number; unit: string; rate: number; insp: "Accepted" | "Partially Accepted" | "Rejected" | "Under Inspection"; status: "Pending QC" | "Posted"; by: string }
+export interface StockTransfer { id: string; no: string; date: string; material: string; qty: number; unit: string; from: string; to: string; status: "Pending" | "Approved" | "In Transit" | "Received"; by: string }
+export interface StockAdj { id: string; no: string; date: string; material: string; store: string; system: number; physical: number; diff: number; reason: string; status: "Pending" | "Approved" | "Posted"; by: string }
+export interface Reservation { id: string; material: string; qty: number; unit: string; against: string; project: string; status: "Active" | "Released"; by: string }
+export interface Quotation { id: string; no: string; rfq: string; vendor: string; date: string; validity: string; material: string; qty: number; unit: string; rate: number; disc: number; freight: number; gst: number; delivery: string; tech: "Qualified" | "Disqualified" | "Conditional" | "Under Review"; status: "Received" | "Evaluated" | "L1 Recommended" | "Rejected" }
+export interface Negotiation { id: string; vendor: string; quot: string; orig: number; final: number; date: string; by: string; savings: number; status: "Open" | "Closed" }
+
 export interface Punch {
   id: string; user: string; date: string; inAt?: string; outAt?: string; breakStart?: string; breakEnd?: string;
   method: string; project: string; site?: string; status: "Present" | "Late" | "Half Day" | "On Leave" | "Holiday";
@@ -280,6 +293,69 @@ const seed = () => ({
     { id: "x4", code: "TRF-0310", kind: "Transfer", material: "Binding Wire", qty: 120, unit: "kg", project: "P2", date: dStr(-1), by: "Dinesh Pawar" },
     { id: "x5", code: "ISS-5518", kind: "Outward", material: "TMT Steel Fe-550D", qty: 12.4, unit: "MT", project: "P1", date: dStr(-2), by: "Dinesh Pawar" },
   ],
+  storesM: [
+    { id: "sm1", code: "ST-CENT", name: "Central Warehouse", type: "Central Warehouse", project: "HO", site: "Pune HQ", incharge: "Dinesh Pawar", capacity: "8,000 Cu.M", used: 62, zones: 6, bins: 240, status: "Active" },
+    { id: "sm2", code: "ST-P1", name: "Pachgaon Project Store", type: "Project Store", project: "P1", site: "Pachgaon Yard", incharge: "Ganesh More", capacity: "2,500 Cu.M", used: 74, zones: 3, bins: 96, status: "Active" },
+    { id: "sm3", code: "ST-P3", name: "Talegaon Site Store", type: "Site Store", project: "P3", site: "Talegaon Plant", incharge: "Ravi Shinde", capacity: "1,200 Cu.M", used: 51, zones: 2, bins: 48, status: "Active" },
+    { id: "sm4", code: "ST-RMC", name: "RMC Plant Store", type: "RMC Store", project: "RMC-1", site: "Batching Plant", incharge: "Sandeep Kulkarni", capacity: "900 Cu.M", used: 83, zones: 2, bins: 30, status: "Active" },
+    { id: "sm5", code: "ST-FUEL", name: "Fuel Store", type: "Fuel Store", project: "HO", site: "Pune HQ", incharge: "Dinesh Pawar", capacity: "40,000 L", used: 47, zones: 1, bins: 6, status: "Active" },
+  ] as StoreMaster[],
+  stockB: [
+    { id: "sb1", material: "OPC 53 Cement", store: "ST-CENT", bin: "A-01-03", batch: "UTC/2602", qty: 2150, unit: "Bag", cat: "Unrestricted", value: 8.4 },
+    { id: "sb2", material: "OPC 53 Cement", store: "ST-P1", bin: "C-02-01", batch: "UTC/2603", qty: 480, unit: "Bag", cat: "Quality", value: 1.9 },
+    { id: "sb3", material: "TMT Steel Fe-550D", store: "ST-CENT", bin: "D-01-02", batch: "TS/H-8841", qty: 184, unit: "MT", cat: "Unrestricted", value: 11.3 },
+    { id: "sb4", material: "TMT Steel Fe-550D", store: "ST-P1", bin: "C-04-01", batch: "TS/H-8836", qty: 42, unit: "MT", cat: "Reserved", value: 2.6 },
+    { id: "sb5", material: "M-Sand", store: "ST-P3", bin: "YD-02", batch: "DC/BULK", qty: 940, unit: "Cu.M", cat: "Unrestricted", value: 1.4 },
+    { id: "sb6", material: "M-Sand", store: "ST-P3", bin: "YD-03", batch: "DC/BULK", qty: 120, unit: "Cu.M", cat: "Transit", value: 0.2 },
+    { id: "sb7", material: "Admixture (PCE)", store: "ST-RMC", bin: "R-01-04", batch: "SK/26-114", qty: 2400, unit: "Ltr", cat: "Unrestricted", value: 2.2, expiry: dStr(140) },
+    { id: "sb8", material: "Plywood Formwork", store: "ST-CENT", bin: "B-03-02", batch: "GP/PLY-18", qty: 310, unit: "Sheet", cat: "Unrestricted", value: 5.7 },
+    { id: "sb9", material: "Plywood Formwork", store: "ST-P1", bin: "C-01-05", batch: "GP/PLY-18", qty: 25, unit: "Sheet", cat: "Blocked", value: 0.45 },
+    { id: "sb10", material: "Binding Wire", store: "ST-CENT", bin: "A-05-01", batch: "BW/2601", qty: 820, unit: "kg", cat: "Unrestricted", value: 0.6 },
+    { id: "sb11", material: "Safety Net", store: "ST-P1", bin: "C-06-02", batch: "SN/2602", qty: 60, unit: "Sq.M", cat: "Scrap", value: 0.1 },
+  ] as StockBatch[],
+  movements: [
+    { id: "mv1", date: dStr(-2), material: "OPC 53 Cement", doc: "GRN-2041", docType: "GRN", project: "P1", receipt: 600, issue: 0, transferIn: 0, transferOut: 0, adjust: 0, opening: 1900, closing: 2500, by: "Dinesh Pawar" },
+    { id: "mv2", date: dStr(-2), material: "OPC 53 Cement", doc: "ISS-5521", docType: "Issue", project: "P1", receipt: 0, issue: 340, transferIn: 0, transferOut: 0, adjust: 0, opening: 2500, closing: 2160, by: "Dinesh Pawar" },
+    { id: "mv3", date: dStr(-1), material: "M-Sand", doc: "GRN-2043", docType: "GRN", project: "P3", receipt: 180, issue: 0, transferIn: 0, transferOut: 0, adjust: 0, opening: 760, closing: 940, by: "Ravi Shinde" },
+    { id: "mv4", date: dStr(-1), material: "Binding Wire", doc: "TRF-0310", docType: "Transfer", project: "P2", receipt: 0, issue: 0, transferIn: 0, transferOut: 120, adjust: 0, opening: 940, closing: 820, by: "Dinesh Pawar" },
+    { id: "mv5", date: dStr(-2), material: "TMT Steel Fe-550D", doc: "ISS-5518", docType: "Issue", project: "P1", receipt: 0, issue: 12.4, transferIn: 0, transferOut: 0, adjust: 0, opening: 196, closing: 184, by: "Dinesh Pawar" },
+    { id: "mv6", date: dStr(0), material: "Admixture (PCE)", doc: "GRN-2044", docType: "GRN", project: "RMC-1", receipt: 2400, issue: 0, transferIn: 0, transferOut: 0, adjust: 0, opening: 0, closing: 2400, by: "Sandeep Kulkarni" },
+    { id: "mv7", date: dStr(-3), material: "Plywood Formwork", doc: "ADJ-0042", docType: "Adjustment", project: "P1", receipt: 0, issue: 0, transferIn: 0, transferOut: 0, adjust: -8, opening: 343, closing: 335, by: "Dinesh Pawar" },
+  ] as Movement[],
+  matReqs: [
+    { id: "mr1", no: "MR-1187", date: dStr(-1), project: "P1", site: "Pachgaon Yard", by: "Rohan Bhosale", material: "Binding Wire", qty: 150, unit: "kg", available: 820, reserved: 0, shortfall: 0, need: "Column tie-wire for PC-115", priority: "Urgent", status: "Issued", boq: "2.4" },
+    { id: "mr2", no: "MR-1188", date: dStr(-1), project: "P3", site: "Talegaon Plant", by: "Imran Shaikh", material: "M-Sand", qty: 1200, unit: "Cu.M", available: 940, reserved: 120, shortfall: 140, need: "PCC for raft — week 12", priority: "Critical", status: "Pending", boq: "7.3" },
+    { id: "mr3", no: "MR-1189", date: dStr(0), project: "P1", site: "Pachgaon Yard", by: "Sunita Deshmukh", material: "Plywood Formwork", qty: 200, unit: "Sheet", available: 310, reserved: 25, shortfall: 0, need: "Pier cap shuttering — PC-116", priority: "Normal", status: "Pending", boq: "2.4" },
+    { id: "mr4", no: "MR-1190", date: dStr(0), project: "RMC-1", site: "Batching Plant", by: "Sandeep Kulkarni", material: "Admixture (PCE)", qty: 500, unit: "Ltr", available: 2400, reserved: 0, shortfall: 0, need: "M40 night batch", priority: "Normal", status: "Pending", boq: "—" },
+  ] as MatRequest[],
+  grns: [
+    { id: "g1", no: "GRN-2044", date: dStr(0), po: "PO-1289", vendor: "Sika India", project: "RMC-1", store: "ST-RMC", dc: "DC/88411", vehicle: "MH-12-KL-0217", material: "Admixture (PCE)", ordered: 2400, received: 2400, accepted: 2400, rejected: 0, unit: "Ltr", rate: 92, insp: "Accepted", status: "Posted", by: "Sandeep Kulkarni" },
+    { id: "g2", no: "GRN-2043", date: dStr(-1), po: "PO-1288", vendor: "UltraTech Cement", project: "P3", store: "ST-P3", dc: "DC/88302", vehicle: "MH-14-MN-5590", material: "M-Sand", ordered: 180, received: 180, accepted: 180, rejected: 0, unit: "Cu.M", rate: 1450, insp: "Accepted", status: "Posted", by: "Ravi Shinde" },
+    { id: "g3", no: "GRN-2042", date: dStr(-2), po: "PO-1287", vendor: "Tata Steel", project: "P1", store: "ST-P1", dc: "DC/88270", vehicle: "MH-12-OP-3341", material: "TMT Steel Fe-550D", ordered: 42, received: 42, accepted: 40, rejected: 2, unit: "MT", rate: 61500, insp: "Partially Accepted", status: "Pending QC", by: "Ganesh More" },
+  ] as GRNRec[],
+  transfers: [
+    { id: "tr1", no: "TRF-0310", date: dStr(-1), material: "Binding Wire", qty: 120, unit: "kg", from: "ST-CENT", to: "ST-P1", status: "Received", by: "Dinesh Pawar" },
+    { id: "tr2", no: "TRF-0311", date: dStr(0), material: "Plywood Formwork", qty: 60, unit: "Sheet", from: "ST-CENT", to: "ST-P1", status: "In Transit", by: "Dinesh Pawar" },
+  ] as StockTransfer[],
+  adjs: [
+    { id: "ad1", no: "ADJ-0042", date: dStr(-3), material: "Plywood Formwork", store: "ST-CENT", system: 343, physical: 335, diff: -8, reason: "Water damage — 8 sheets delaminated", status: "Posted", by: "Dinesh Pawar" },
+    { id: "ad2", no: "ADJ-0043", date: dStr(0), material: "Binding Wire", store: "ST-P1", system: 820, physical: 812, diff: -8, reason: "Cycle count variance", status: "Pending", by: "Ganesh More" },
+  ] as StockAdj[],
+  reserves: [
+    { id: "rs1", material: "TMT Steel Fe-550D", qty: 42, unit: "MT", against: "MR-1184 / Pile cap PCC", project: "P1", status: "Active", by: "Rohan Bhosale" },
+    { id: "rs2", material: "Plywood Formwork", qty: 25, unit: "Sheet", against: "MR-1189 / PC-116 shuttering", project: "P1", status: "Active", by: "Sunita Deshmukh" },
+  ] as Reservation[],
+  quotations: [
+    { id: "qt1", no: "UTC/Q/8841", rfq: "RFQ-0412", vendor: "UltraTech Cement", date: dStr(-4), validity: dStr(11), material: "M-Sand", qty: 350, unit: "Cu.M", rate: 1420, disc: 1, freight: 18000, gst: 5, delivery: "10 days", tech: "Qualified", status: "L1 Recommended" },
+    { id: "qt2", no: "DC/Q/2210", rfq: "RFQ-0412", vendor: "Deccan Aggregates", date: dStr(-3), validity: dStr(12), material: "M-Sand", qty: 350, unit: "Cu.M", rate: 1465, disc: 0, freight: 12000, gst: 5, delivery: "7 days", tech: "Qualified", status: "Evaluated" },
+    { id: "qt3", no: "GP/Q/4471", rfq: "RFQ-0412", vendor: "GreenPly Industries", date: dStr(-3), validity: dStr(9), material: "M-Sand", qty: 350, unit: "Cu.M", rate: 1390, disc: 2, freight: 25000, gst: 5, delivery: "14 days", tech: "Conditional", status: "Evaluated" },
+    { id: "qt4", no: "TS/EST/4471", rfq: "RFQ-0409", vendor: "Tata Steel", date: dStr(-9), validity: dStr(6), material: "TMT Steel Fe-550D", qty: 42, unit: "MT", rate: 61500, disc: 0, freight: 0, gst: 18, delivery: "10 days", tech: "Qualified", status: "L1 Recommended" },
+    { id: "qt5", no: "SK/Q/9917", rfq: "RFQ-0415", vendor: "Sika India", date: dStr(-2), validity: dStr(13), material: "Admixture (PCE)", qty: 800, unit: "Ltr", rate: 92, disc: 1.5, freight: 4000, gst: 18, delivery: "5 days", tech: "Qualified", status: "Received" },
+  ] as Quotation[],
+  negos: [
+    { id: "ng1", vendor: "UltraTech Cement", quot: "UTC/Q/8841", orig: 1460, final: 1420, date: dStr(-3), by: "Meera Krishnan", savings: 40, status: "Closed" },
+    { id: "ng2", vendor: "Tata Steel", quot: "TS/EST/4471", orig: 62200, final: 61500, date: dStr(-8), by: "Meera Krishnan", savings: 700, status: "Closed" },
+  ] as Negotiation[],
   equipment: [
     { code: "EQ-011", name: "Excavator CAT 320", reg: "MH-12-AB-4471", cap: "20 T", project: "P1", hrs: 1240, fuel: 18, status: "Operational", maintDue: dStr(-22) },
     { code: "EQ-014", name: "JCB 3DX", reg: "MH-13-CD-8820", cap: "7.5 T", project: "P5", hrs: 986, fuel: 11, status: "Operational", maintDue: dStr(6) },
@@ -697,7 +773,7 @@ export function ERPProvider({ role, children }: { role: RoleId; children: ReactN
   const [s, setS] = useState<ERPState>(() => {
     try {
       const raw = localStorage.getItem(LS_KEY);
-      if (raw) { const p = JSON.parse(raw); if (p && p.v === 9 && p.data) return p.data as ERPState; }
+      if (raw) { const p = JSON.parse(raw); if (p && p.v === 10 && p.data) return p.data as ERPState; }
     } catch { /* fall through to seed */ }
     return seed();
   });
@@ -706,7 +782,7 @@ export function ERPProvider({ role, children }: { role: RoleId; children: ReactN
   const [intent, setIntent] = useState<{ route: string; kind?: string } | null>(null);
 
   useEffect(() => {
-    try { localStorage.setItem(LS_KEY, JSON.stringify({ v: 9, data: s })); } catch { /* storage full — ignore */ }
+    try { localStorage.setItem(LS_KEY, JSON.stringify({ v: 10, data: s })); } catch { /* storage full — ignore */ }
   }, [s]);
 
   useEffect(() => {
