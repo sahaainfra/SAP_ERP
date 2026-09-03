@@ -1,0 +1,557 @@
+/* Meridian ERP · central store — one interconnected state for all modules */
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
+import { ACCESS, MODULES, PROJECTS, ROLES } from "./data";
+import type { ModuleId, RoleId } from "./data";
+import type { Project } from "./data";
+
+/* ── helpers ─────────────────────────────────────────────────── */
+export const dStr = (offsetDays: number) => {
+  const d = new Date(); d.setDate(d.getDate() + offsetDays);
+  return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+};
+export const dISO = (minAgo: number) => new Date(Date.now() - minAgo * 60000).toISOString();
+const nowHrs = (offset: number) => new Date(Date.now() + offset * 3600e3);
+
+/* ── types ───────────────────────────────────────────────────── */
+export interface Notif { id: string; ts: string; type: "approval" | "stock" | "payment" | "project" | "hr" | "system"; text: string; read: boolean }
+export interface AuditEntry { id: string; ts: string; user: string; role: string; module: string; action: string; entity: string; detail: string; ip: string }
+export interface UserRec {
+  id: string; name: string; email: string; role: RoleId; dept: string; project: string; site: string;
+  office: "Head Office" | "Site Office" | "RMC Plant" | "Warehouse" | "Regional Office";
+  finLimit: number; active: boolean; lastLogin: string; manager?: string;
+  signature?: { svg: string; ver: number; active: boolean; updated: string };
+}
+export interface Workflow { id: string; name: string; module: string; levels: string; basis: string; active: boolean }
+export interface SeriesRec { doc: string; prefix: string; next: number }
+export interface DocFile { id: string; name: string; folder: string; type: string; ver: number; size: string; uploaded: string; by: string; expiry?: string }
+
+export type ProcType = "PR" | "RFQ" | "CS" | "PO" | "GRN" | "PINV" | "PAY";
+export const PROC_STAGES: ProcType[] = ["PR", "RFQ", "CS", "PO", "GRN", "PINV", "PAY"];
+export const PROC_LABEL: Record<ProcType, string> = { PR: "Requisition", RFQ: "RFQ", CS: "Comparison", PO: "Order", GRN: "Receipt", PINV: "Invoice", PAY: "Payment" };
+export interface ProcDoc { id: string; code: string; type: ProcType; ref?: string; project: string; party: string; items: string; qty: number; unit: string; amount: number; date: string; status: string; by: string }
+
+export type PRStatus = "Draft" | "Submitted" | "Under Approval" | "Approved" | "Partially Converted" | "Fully Converted" | "Closed" | "Rejected" | "Returned";
+export interface PRLine { id: string; code: string; desc: string; spec: string; brand: string; unit: string; boqRef: string; boqNo: string; qty: number; rate: number; remarks: string }
+export interface PRDoc {
+  id: string; no: string; date: string; project: string; dept: string; site: string; by: string;
+  need: string; priority: "Normal" | "Urgent" | "Critical"; purpose: string; costCentre: string;
+  lines: PRLine[]; status: PRStatus; ts: number; history: { ts: number; action: string; by: string }[];
+}
+export type POStatus = "Draft" | "Pending Approval" | "Approved" | "Dispatched" | "Closed";
+export interface POLine { id: string; code: string; desc: string; spec: string; brand: string; unit: string; boqRef: string; boqNo: string; qty: number; prevQty: number; rate: number; disc: number; gst: number; schedule: string }
+export interface PODoc {
+  id: string; no: string; date: string; vendor: string; vendorAddr: string; gst: string; contact: string; email: string; phone: string;
+  project: string; site: string; costCentre: string; prRef: string; rfqRef: string; quotRef: string; quotDate: string; negoRef: string;
+  lines: POLine[]; freight: number; loading: number; other: number; terms: string[]; termsLocked: boolean;
+  status: POStatus; ts: number; acceptedBy?: string;
+}
+
+export interface Punch { id: string; user: string; date: string; inAt?: string; outAt?: string; breakStart?: string; breakEnd?: string; method: string; project: string; status: "Present" | "Late" | "Half Day" | "On Leave" | "Holiday" }
+export interface MatrixLevel { role: string; limit: string; backup: string }
+export interface MatrixRow { id: string; doc: string; levels: MatrixLevel[] }
+
+/* billing */
+export type BillStatus = "Draft" | "Under Preparation" | "Submitted for Checking" | "Under Approval" | "Approved" | "Submitted to Client" | "Under Client Certification" | "Certified" | "Partially Paid" | "Fully Paid" | "Returned for Correction" | "Rejected" | "Cancelled";
+export interface BillBoqLine { id: string; project: string; itemNo: string; desc: string; spec: string; unit: string; contractQty: number; rate: number; prevQty: number; currentQty: number }
+export interface MBEntry { id: string; mbNo: string; page: string; date: string; project: string; location: string; boqItem: string; boqNo: string; desc: string; drawing: string; unit: string; by: string; status: "Contractor" | "Internal" | "Client" | "Certified"; meas: { id: string; nos: number; l: number; b: number; h: number }[] }
+export interface ExtraItem { id: string; no: string; project: string; desc: string; spec: string; unit: string; qty: number; rate: number; justification: string; drawing: string; status: string; approvalDate?: string }
+export interface VariationItem { id: string; no: string; project: string; desc: string; origQty: number; revQty: number; origRate: number; revRate: number; amount: number; status: string }
+export interface EscalationItem { id: string; no: string; project: string; head: string; baseIndex: number; currentIndex: number; weightage: number; eligibleAmt: number }
+export interface AdvanceItem { id: string; no: string; project: string; kind: "Mobilization" | "Material"; sanctioned: number; paid: number; recPct: number; recovered: number }
+export interface DeductionCfg { id: string; head: string; basis: string; value: number; active: boolean }
+export interface BillDoc {
+  id: string; no: string; rev: number; project: string; client: string; period: string; date: string; type: string;
+  gross: number; deductions: number; gst: number; net: number; certifiedAmt?: number; certifiedDate?: string; received?: number;
+  status: BillStatus; by: string; ts: number; checklist: Record<string, boolean>; lines: { itemNo: string; desc: string; unit: string; prevQty: number; currentQty: number; rate: number }[];
+}
+
+/* workspace */
+export interface Task { id: string; title: string; due: string; status: "Open" | "Overdue" | "Done"; forRole: RoleId; forUser?: string; link?: string }
+export interface QueryRec { id: string; docRef: string; raisedBy: string; text: string; field?: string; priority?: string; due?: string; status: "Open" | "Responded" | "Resolved"; response?: string; ts: number }
+export interface VersionRec { id: string; docRef: string; ver: number; date: string; user: string; reason: string; status: string }
+export interface SignLog { id: string; docRef: string; name: string; desig: string; role: string; date: string; time: string; svg: string; ip: string; comment: string; action: "Approved" | "Rejected" | "Certified" }
+export interface AccessFlags { v: boolean; c: boolean; e: boolean; a: boolean; s: boolean }
+
+export const PURCHASE_MEMORY: Record<string, { vendor: string; rate: number; po: string; date: string }> = {
+  "OPC 53 Cement": { vendor: "UltraTech Cement", rate: 390, po: "PO-1284", date: "22 Jan 2026" },
+  "TMT Steel Fe-550D": { vendor: "Tata Steel", rate: 61500, po: "PO-1281", date: "14 Jan 2026" },
+  "M-Sand": { vendor: "Deccan Aggregates", rate: 1450, po: "PO-1279", date: "08 Jan 2026" },
+  "Admixture (PCE)": { vendor: "Sika India", rate: 92, po: "PO-1276", date: "19 Dec 2025" },
+  "Binding Wire": { vendor: "Sudarshan Traders", rate: 78, po: "PO-1274", date: "12 Dec 2025" },
+  "Plywood Formwork": { vendor: "GreenPly Industries", rate: 1850, po: "PO-1271", date: "02 Dec 2025" },
+};
+
+export const TERMS_LIBRARY: { id: string; scope: string; text: string }[] = [
+  { id: "t1", scope: "Standard", text: "Prices are firm and inclusive of all taxes unless stated; any statutory change in GST after PO date shall be adjusted on actuals with documentary proof." },
+  { id: "t2", scope: "Standard", text: "Delivery within the schedule stated against each line item; delay beyond 7 days attracts liquidated damages of 0.5% of delayed value per week, capped at 5%." },
+  { id: "t3", scope: "Standard", text: "Delivery at project site, unloaded, stacked and secured as directed by the Site In-charge. Transit insurance to be arranged by the vendor." },
+  { id: "t4", scope: "Quality", text: "Material must conform to the referenced IS codes / approved make list; Mill Test Certificates and batch-wise QC records to accompany each consignment." },
+  { id: "t5", scope: "Quality", text: "Company reserves the right to test material at NABL-accredited labs; material failing test shall be replaced within 72 hours at vendor's cost including re-testing." },
+  { id: "t6", scope: "Standard", text: "Quantity tolerance ±3% for bulk materials; short / excess supply will be reconciled at site measurement and settled on actuals." },
+  { id: "t7", scope: "Payment", text: "Payment within 30 days from receipt of original tax invoice, GRN copy and e-way bill, subject to deduction of advances and recoveries." },
+  { id: "t8", scope: "Payment", text: "No interest shall be payable on delayed payments beyond the agreed credit period." },
+  { id: "t9", scope: "Standard", text: "Rejected material shall be removed from site within 48 hours at vendor's risk and cost; failing which Company may dispose it off on behalf of the vendor." },
+  { id: "t10", scope: "Compliance", text: "Vendor shall comply with all statutory obligations (GST, EPF, ESI, Labour Laws) and safety norms of the site; violations are at vendor's sole risk." },
+  { id: "t11", scope: "Standard", text: "Company may cancel unexecuted balance with 15 days' notice without liability; Force Majeure events shall be settled as per Contract Act." },
+  { id: "t12", scope: "Legal", text: "Subject to Pune jurisdiction. This PO is governed by the General Terms (Rev 4) available at Company's vendor portal." },
+];
+
+/* ── seed ────────────────────────────────────────────────────── */
+const seed = () => ({
+  projects: PROJECTS as Project[],
+  tenders: [
+    { id: "t1", no: "TND-2026-014", authority: "NHAI — RO Pune", nit: "NIT/2025-26/1189", value: 214, emd: 2.1, fee: 0.5, deadline: dStr(-6), opening: dStr(-8), stage: 8, status: "Bid Submitted", docs: { NIT: true, BOQ: true, Drawings: true, Specifications: true, "Eligibility Docs": true, "Pre-bid Queries": true } },
+    { id: "t2", no: "TND-2026-015", authority: "MSRDC", nit: "NIT/2025-26/1244", value: 86, emd: 0.86, fee: 0.25, deadline: dStr(-3), opening: dStr(-5), stage: 6, status: "Rate Analysis", docs: { NIT: true, BOQ: true, Drawings: true, Specifications: false, "Eligibility Docs": true, "Pre-bid Queries": false } },
+    { id: "t3", no: "TND-2026-011", authority: "Pune Municipal Corp.", nit: "NIT/2025-26/1102", value: 42, emd: 0.42, fee: 0.2, deadline: dStr(12), opening: dStr(10), stage: 9, status: "Awarded — L1", docs: { NIT: true, BOQ: true, Drawings: true, Specifications: true, "Eligibility Docs": true, "Pre-bid Queries": true } },
+    { id: "t4", no: "TND-2026-016", authority: "Indian Railways", nit: "NIT/2025-26/1310", value: 128, emd: 1.28, fee: 0.35, deadline: dStr(-11), opening: dStr(-13), stage: 4, status: "Technical Review", docs: { NIT: true, BOQ: true, Drawings: false, Specifications: false, "Eligibility Docs": false, "Pre-bid Queries": false } },
+  ],
+  proc: [
+    { id: "pc1", code: "PR-0086", type: "PR", project: "P1", party: "RMC Operations", items: "Admixture (PCE)", qty: 800, unit: "Ltr", amount: 7.4, date: dStr(-15), status: "Approved", by: "Sandeep Kulkarni" },
+    { id: "pc2", code: "RFQ-0405", type: "RFQ", ref: "PR-0086", project: "P1", party: "3 vendors invited", items: "Admixture (PCE)", qty: 800, unit: "Ltr", amount: 7.3, date: dStr(-13), status: "Closed", by: "Imran Shaikh" },
+    { id: "pc3", code: "CS-0188", type: "CS", ref: "RFQ-0405", project: "P1", party: "L1 — Sika India", items: "Admixture (PCE)", qty: 800, unit: "Ltr", amount: 7.2, date: dStr(-12), status: "L1 Recommended", by: "Imran Shaikh" },
+    { id: "pc4", code: "PO-1276", type: "PO", ref: "CS-0188", project: "P1", party: "Sika India", items: "Admixture (PCE)", qty: 800, unit: "Ltr", amount: 7.2, date: dStr(-11), status: "Approved", by: "Imran Shaikh" },
+    { id: "pc5", code: "GRN-2041", type: "GRN", ref: "PO-1276", project: "P1", party: "Sika India", items: "Admixture (PCE)", qty: 800, unit: "Ltr", amount: 7.2, date: dStr(-8), status: "Received", by: "Dinesh Pawar" },
+    { id: "pc6", code: "INV-V-3320", type: "PINV", ref: "GRN-2041", project: "P1", party: "Sika India", items: "Admixture (PCE)", qty: 800, unit: "Ltr", amount: 7.2, date: dStr(-7), status: "Booked", by: "Prakash Rao" },
+    { id: "pc7", code: "PR-0093", type: "PR", project: "P1", party: "Project Execution", items: "TMT Steel Fe-550D", qty: 42, unit: "MT", amount: 25.8, date: dStr(-1), status: "Pending Approval", by: "Vikas Thorat" },
+    { id: "pc8", code: "PR-0089", type: "PR", project: "P3", party: "Project Execution", items: "M-Sand", qty: 350, unit: "Cu.M", amount: 5.1, date: dStr(-6), status: "Approved", by: "Sunita Deshmukh" },
+    { id: "pc9", code: "PO-1288", type: "PO", ref: "PR-0089", project: "P3", party: "UltraTech Cement", items: "M-Sand (via UTC)", qty: 350, unit: "Cu.M", amount: 5.0, date: dStr(-1), status: "Pending Approval", by: "Imran Shaikh" },
+  ] as ProcDoc[],
+  prs: [
+    { id: "pr1", no: "PR-0093", date: dStr(-1), project: "P1", dept: "Project Execution", site: "Site Office — Pachgaon", by: "Vikas Thorat", need: dStr(9), priority: "Critical", purpose: "Urgent requirement for pier cap concreting — piling sequence slips if steel is not on site within a week.", costCentre: "CC-P1-MAT", status: "Under Approval", ts: nowHrs(-30).getTime(), lines: [
+      { id: "l1", code: "MAT-014", desc: "TMT Steel Fe-550D", spec: "IS 1786:2008, CRS ribbed, bend tested", brand: "Tata / JSW", unit: "MT", boqRef: "BOQ-P1", boqNo: "2.4", qty: 42, rate: 61500, remarks: "MTC mandatory" },
+      { id: "l2", code: "MAT-021", desc: "Binding Wire", spec: "20 gauge annealed", brand: "Any approved", unit: "kg", boqRef: "BOQ-P1", boqNo: "2.6", qty: 900, rate: 78, remarks: "" },
+    ], history: [{ ts: nowHrs(-30).getTime(), action: "Submitted", by: "Vikas Thorat" }, { ts: nowHrs(-6).getTime(), action: "Forwarded to Procurement Manager", by: "Sunita Deshmukh" }] },
+    { id: "pr2", no: "PR-0092", date: dStr(-2), project: "P4", dept: "Project Execution", site: "Site Office — Wagholi", by: "Amit Bhosale", need: dStr(14), priority: "Urgent", purpose: "Retaining wall concreting planned for next fortnight; cement and admixture to reach store before 20th.", costCentre: "CC-P4-MAT", status: "Submitted", ts: nowHrs(-52).getTime(), lines: [
+      { id: "l1", code: "MAT-002", desc: "OPC 53 Cement", spec: "IS 12269, fresh stock < 30 days", brand: "UltraTech / ACC", unit: "Bag", boqRef: "BOQ-P4", boqNo: "3.1", qty: 1200, rate: 390, remarks: "Silos preferred" },
+      { id: "l2", code: "MAT-031", desc: "Admixture (PCE)", spec: "IS 9103, retarder cum plasticiser", brand: "Sika / BASF", unit: "Ltr", boqRef: "BOQ-P4", boqNo: "3.4", qty: 400, rate: 92, remarks: "Lab trial done" },
+    ], history: [{ ts: nowHrs(-52).getTime(), action: "Submitted", by: "Amit Bhosale" }] },
+    { id: "pr3", no: "PR-0091", date: dStr(0), project: "P2", dept: "Plant & Machinery", site: "Central Store — Chakan", by: "Dinesh Pawar", need: dStr(21), priority: "Normal", purpose: "Formwork material for deck slab cycle 2; plywood sheets as per approved formwork drawings.", costCentre: "CC-P2-PLT", status: "Draft", ts: nowHrs(-2).getTime(), lines: [
+      { id: "l1", code: "MAT-042", desc: "Plywood Formwork", spec: "18 mm, film-faced, WBP grade", brand: "GreenPly", unit: "Sheet", boqRef: "BOQ-P2", boqNo: "5.2", qty: 260, rate: 1850, remarks: "8×4 ft size" },
+    ], history: [{ ts: nowHrs(-2).getTime(), action: "Saved as Draft", by: "Dinesh Pawar" }] },
+    { id: "pr4", no: "PR-0089", date: dStr(-6), project: "P3", dept: "Project Execution", site: "Site Office — Talegaon", by: "Sunita Deshmukh", need: dStr(3), priority: "Urgent", purpose: "Final stretch bituminous works — M-Sand consumption higher than planned due to sub-base correction.", costCentre: "CC-P3-MAT", status: "Approved", ts: nowHrs(-150).getTime(), lines: [
+      { id: "l1", code: "MAT-008", desc: "M-Sand", spec: "Zone II, < 3% fines, washed", brand: "Deccan", unit: "Cu.M", boqRef: "BOQ-P3", boqNo: "7.3", qty: 350, rate: 1450, remarks: "In 2 equal lots" },
+    ], history: [{ ts: nowHrs(-150).getTime(), action: "Submitted", by: "Sunita Deshmukh" }, { ts: nowHrs(-140).getTime(), action: "Approved", by: "Imran Shaikh" }] },
+    { id: "pr5", no: "PR-0086", date: dStr(-15), project: "P1", dept: "RMC Operations", site: "RMC Plant — Kharadi", by: "Sandeep Kulkarni", need: dStr(-5), priority: "Normal", purpose: "Monthly replenishment of admixture stock against production plan.", costCentre: "CC-RMC-MAT", status: "Fully Converted", ts: nowHrs(-360).getTime(), lines: [
+      { id: "l1", code: "MAT-031", desc: "Admixture (PCE)", spec: "IS 9103", brand: "Sika", unit: "Ltr", boqRef: "BOQ-RMC", boqNo: "1.8", qty: 800, rate: 92, remarks: "" },
+    ], history: [{ ts: nowHrs(-360).getTime(), action: "Approved", by: "Imran Shaikh" }, { ts: nowHrs(-330).getTime(), action: "Converted to PO-1276", by: "Imran Shaikh" }] },
+    { id: "pr6", no: "PR-0084", date: dStr(-19), project: "P5", dept: "Project Execution", site: "Site Office — Hadapsar", by: "Vikas Thorat", need: dStr(-8), priority: "Normal", purpose: "Site consumables replenishment.", costCentre: "CC-P5-MAT", status: "Rejected", ts: nowHrs(-460).getTime(), lines: [
+      { id: "l1", code: "MAT-055", desc: "Safety Net", spec: "HDPE braided, green", brand: "Any", unit: "Sq.M", boqRef: "—", boqNo: "—", qty: 600, rate: 22, remarks: "" },
+    ], history: [{ ts: nowHrs(-460).getTime(), action: "Rejected — duplicate of PR-0082", by: "Imran Shaikh" }] },
+  ] as PRDoc[],
+  pos: [
+    { id: "po1", no: "PO-1288", date: dStr(-1), vendor: "UltraTech Cement", vendorAddr: "Birla Bhavan, M.P. Nagar, Mumbai 400021", gst: "27AAACU1901R1ZK", contact: "Rohit Salunkhe", email: "r.salunkhe@ultratech.com", phone: "+91 98220 44120", project: "P3", site: "Talegaon Batching Plant", costCentre: "CC-P3-MAT", prRef: "PR-0089", rfqRef: "RFQ-0412", quotRef: "UTC/Q/8841", quotDate: dStr(-4), negoRef: "Negotiated on 12 Mar — 2% off list", lines: [
+      { id: "l1", code: "MAT-008", desc: "M-Sand", spec: "Zone II, washed, < 3% fines", brand: "Deccan (via UTC)", unit: "Cu.M", boqRef: "BOQ-P3", boqNo: "7.3", qty: 350, prevQty: 0, rate: 1420, disc: 1, gst: 5, schedule: "Lot 1 — 175 Cu.M by 18 Mar; Lot 2 by 25 Mar" },
+    ], freight: 18000, loading: 4000, other: 0, terms: ["t1", "t2", "t4", "t6", "t7", "t9", "t12"].map((id) => TERMS_LIBRARY.find((t) => t.id === id)!.text), termsLocked: false, status: "Pending Approval", ts: nowHrs(-26).getTime() },
+    { id: "po2", no: "PO-1287", date: dStr(-5), vendor: "Tata Steel", vendorAddr: "Bombay House, 24 Homi Mody St, Mumbai 400001", gst: "27AAACT2727Q1ZW", contact: "Priya Nair", email: "priya.nair@tatasteel.com", phone: "+91 98333 71210", project: "P1", site: "Pachgaon Yard", costCentre: "CC-P1-MAT", prRef: "PR-0093", rfqRef: "RFQ-0409", quotRef: "TS/EST/4471", quotDate: dStr(-9), negoRef: "L1 — base rate as quoted", lines: [
+      { id: "l1", code: "MAT-014", desc: "TMT Steel Fe-550D", spec: "IS 1786:2008 CRS, 12–25 mm mix as per BBS", brand: "Tata Tiscon", unit: "MT", boqRef: "BOQ-P1", boqNo: "2.4", qty: 42, prevQty: 18, rate: 61500, disc: 0, gst: 18, schedule: "Single lot — 10 days from PO" },
+      { id: "l2", code: "MAT-021", desc: "Binding Wire", spec: "20 gauge annealed, 5 kg coils", brand: "Tata", unit: "kg", boqRef: "BOQ-P1", boqNo: "2.6", qty: 900, prevQty: 300, rate: 78, disc: 2, gst: 18, schedule: "Along with steel lot" },
+    ], freight: 0, loading: 0, other: 6000, terms: ["t1", "t3", "t4", "t5", "t7", "t10", "t12"].map((id) => TERMS_LIBRARY.find((t) => t.id === id)!.text), termsLocked: true, status: "Approved", ts: nowHrs(-120).getTime(), acceptedBy: "Priya Nair · Tata Steel · " + dStr(-3) },
+    { id: "po3", no: "PO-1284", date: dStr(-24), vendor: "UltraTech Cement", vendorAddr: "Birla Bhavan, M.P. Nagar, Mumbai 400021", gst: "27AAACU1901R1ZK", contact: "Rohit Salunkhe", email: "r.salunkhe@ultratech.com", phone: "+91 98220 44120", project: "P4", site: "Wagholi Store", costCentre: "CC-P4-MAT", prRef: "PR-0088", rfqRef: "RFQ-0401", quotRef: "UTC/Q/8620", quotDate: dStr(-28), negoRef: "—", lines: [
+      { id: "l1", code: "MAT-002", desc: "OPC 53 Cement", spec: "IS 12269, 50 kg bags", brand: "UltraTech", unit: "Bag", boqRef: "BOQ-P4", boqNo: "3.1", qty: 1500, prevQty: 3200, rate: 390, disc: 0, gst: 18, schedule: "300 bags weekly" },
+    ], freight: 22000, loading: 0, other: 0, terms: ["t1", "t2", "t7", "t12"].map((id) => TERMS_LIBRARY.find((t) => t.id === id)!.text), termsLocked: true, status: "Closed", ts: nowHrs(-580).getTime(), acceptedBy: "Rohit Salunkhe · UltraTech · " + dStr(-23) },
+  ] as PODoc[],
+  punches: [
+    { id: "pu1", user: "Sunita Deshmukh", date: dStr(-1), inAt: "09:02", outAt: "18:24", method: "GPS punch", project: "P1", status: "Present" },
+    { id: "pu2", user: "Sunita Deshmukh", date: dStr(-2), inAt: "09:41", outAt: "18:05", method: "Web punch", project: "P1", status: "Late" },
+    { id: "pu3", user: "Sunita Deshmukh", date: dStr(-3), inAt: "08:55", outAt: "20:10", method: "GPS punch", project: "P1", status: "Present" },
+  ] as Punch[],
+  matrix: [
+    { id: "mx1", doc: "Purchase Requisition", levels: [{ role: "Site Engineer", limit: "≤ ₹2 L", backup: "Project Engineer" }, { role: "Project Manager", limit: "≤ ₹10 L", backup: "Sr. Project Manager" }, { role: "Procurement Manager", limit: "≤ ₹50 L", backup: "Supply Chain Head" }, { role: "Managing Director", limit: "> ₹50 L", backup: "—" }] },
+    { id: "mx2", doc: "Purchase Order", levels: [{ role: "Procurement Manager", limit: "≤ ₹25 L", backup: "Supply Chain Head" }, { role: "Accounts Manager", limit: "All (parallel)", backup: "—" }, { role: "Commercial Manager", limit: "≤ ₹75 L", backup: "—" }, { role: "Managing Director", limit: "> ₹75 L", backup: "—" }] },
+    { id: "mx3", doc: "Vendor Payment", levels: [{ role: "Accounts Executive", limit: "≤ ₹5 L", backup: "Accounts Manager" }, { role: "Accounts Manager", limit: "≤ ₹25 L", backup: "Finance Controller" }, { role: "Managing Director", limit: "> ₹25 L", backup: "—" }] },
+    { id: "mx4", doc: "Attendance", levels: [{ role: "Reporting Manager", limit: "All", backup: "Site Supervisor" }, { role: "HR Manager", limit: "Final lock", backup: "—" }] },
+    { id: "mx5", doc: "RA Bill", levels: [{ role: "Site Engineer", limit: "Measurement", backup: "Project Engineer" }, { role: "Project Manager", limit: "Verification", backup: "—" }, { role: "Commercial Manager", limit: "≤ ₹5 Cr", backup: "—" }, { role: "Management", limit: "> ₹5 Cr", backup: "—" }] },
+  ] as MatrixRow[],
+
+  materials: [
+    { code: "MAT-002", name: "OPC 53 Cement", cat: "Cement", unit: "Bag", rol: 3000, rate: 0.00039 },
+    { code: "MAT-008", name: "M-Sand", cat: "Aggregates", unit: "Cu.M", rol: 600, rate: 0.000145 },
+    { code: "MAT-014", name: "TMT Steel Fe-550D", cat: "Steel", unit: "MT", rol: 120, rate: 0.00615 },
+    { code: "MAT-021", name: "Binding Wire", cat: "Consumables", unit: "kg", rol: 500, rate: 0.0000078 },
+    { code: "MAT-031", name: "Admixture (PCE)", cat: "Admixtures", unit: "Ltr", rol: 1500, rate: 0.0000092 },
+    { code: "MAT-042", name: "Plywood Formwork", cat: "Formwork", unit: "Sheet", rol: 400, rate: 0.000185 },
+    { code: "MAT-055", name: "Safety Net", cat: "Safety", unit: "Sq.M", rol: 800, rate: 0.0000022 },
+  ],
+  stock: [
+    { material: "OPC 53 Cement", store: "Store A — Pune", onHand: 2150, unit: "Bags", value: 8.4 },
+    { material: "TMT Steel Fe-550D", store: "Store A — Pune", onHand: 184, unit: "MT", value: 11.3 },
+    { material: "M-Sand", store: "Store B — Talegaon", onHand: 940, unit: "Cu.M", value: 1.4 },
+    { material: "Admixture (PCE)", store: "RMC Yard", onHand: 2400, unit: "Ltr", value: 2.2 },
+    { material: "Plywood Formwork", store: "Store A — Pune", onHand: 310, unit: "Sheets", value: 5.7 },
+    { material: "Binding Wire", store: "Store C — Nashik", onHand: 820, unit: "kg", value: 0.6 },
+  ],
+  mTxns: [
+    { id: "x1", code: "GRN-2044", kind: "Inward", material: "Admixture (PCE)", qty: 2400, unit: "Ltr", project: "P1", date: dStr(0), by: "Dinesh Pawar" },
+    { id: "x2", code: "ISS-5521", kind: "Outward", material: "OPC 53 Cement", qty: 340, unit: "Bags", project: "P1", date: dStr(0), by: "Dinesh Pawar" },
+    { id: "x3", code: "GRN-2043", kind: "Inward", material: "M-Sand", qty: 180, unit: "Cu.M", project: "P3", date: dStr(-1), by: "Dinesh Pawar" },
+    { id: "x4", code: "TRF-0310", kind: "Transfer", material: "Binding Wire", qty: 120, unit: "kg", project: "P2", date: dStr(-1), by: "Dinesh Pawar" },
+    { id: "x5", code: "ISS-5518", kind: "Outward", material: "TMT Steel Fe-550D", qty: 12.4, unit: "MT", project: "P1", date: dStr(-2), by: "Dinesh Pawar" },
+  ],
+  equipment: [
+    { code: "EQ-011", name: "Excavator CAT 320", reg: "MH-12-AB-4471", cap: "20 T", project: "P1", hrs: 1240, fuel: 18, status: "Operational", maintDue: dStr(-22) },
+    { code: "EQ-014", name: "JCB 3DX", reg: "MH-13-CD-8820", cap: "7.5 T", project: "P5", hrs: 986, fuel: 11, status: "Operational", maintDue: dStr(6) },
+    { code: "EQ-021", name: "Hydra Crane 14 T", reg: "MH-12-EF-1293", cap: "14 T", project: "P2", hrs: 1512, fuel: 14, status: "Under Maintenance", maintDue: dStr(3) },
+    { code: "EQ-027", name: "Concrete Pump 36 m", reg: "MH-14-GH-0092", cap: "90 m³/h", project: "P1", hrs: 2210, fuel: 26, status: "Operational", maintDue: dStr(18) },
+    { code: "EQ-031", name: "Transit Mixer 6 m³", reg: "MH-12-IJ-3341", cap: "6 m³", project: "RMC-1", hrs: 3105, fuel: 32, status: "Idle", maintDue: dStr(-4) },
+  ],
+  rmcOrders: [
+    { id: "o1", no: "CO-2291", customer: "Internal — P1", site: "Pier Cap PC-114", grade: "M40", qty: 96, time: "06:30", status: "In Transit" },
+    { id: "o2", no: "CO-2292", customer: "Shree Construction", site: "RCC Slab L2", grade: "M25", qty: 48, time: "07:15", status: "Batching" },
+    { id: "o3", no: "CO-2289", customer: "Kalyani Builders", site: "RCC Slab L3", grade: "M25", qty: 60, time: "05:45", status: "Delivered" },
+    { id: "o4", no: "CO-2293", customer: "Internal — P2", site: "Pile Cap PC-115", grade: "M35", qty: 75, time: "10:30", status: "Scheduled" },
+    { id: "o5", no: "CO-2288", customer: "Rohan Infra", site: "Footings F-21", grade: "M20", qty: 45, time: "05:15", status: "Delivered" },
+  ],
+  batches: [
+    { id: "bt1", order: "CO-2291", grade: "M40", qty: 6, cement: 2.4, sand: 3.6, agg: 5.9, admix: 24, time: "07:12", slump: 120, cubes: "3 × 150 mm" },
+    { id: "bt2", order: "CO-2291", grade: "M40", qty: 6, cement: 2.4, sand: 3.6, agg: 5.9, admix: 24, time: "07:34", slump: 115, cubes: "3 × 150 mm" },
+    { id: "bt3", order: "CO-2289", grade: "M25", qty: 6, cement: 1.9, sand: 4.2, agg: 6.4, admix: 15, time: "06:05", slump: 100, cubes: "3 × 150 mm" },
+    { id: "bt4", order: "CO-2288", grade: "M20", qty: 5, cement: 1.6, sand: 4.0, agg: 6.2, admix: 10, time: "05:31", slump: 95, cubes: "3 × 150 mm" },
+  ],
+
+  billBoq: [
+    { id: "b1", project: "P1", itemNo: "2.1", desc: "Piling — Bored cast-in-situ (M30)", spec: "IS 2911", unit: "R.M", contractQty: 4200, rate: 18400, prevQty: 2860, currentQty: 320 },
+    { id: "b2", project: "P1", itemNo: "2.4", desc: "RCC M40 in pier caps & piers", spec: "IS 456", unit: "Cu.M", contractQty: 6800, rate: 9650, prevQty: 3910, currentQty: 410 },
+    { id: "b3", project: "P1", itemNo: "2.7", desc: "Structural steel Fe-550D", spec: "IS 1786", unit: "MT", contractQty: 2150, rate: 74800, prevQty: 1180, currentQty: 140 },
+    { id: "b4", project: "P2", itemNo: "3.2", desc: "RCC M35 in deck slab", spec: "IS 456", unit: "Cu.M", contractQty: 5200, rate: 8900, prevQty: 2180, currentQty: 260 },
+    { id: "b5", project: "P2", itemNo: "3.5", desc: "Formwork & staging", spec: "Steel", unit: "Sq.M", contractQty: 62000, rate: 410, prevQty: 26500, currentQty: 3200 },
+    { id: "b6", project: "P3", itemNo: "7.3", desc: "Granular sub-base (M-Sand)", spec: "MORTH", unit: "Cu.M", contractQty: 18000, rate: 1150, prevQty: 13900, currentQty: 900 },
+    { id: "b7", project: "P3", itemNo: "8.1", desc: "Dense bituminous macadam", spec: "VG-40", unit: "MT", contractQty: 14500, rate: 6400, prevQty: 8700, currentQty: 640 },
+    { id: "b8", project: "P5", itemNo: "4.4", desc: "RCC M30 in clarifier walls", spec: "IS 456", unit: "Cu.M", contractQty: 4100, rate: 8750, prevQty: 2050, currentQty: 240 },
+    { id: "b9", project: "P4", itemNo: "5.1", desc: "PSC girders — casting & erection", spec: "IRC 18", unit: "Nos", contractQty: 24, rate: 2850000, prevQty: 8, currentQty: 2 },
+    { id: "b10", project: "P5", itemNo: "6.2", desc: "PCC M15 in footings", spec: "IS 456", unit: "Cu.M", contractQty: 3100, rate: 5400, prevQty: 2480, currentQty: 120 },
+  ] as BillBoqLine[],
+  mbs: [
+    { id: "m1", mbNo: "MB-1204/12", page: "12", date: dStr(-3), project: "P1", location: "Pier P4-P5, span 3", boqItem: "RCC M40 in pier caps & piers", boqNo: "2.4", desc: "Pier cap PC-114 concrete", drawing: "GFC-118 Rev C", unit: "Cu.M", by: "Rohan Bhosale", status: "Certified", meas: [{ id: "mm1", nos: 4, l: 8.2, b: 3.4, h: 1.6 }, { id: "mm2", nos: 2, l: 6.5, b: 3.4, h: 1.4 }] },
+    { id: "m2", mbNo: "MB-1204/13", page: "13", date: dStr(-2), project: "P1", location: "Pile cap zone B", boqItem: "Piling — Bored cast-in-situ (M30)", boqNo: "2.1", desc: "Bored pile P-217 to P-224", drawing: "GFC-102 Rev B", unit: "R.M", by: "Rohan Bhosale", status: "Client", meas: [{ id: "mm1", nos: 8, l: 24.5, b: 1, h: 1 }] },
+    { id: "m3", mbNo: "MB-1205/4", page: "4", date: dStr(-1), project: "P3", location: "Ch 12+400 to 12+900", boqItem: "Granular sub-base (M-Sand)", boqNo: "7.3", desc: "GSB layer 250 mm", drawing: "DWG-308", unit: "Cu.M", by: "Amit Bhosale", status: "Internal", meas: [{ id: "mm1", nos: 1, l: 500, b: 12.5, h: 0.25 }] },
+  ] as MBEntry[],
+  extras: [
+    { id: "e1", no: "EI-041", project: "P1", desc: "Boulder apron below pier — additional scope", spec: "M20 PCC + rubble", unit: "Cu.M", qty: 320, rate: 4850, justification: "Ground condition at P4 required apron not in BOQ", drawing: "GFC-121", status: "Client Approval", approvalDate: dStr(-9) },
+    { id: "e2", no: "EI-042", project: "P3", desc: "Additional catch pit at low point", spec: "RCC M25 precast", unit: "Nos", qty: 6, rate: 88000, justification: "Drainage survey revision", drawing: "DWG-312", status: "Execution" },
+    { id: "e3", no: "EI-039", project: "P2", desc: "Extra shuttering cycles for deck", spec: "Steel formwork", unit: "Sq.M", qty: 4200, rate: 210, justification: "Cycle time revised by client", drawing: "GFC-204", status: "Billed", approvalDate: dStr(-40) },
+  ] as ExtraItem[],
+  variations: [
+    { id: "v1", no: "VO-018", project: "P1", desc: "Increase in pile depth — rocky strata", origQty: 4200, revQty: 4620, origRate: 18400, revRate: 18400, amount: 0.77, status: "Approved" },
+    { id: "v2", no: "VO-019", project: "P3", desc: "Asphalt grade VG-10 → VG-40", origQty: 14500, revQty: 14500, origRate: 6100, revRate: 6400, amount: 0.44, status: "Approved" },
+    { id: "v3", no: "VO-020", project: "P2", desc: "Column size revision C-12", origQty: 9200, revQty: 8970, origRate: 6800, revRate: 6800, amount: -0.16, status: "Proposed" },
+  ] as VariationItem[],
+  escalations: [
+    { id: "es1", no: "ESC-007", project: "P1", head: "Steel (TMT)", baseIndex: 132.4, currentIndex: 141.9, weightage: 18, eligibleAmt: 38400000 },
+    { id: "es2", no: "ESC-008", project: "P1", head: "Cement", baseIndex: 118.2, currentIndex: 122.6, weightage: 12, eligibleAmt: 21700000 },
+    { id: "es3", no: "ESC-009", project: "P3", head: "Bitumen", baseIndex: 96.8, currentIndex: 103.1, weightage: 22, eligibleAmt: 17200000 },
+  ] as EscalationItem[],
+  advances: [
+    { id: "ad1", no: "ADV-011", project: "P1", kind: "Mobilization", sanctioned: 120000000, paid: 120000000, recPct: 2, recovered: 46000000 },
+    { id: "ad2", no: "ADV-012", project: "P1", kind: "Material", sanctioned: 35000000, paid: 35000000, recPct: 5, recovered: 9800000 },
+    { id: "ad3", no: "ADV-013", project: "P3", kind: "Mobilization", sanctioned: 60000000, paid: 60000000, recPct: 2, recovered: 18400000 },
+  ] as AdvanceItem[],
+  deductionCfg: [
+    { id: "dcg1", head: "Retention", basis: "Pct of Gross", value: 5, active: true },
+    { id: "dcg2", head: "Security Deposit", basis: "Pct of Gross", value: 2.5, active: true },
+    { id: "dcg3", head: "Mobilization Advance Recovery", basis: "Cumulative Recovery", value: 2, active: true },
+    { id: "dcg4", head: "Material Advance Recovery", basis: "Cumulative Recovery", value: 5, active: true },
+    { id: "dcg5", head: "TDS @ 2%", basis: "Pct of Gross", value: 2, active: true },
+    { id: "dcg6", head: "Labour Cess", basis: "Pct of Gross", value: 1, active: true },
+    { id: "dcg7", head: "GST TDS", basis: "Pct of Gross", value: 0, active: false },
+  ] as DeductionCfg[],
+  billDocs: [
+    { id: "bd1", no: "RA-07/PRJ-018/2026", rev: 1, project: "P2", client: "NHAI", period: "01–29 Feb 2026", date: dStr(-12), type: "RA Bill", gross: 5.42, deductions: 0.96, gst: 0.8, net: 5.26, status: "Under Client Certification", by: "Meera Krishnan", ts: nowHrs(-290).getTime(), checklist: { "Measurement completed": true, "BOQ quantities verified": true, "Drawings attached": true, "Previous bill reconciled": true, "Deductions verified": true, "GST verified": true, "Internal approval completed": true }, lines: [{ itemNo: "3.2", desc: "RCC M35 in deck slab", unit: "Cu.M", prevQty: 1920, currentQty: 260, rate: 8900 }, { itemNo: "3.5", desc: "Formwork & staging", unit: "Sq.M", prevQty: 23300, currentQty: 3200, rate: 410 }] },
+    { id: "bd2", no: "RA-05/PRJ-016/2026", rev: 2, project: "P1", client: "MahaMetro", period: "01–28 Feb 2026", date: dStr(-4), type: "RA Bill", gross: 8.86, deductions: 1.57, gst: 1.31, net: 8.6, status: "Approved", by: "Meera Krishnan", ts: nowHrs(-100).getTime(), checklist: { "Measurement completed": true, "BOQ quantities verified": true, "Drawings attached": true, "Previous bill reconciled": true, "Deductions verified": true, "GST verified": true, "Internal approval completed": true }, lines: [{ itemNo: "2.1", desc: "Piling — Bored cast-in-situ (M30)", unit: "R.M", prevQty: 2540, currentQty: 320, rate: 18400 }, { itemNo: "2.4", desc: "RCC M40 in pier caps & piers", unit: "Cu.M", prevQty: 3500, currentQty: 410, rate: 9650 }] },
+    { id: "bd3", no: "RA-09/PRJ-021/2026", rev: 1, project: "P3", client: "MIDC", period: "01–25 Feb 2026", date: dStr(-18), type: "RA Bill", gross: 6.77, deductions: 1.2, gst: 1.0, net: 6.57, certifiedAmt: 6.31, certifiedDate: dStr(-9), status: "Certified", by: "Meera Krishnan", ts: nowHrs(-430).getTime(), checklist: { "Measurement completed": true, "BOQ quantities verified": true, "Drawings attached": true, "Previous bill reconciled": true, "Deductions verified": true, "GST verified": true, "Internal approval completed": true }, lines: [{ itemNo: "7.3", desc: "Granular sub-base (M-Sand)", unit: "Cu.M", prevQty: 13000, currentQty: 900, rate: 1150 }, { itemNo: "8.1", desc: "Dense bituminous macadam", unit: "MT", prevQty: 8060, currentQty: 640, rate: 6400 }] },
+    { id: "bd4", no: "RA-06/PRJ-024/2026", rev: 1, project: "P5", client: "Pune Municipal Corp.", period: "01–31 Jan 2026", date: dStr(-42), type: "RA Bill", gross: 4.48, deductions: 0.8, gst: 0.66, net: 4.34, certifiedAmt: 4.34, certifiedDate: dStr(-30), received: 4.34, status: "Fully Paid", by: "Meera Krishnan", ts: nowHrs(-1000).getTime(), checklist: { "Measurement completed": true, "BOQ quantities verified": true, "Drawings attached": true, "Previous bill reconciled": true, "Deductions verified": true, "GST verified": true, "Internal approval completed": true }, lines: [{ itemNo: "4.4", desc: "RCC M30 in clarifier walls", unit: "Cu.M", prevQty: 1810, currentQty: 240, rate: 8750 }, { itemNo: "6.2", desc: "PCC M15 in footings", unit: "Cu.M", prevQty: 2360, currentQty: 120, rate: 5400 }] },
+    { id: "bd5", no: "RA-04/PRJ-016/2026", rev: 1, project: "P1", client: "MahaMetro", period: "01–31 Dec 2025", date: dStr(-60), type: "RA Bill", gross: 7.12, deductions: 1.27, gst: 1.05, net: 6.9, status: "Returned for Correction", by: "Sunita Deshmukh", ts: nowHrs(-1400).getTime(), checklist: { "Measurement completed": true, "BOQ quantities verified": false, "Drawings attached": true, "Previous bill reconciled": true, "Deductions verified": true, "GST verified": false, "Internal approval completed": false }, lines: [{ itemNo: "2.7", desc: "Structural steel Fe-550D", unit: "MT", prevQty: 1040, currentQty: 140, rate: 74800 }] },
+  ] as BillDoc[],
+
+  coa: [
+    { code: "1000", name: "Cash & Bank", type: "Asset", balance: 42.8 }, { code: "1200", name: "Accounts Receivable", type: "Asset", balance: 186.4 },
+    { code: "1400", name: "Inventory — Materials", type: "Asset", balance: 27.4 }, { code: "1600", name: "Plant & Machinery", type: "Asset", balance: 96.2 },
+    { code: "2000", name: "Sundry Creditors", type: "Liability", balance: -93.4 }, { code: "2200", name: "GST Payable", type: "Liability", balance: -8.6 },
+    { code: "2400", name: "Retention Payable", type: "Liability", balance: -14.2 }, { code: "3000", name: "Share Capital", type: "Equity", balance: -120 },
+    { code: "4000", name: "Project Revenue", type: "Revenue", balance: -312.5 }, { code: "5000", name: "Material Cost", type: "Expense", balance: 128.9 },
+    { code: "5200", name: "Labour Cost", type: "Expense", balance: 74.6 }, { code: "5400", name: "Plant & Equipment Cost", type: "Expense", balance: 28.4 },
+    { code: "5600", name: "Overheads", type: "Expense", balance: 18.7 },
+  ],
+  journals: [
+    { id: "j1", no: "JV-0344", date: dStr(0), debit: "Inventory — Materials", credit: "Sundry Creditors", amount: 7.2, narr: "INV-V-3320 booked against GRN-2041 — Sika India", by: "Prakash Rao" },
+    { id: "j2", no: "JV-0343", date: dStr(-1), debit: "Accounts Receivable", credit: "Project Revenue", amount: 54.6, narr: "RA-042 certified — NHAI PRJ-018", by: "Prakash Rao" },
+    { id: "j3", no: "JV-0342", date: dStr(-2), debit: "Labour Cost", credit: "Cash & Bank", amount: 22.8, narr: "Feb payroll — site workforce batch 2", by: "Prakash Rao" },
+    { id: "j4", no: "JV-0341", date: dStr(-3), debit: "Plant & Equipment Cost", credit: "Sundry Creditors", amount: 4.1, narr: "EQ fuel cards — March allocation", by: "Prakash Rao" },
+  ],
+  apInvoices: [
+    { id: "ap1", no: "INV-V-3320", vendor: "Sika India", ref: "GRN-2041", amount: 7.2, due: dStr(-26), status: "Booked" as const },
+    { id: "ap2", no: "INV-V-3318", vendor: "Bharat Bitumen", ref: "PO-1272", amount: 21.6, due: dStr(-12), status: "Scheduled" as const },
+    { id: "ap3", no: "INV-V-3311", vendor: "UltraTech Cement", ref: "PO-1284", amount: 6.8, due: dStr(-30), status: "Paid" as const },
+    { id: "ap4", no: "INV-V-3308", vendor: "Deccan Aggregates", ref: "PO-1279", amount: 5.1, due: dStr(-6), status: "Booked" as const },
+  ],
+  arInvoices: [
+    { id: "ar1", no: "INV-C-2214", client: "NHAI", ref: "RA-07/PRJ-018/2026", amount: 5.26, due: dStr(-22), status: "Raised" as const, received: 0 },
+    { id: "ar2", no: "INV-C-2210", client: "MIDC", ref: "RA-09/PRJ-021/2026", amount: 6.31, due: dStr(-4), status: "Overdue" as const, received: 0 },
+    { id: "ar3", no: "INV-C-2204", client: "Pune Municipal Corp.", ref: "RA-06/PRJ-024/2026", amount: 4.34, due: dStr(-20), status: "Paid" as const, received: 4.34 },
+    { id: "ar4", no: "INV-C-2198", client: "MahaMetro", ref: "RA-03/PRJ-016/2026", amount: 12.8, due: dStr(-15), status: "Partially Paid" as const, received: 6.4 },
+  ],
+  banks: [
+    { id: "bk1", bank: "HDFC Bank", no: "…4471", type: "Current", balance: 24.6, reconciled: dStr(-1) },
+    { id: "bk2", bank: "ICICI Bank", no: "…8820", type: "Current", balance: 12.9, reconciled: dStr(-2) },
+    { id: "bk3", bank: "SBI", no: "…1293", type: "OD / CC", balance: -9.4, reconciled: dStr(-1) },
+    { id: "bk4", bank: "Axis Bank", no: "…0092", type: "Current", balance: 5.3, reconciled: dStr(-3) },
+  ],
+  payments: [
+    { id: "py1", no: "PAY-0875", party: "Bharat Bitumen", ref: "INV-V-3318", amount: 21.6, date: dStr(0), mode: "NEFT", status: "Pending" as const },
+    { id: "py2", no: "PAY-0872", party: "Deccan Aggregates", ref: "INV-V-3308", amount: 5.1, date: dStr(-1), mode: "NEFT", status: "Pending" as const },
+    { id: "py3", no: "PAY-0869", party: "UltraTech Cement", ref: "INV-V-3311", amount: 6.8, date: dStr(-6), mode: "RTGS", status: "Released" as const },
+  ],
+  employees: [
+    { id: "EMP-0114", name: "Sunita Deshmukh", dept: "Project Execution", designation: "Project Manager", project: "P1", joined: "2019-04-12", base: 1.85, role: "PM" },
+    { id: "EMP-0207", name: "Rohan Bhosale", dept: "Project Execution", designation: "Site Engineer", project: "P2", joined: "2021-08-02", base: 0.72, role: "SITE_ENG" },
+    { id: "EMP-0318", name: "Dinesh Pawar", dept: "Store Management", designation: "Store In-charge", project: "P1", joined: "2018-01-15", base: 0.54, role: "STORE" },
+    { id: "EMP-0421", name: "Kavita Iyer", dept: "Human Resources", designation: "HR Manager", project: "HO", joined: "2017-06-01", base: 1.42, role: "HR" },
+    { id: "EMP-0522", name: "Prakash Rao", dept: "Finance & Accounts", designation: "Accounts Manager", project: "HO", joined: "2016-11-21", base: 1.68, role: "ACCOUNTS" },
+    { id: "EMP-0633", name: "Imran Shaikh", dept: "Procurement", designation: "Procurement Manager", project: "HO", joined: "2020-02-10", base: 1.51, role: "PROCUREMENT" },
+    { id: "EMP-0741", name: "Meera Krishnan", dept: "Commercial", designation: "Commercial Manager", project: "HO", joined: "2019-09-30", base: 1.74, role: "COMMERCIAL" },
+    { id: "EMP-0856", name: "Sandeep Kulkarni", dept: "RMC Operations", designation: "Plant Manager", project: "RMC-1", joined: "2018-05-14", base: 1.12, role: "RMC" },
+  ],
+  leaves: [
+    { id: "lv1", emp: "Rohan Bhosale", type: "Earned Leave", from: dStr(6), to: dStr(8), days: 3, status: "Pending", reason: "Family function" },
+    { id: "lv2", emp: "Dinesh Pawar", type: "Sick Leave", from: dStr(-4), to: dStr(-3), days: 2, status: "Approved", reason: "Fever — certificate attached" },
+    { id: "lv3", emp: "Sandeep Kulkarni", type: "Casual Leave", from: dStr(12), to: dStr(12), days: 1, status: "Pending", reason: "Personal work" },
+    { id: "lv4", emp: "Kavita Iyer", type: "Earned Leave", from: dStr(-12), to: dStr(-10), days: 3, status: "Approved", reason: "Vacation" },
+  ],
+  attendance: [
+    { id: "at1", empId: "EMP-0207", name: "Rohan Bhosale", project: "P2", hours: 9.2, ot: 1.2, status: "Present", appr: "Pending" },
+    { id: "at2", empId: "EMP-0318", name: "Dinesh Pawar", project: "P1", hours: 8.0, ot: 0, status: "Present", appr: "Approved" },
+    { id: "at3", empId: "EMP-0856", name: "Sandeep Kulkarni", project: "RMC-1", hours: 10.5, ot: 2.5, status: "Present", appr: "Pending" },
+    { id: "at4", empId: "EMP-0114", name: "Sunita Deshmukh", project: "P1", hours: 9.0, ot: 1.0, status: "Present", appr: "Approved" },
+    { id: "at5", empId: "EMP-0741", name: "Meera Krishnan", project: "HO", hours: 0, ot: 0, status: "On Leave", appr: "Approved" },
+  ],
+  payRuns: [
+    { id: "pyr1", period: "Feb 2026", status: "Paid", employees: 1451, gross: 2.61, deductions: 0.33, net: 2.28, date: dStr(-9) },
+    { id: "pyr2", period: "Jan 2026", status: "Paid", employees: 1407, gross: 2.52, deductions: 0.31, net: 2.21, date: dStr(-38) },
+    { id: "pyr3", period: "Mar 2026", status: "Processing", employees: 1478, gross: 2.68, deductions: 0.34, net: 2.34, date: dStr(6) },
+  ],
+
+  tasks: [
+    { id: "tk1", title: "Verify MB-1204/13 measurements for pile caps", due: dStr(0), status: "Open", forRole: "PM", link: "billing" },
+    { id: "tk2", title: "Approve PO-1288 — M-Sand, Talegaon", due: dStr(0), status: "Overdue", forRole: "PROCUREMENT", link: "pro-po" },
+    { id: "tk3", title: "Resubmit RA-04 after BOQ correction", due: dStr(-1), status: "Overdue", forRole: "COMMERCIAL", link: "billing" },
+    { id: "tk4", title: "Raise PR for deck slab cycle-2 plywood", due: dStr(1), status: "Open", forRole: "STORE", link: "pro-pr" },
+    { id: "tk5", title: "Lock Feb attendance after HR verification", due: dStr(0), status: "Open", forRole: "HR", link: "attendance" },
+    { id: "tk6", title: "Review vendor quotation comparison — RFQ-0412", due: dStr(1), status: "Open", forRole: "PROCUREMENT", link: "procurement" },
+    { id: "tk7", title: "Cube test results — batch BT-0291 to 0296", due: dStr(0), status: "Open", forRole: "RMC", link: "rmc" },
+    { id: "tk8", title: "Submit DPR for pier cap PC-114", due: dStr(0), status: "Open", forRole: "SITE_ENG", link: "projects" },
+    { id: "tk9", title: "Reconcile P1 material consumption vs BOQ", due: dStr(2), status: "Open", forRole: "ACCOUNTS", link: "materials" },
+    { id: "tk10", title: "Update safety training register", due: dStr(-2), status: "Done", forRole: "HR", link: "hr" },
+  ] as Task[],
+  queries: [
+    { id: "q1", docRef: "RA-04/PRJ-016/2026", raisedBy: "Meera Krishnan", text: "BOQ item 2.7 cumulative quantity exceeds previous certified by 12 MT — verify against MB-1204/11 and resubmit.", field: "Structural steel qty", priority: "High", due: dStr(1), status: "Open", ts: nowHrs(-1300).getTime() },
+    { id: "q2", docRef: "PR-0092", raisedBy: "Imran Shaikh", text: "Please attach the approved mix design reference for the PCE admixture specification.", field: "Specification", priority: "Normal", due: dStr(2), status: "Responded", response: "Mix design MD-P4-118 attached to the PR.", ts: nowHrs(-40).getTime() },
+    { id: "q3", docRef: "PO-1284", raisedBy: "Prakash Rao", text: "Freight charged twice in invoice — reconcile with e-way bill before payment.", field: "Freight", priority: "High", status: "Resolved", response: "Credit note received; invoice revised to ₹6.8 L.", ts: nowHrs(-400).getTime() },
+  ] as QueryRec[],
+  versions: [
+    { id: "vr1", docRef: "RA-05/PRJ-016/2026", ver: 1, date: dStr(-9), user: "Meera Krishnan", reason: "Initial submission", status: "Superseded" },
+    { id: "vr2", docRef: "RA-05/PRJ-016/2026", ver: 2, date: dStr(-4), user: "Meera Krishnan", reason: "Quantity revised per certified MB-1204/12", status: "Approved" },
+    { id: "vr3", docRef: "RA-04/PRJ-016/2026", ver: 1, date: dStr(-60), user: "Sunita Deshmukh", reason: "Initial submission", status: "Returned for Correction" },
+    { id: "vr4", docRef: "PO-1287", ver: 1, date: dStr(-5), user: "Imran Shaikh", reason: "Raised from PR-0093", status: "Approved" },
+  ] as VersionRec[],
+  signedLog: [
+    { id: "sg1", docRef: "PO-1287", name: "Rajesh Malhotra", desig: "Managing Director", role: "MD", date: dStr(-4), time: "11:42", svg: "", ip: "10.20.4.03", comment: "Approved within delegated limit", action: "Approved" },
+    { id: "sg2", docRef: "RA-05/PRJ-016/2026", name: "Meera Krishnan", desig: "Commercial Manager", role: "COMMERCIAL", date: dStr(-4), time: "16:05", svg: "", ip: "10.20.4.22", comment: "Quantities verified with MB", action: "Approved" },
+  ] as SignLog[],
+  announcements: [
+    { id: "an1", text: "FY 2025–26 year-end closing begins 28 Mar — freeze all material issues by 26 Mar, 18:00.", ts: nowHrs(-20).getTime(), kind: "Finance" },
+    { id: "an2", text: "New GST e-invoicing threshold applies from 01 Apr — update vendor master records.", ts: nowHrs(-44).getTime(), kind: "Compliance" },
+    { id: "an3", text: "Quarterly safety audit — all sites, week of 24 Mar. HSE cell will share checklists.", ts: nowHrs(-70).getTime(), kind: "HSE" },
+  ],
+  userAccess: {
+    u3: { DPR: { v: true, c: true, e: true, a: true, s: true }, MB: { v: true, c: true, e: true, a: true, s: true }, "RA Bill": { v: true, c: false, e: false, a: false, s: false }, Payment: { v: true, c: false, e: false, a: false, s: false } },
+    u8: { "RA Bill": { v: true, c: true, e: true, a: true, s: true }, MB: { v: true, c: false, e: false, a: true, s: true }, Payment: { v: true, c: false, e: false, a: false, s: false }, DPR: { v: true, c: false, e: false, a: false, s: false } },
+    u5: { Payment: { v: true, c: true, e: true, a: true, s: true }, "RA Bill": { v: true, c: false, e: false, a: false, s: false }, GRN: { v: true, c: false, e: false, a: false, s: false }, DPR: { v: false, c: false, e: false, a: false, s: false } },
+    u7: { GRN: { v: true, c: true, e: true, a: false, s: false }, "Material Issue": { v: true, c: true, e: true, a: false, s: false }, DPR: { v: false, c: false, e: false, a: false, s: false }, Payment: { v: false, c: false, e: false, a: false, s: false } },
+  } as Record<string, Record<string, AccessFlags>>,
+
+  folders: ["Contracts & Work Orders", "Drawings — GFC", "BOQ & Estimates", "Invoices & Bills", "Certificates", "HR Records"],
+  docs: [
+    { id: "dc1", name: "Work Order — NHAI Pune Viaduct.pdf", folder: "Contracts & Work Orders", type: "PDF", ver: 3, size: "2.4 MB", uploaded: dStr(120), by: "Meera Krishnan" },
+    { id: "dc2", name: "GFC — Pier Cap P4-P5.dwg", folder: "Drawings — GFC", type: "DWG", ver: 2, size: "8.1 MB", uploaded: dStr(31), by: "Rohan Bhosale", expiry: dStr(-60) },
+    { id: "dc3", name: "BOQ — MSRDC Junction (Rev C).xlsx", folder: "BOQ & Estimates", type: "XLSX", ver: 3, size: "1.1 MB", uploaded: dStr(44), by: "Meera Krishnan" },
+    { id: "dc4", name: "RA-042 — NHAI.pdf", folder: "Invoices & Bills", type: "PDF", ver: 1, size: "640 KB", uploaded: dStr(12), by: "Prakash Rao" },
+    { id: "dc5", name: "Completion Certificate — P7.pdf", folder: "Certificates", type: "PDF", ver: 1, size: "310 KB", uploaded: dStr(80), by: "Sunita Deshmukh" },
+    { id: "dc6", name: "Insurance — Plant Machinery.pdf", folder: "Contracts & Work Orders", type: "PDF", ver: 2, size: "1.8 MB", uploaded: dStr(200), by: "Arvind Nair", expiry: dStr(-21) },
+    { id: "dc7", name: "Rate Analysis — M40 Concrete.xlsx", folder: "BOQ & Estimates", type: "XLSX", ver: 5, size: "480 KB", uploaded: dStr(18), by: "Commercial Cell" },
+    { id: "dc8", name: "Safety Audit Report — Feb.pdf", folder: "Certificates", type: "PDF", ver: 1, size: "2.9 MB", uploaded: dStr(28), by: "HSE Cell" },
+  ] as DocFile[],
+  users: [
+    { id: "u1", name: "Arvind Nair", email: "arvind.n@sahaainfra.com", role: "SUPER_ADMIN", dept: "IT & Systems", project: "HO", site: "Head Office", office: "Head Office", finLimit: 0, active: true, lastLogin: "Today 09:12" },
+    { id: "u2", name: "Rajesh Malhotra", email: "rajesh.m@sahaainfra.com", role: "MD", dept: "Executive Office", project: "HO", site: "Head Office", office: "Head Office", finLimit: 999, active: true, lastLogin: "Today 08:41" },
+    { id: "u3", name: "Sunita Deshmukh", email: "sunita.d@sahaainfra.com", role: "PM", dept: "Project Execution", project: "P1", site: "Pachgaon Site", office: "Site Office", finLimit: 10, active: true, lastLogin: "Today 08:03", manager: "Rajesh Malhotra" },
+    { id: "u4", name: "Kavita Iyer", email: "kavita.i@sahaainfra.com", role: "HR", dept: "Human Resources", project: "HO", site: "Head Office", office: "Head Office", finLimit: 2, active: true, lastLogin: "Today 09:30" },
+    { id: "u5", name: "Prakash Rao", email: "prakash.r@sahaainfra.com", role: "ACCOUNTS", dept: "Finance & Accounts", project: "HO", site: "Head Office", office: "Head Office", finLimit: 25, active: true, lastLogin: "Today 09:02" },
+    { id: "u6", name: "Imran Shaikh", email: "imran.s@sahaainfra.com", role: "PROCUREMENT", dept: "Supply Chain", project: "HO", site: "Head Office", office: "Head Office", finLimit: 25, active: true, lastLogin: "Today 08:55" },
+    { id: "u7", name: "Dinesh Pawar", email: "dinesh.p@sahaainfra.com", role: "STORE", dept: "Store Management", project: "P1", site: "Pachgaon Store", office: "Warehouse", finLimit: 0.5, active: true, lastLogin: "Today 07:48", manager: "Sunita Deshmukh" },
+    { id: "u8", name: "Meera Krishnan", email: "meera.k@sahaainfra.com", role: "COMMERCIAL", dept: "Commercial & Contracts", project: "HO", site: "Head Office", office: "Head Office", finLimit: 50, active: true, lastLogin: "Today 09:21" },
+    { id: "u9", name: "Sandeep Kulkarni", email: "sandeep.k@sahaainfra.com", role: "RMC", dept: "RMC Operations", project: "RMC-1", site: "Kharadi Plant", office: "RMC Plant", finLimit: 1, active: true, lastLogin: "Today 06:12" },
+    { id: "u10", name: "Rohan Bhosale", email: "rohan.b@sahaainfra.com", role: "SITE_ENG", dept: "Project Execution", project: "P2", site: "Nashik Site", office: "Site Office", finLimit: 2, active: true, lastLogin: "Today 08:16", manager: "Vikas Thorat" },
+    { id: "u11", name: "Ganesh More", email: "ganesh.m@sahaainfra.com", role: "EMPLOYEE", dept: "Site Workforce", project: "P1", site: "Pachgaon Site", office: "Site Office", finLimit: 0, active: true, lastLogin: "Today 07:55", manager: "Sunita Deshmukh" },
+  ] as UserRec[],
+  workflows: [
+    { id: "w1", name: "Purchase Requisition", module: "Procurement", levels: "PM → Procurement Head → MD (>₹25 L)", basis: "Amount-tiered", active: true },
+    { id: "w2", name: "Purchase Order", module: "Procurement", levels: "Procurement → Accounts → MD (>₹50 L)", basis: "Amount-tiered", active: true },
+    { id: "w3", name: "Vendor Payment", module: "Finance", levels: "Accounts Manager → MD (parallel CFO)", basis: "Sequential + Parallel", active: true },
+    { id: "w4", name: "Attendance Correction", module: "HR", levels: "Site Supervisor → HR Manager", basis: "Sequential", active: true },
+    { id: "w5", name: "RA Bill Submission", module: "Billing", levels: "Commercial → Accounts → MD", basis: "Sequential", active: true },
+    { id: "w6", name: "Leave Request", module: "HR", levels: "Reporting Manager → HR", basis: "Sequential", active: false },
+  ] as Workflow[],
+  series: [
+    { doc: "Purchase Requisition", prefix: "PR", next: 1048 },
+    { doc: "Purchase Order", prefix: "PO", next: 1288 },
+    { doc: "Material Receipt", prefix: "GRN", next: 2045 },
+    { doc: "RA Bill", prefix: "RA", next: 43 },
+    { doc: "Journal Voucher", prefix: "JV", next: 345 },
+    { doc: "Payment Voucher", prefix: "PAY", next: 876 },
+  ] as SeriesRec[],
+  settings: { company: "SAHAA INFRA Ltd.", address: "Meridian House, Baner Road, Pune 411045", gstin: "27AAACS1429B1ZQ", currency: "INR (₹)", fy: "FY 2025–26", email: true, sms: false, whatsapp: false, backup: "Daily 02:00 IST — last run today" },
+  audit: [
+    { id: "A-5241", ts: dISO(14), user: "Prakash Rao", role: "Accounts Manager", module: "Finance", action: "Payment Released", entity: "PAY-0872", detail: "₹21.6 L → Bharat Bitumen against INV-V-3318", ip: "10.20.4.18" },
+    { id: "A-5240", ts: dISO(52), user: "Dinesh Pawar", role: "Store Keeper", module: "Materials", action: "GRN Posted", entity: "GRN-2044", detail: "PCE Admixture +2,400 Ltr at RMC Yard (stock updated)", ip: "10.20.9.31" },
+    { id: "A-5239", ts: dISO(95), user: "Imran Shaikh", role: "Procurement Manager", module: "Procurement", action: "PO Raised", entity: "PO-1287", detail: "₹56.1 L Tata Steel — awaiting MD approval", ip: "10.20.4.07" },
+    { id: "A-5238", ts: dISO(140), user: "Meera Krishnan", role: "Commercial Manager", module: "Billing", action: "RA Bill Certified", entity: "RA-042", detail: "NHAI certified gross ₹62.4 L, net ₹45.74 L", ip: "10.20.4.22" },
+    { id: "A-5237", ts: dISO(200), user: "Kavita Iyer", role: "HR Manager", module: "HR", action: "Payroll Approved", entity: "Mar 2026", detail: "1,451 employees · Net ₹2.28 Cr", ip: "10.20.4.11" },
+    { id: "A-5236", ts: dISO(260), user: "Sunita Deshmukh", role: "Project Manager", module: "Projects", action: "Progress Updated", entity: "P1", detail: "Physical progress 62% → 64% (weekly DPR)", ip: "10.20.9.12" },
+    { id: "A-5235", ts: dISO(330), user: "Rohan Bhosale", role: "Site Engineer", module: "Attendance", action: "Punch Verified", entity: "P2 roster", detail: "38 punches verified for morning shift", ip: "10.20.9.44" },
+    { id: "A-5234", ts: dISO(410), user: "Arvind Nair", role: "Super Admin", module: "Settings", action: "Permissions Changed", entity: "STORE role", detail: "Export disabled on Finance module", ip: "10.20.4.02" },
+  ] as AuditEntry[],
+  notifs: [
+    { id: "n1", ts: dISO(12), type: "approval", text: "PO-1288 (₹5.2 L — UltraTech) awaiting your approval", read: false },
+    { id: "n2", ts: dISO(38), type: "stock", text: "OPC 53 Cement below reorder level at Store A — Pune", read: false },
+    { id: "n3", ts: dISO(71), type: "payment", text: "MIDC invoice INV-C-2210 overdue by 4 days (₹6.31 L)", read: false },
+    { id: "n4", ts: dISO(120), type: "project", text: "RA-04/PRJ-016 returned for correction — quantity query open", read: false },
+    { id: "n5", ts: dISO(300), type: "hr", text: "Mar 2026 payroll processing — verify overtime by Friday", read: true },
+  ] as Notif[],
+});
+
+export type ERPState = ReturnType<typeof seed>;
+
+/* ── permissions ─────────────────────────────────────────────── */
+export interface Perm { view: boolean; create: boolean; edit: boolean; delete: boolean; approve: boolean; export: boolean }
+export type Perms = Record<RoleId, Record<string, Perm>>;
+
+function buildPerms(): Perms {
+  const out = {} as Perms;
+  for (const r of ROLES) {
+    const rec: Record<string, Perm> = {};
+    for (const m of MODULES) {
+      const has = ACCESS[r.id].includes(m);
+      rec[m] = {
+        view: has,
+        create: has && r.id !== "EMPLOYEE" && r.id !== "STORE" ? true : r.id === "STORE" ? has && (m === "materials" || m === "stores") : has && m === "attendance",
+        edit: has && r.id !== "EMPLOYEE",
+        delete: has && r.id === "SUPER_ADMIN",
+        approve: has && ["SUPER_ADMIN", "MD", "HR", "ACCOUNTS", "PROCUREMENT", "PM", "COMMERCIAL", "RMC"].includes(r.id) && ["approvals", "procurement", "finance", "billing", "hr", "attendance", "materials", "commercial"].includes(m),
+        export: has && r.id !== "EMPLOYEE" && !(r.id === "STORE" && m === "finance"),
+      };
+    }
+    out[r.id] = rec;
+  }
+  return out;
+}
+
+/* ── context ─────────────────────────────────────────────────── */
+interface ERP {
+  s: ERPState;
+  role: RoleId;
+  user: { name: string; title: string; dept: string };
+  userRec: UserRec;
+  dark: boolean; setDark: (v: boolean) => void;
+  can: (mod: ModuleId | string, perm: keyof Perm) => boolean;
+  log: (module: string, action: string, entity: string, detail: string) => void;
+  notify: (type: Notif["type"], text: string) => void;
+  markRead: (id?: string) => void;
+  setS: React.Dispatch<React.SetStateAction<ERPState>>;
+  perms: Perms; setPerms: React.Dispatch<React.SetStateAction<Perms>>;
+  nextCode: (prefix: string) => string;
+  intent: { route: string; kind?: string } | null; setIntent: (v: { route: string; kind?: string } | null) => void;
+  resetAll: () => void;
+}
+
+const Ctx = createContext<ERP | null>(null);
+export const useERP = () => {
+  const c = useContext(Ctx);
+  if (!c) throw new Error("useERP outside provider");
+  return c;
+};
+
+const LS_KEY = "meridian.erp.v5";
+
+export function ERPProvider({ role, children }: { role: RoleId; children: ReactNode }) {
+  const [s, setS] = useState<ERPState>(() => {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (raw) { const p = JSON.parse(raw); if (p && p.v === 5 && p.data) return p.data as ERPState; }
+    } catch { /* fall through to seed */ }
+    return seed();
+  });
+  const [dark, setDarkState] = useState(() => { try { return localStorage.getItem("mer.dark") === "1"; } catch { return false; } });
+  const [perms, setPerms] = useState<Perms>(buildPerms);
+  const [intent, setIntent] = useState<{ route: string; kind?: string } | null>(null);
+
+  useEffect(() => {
+    try { localStorage.setItem(LS_KEY, JSON.stringify({ v: 5, data: s })); } catch { /* storage full — ignore */ }
+  }, [s]);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", dark);
+    try { localStorage.setItem("mer.dark", dark ? "1" : "0"); } catch { /* noop */ }
+  }, [dark]);
+
+  const r = ROLES.find((x) => x.id === role)!;
+  const user = { name: r.person, title: r.title, dept: r.dept };
+  const userRec = useMemo(() => s.users.find((u) => u.role === role) ?? ({ id: "u0", name: r.person, email: "", role, dept: r.dept, project: "HO", site: "Head Office", office: "Head Office", finLimit: 0, active: true, lastLogin: "Now" } as UserRec), [s.users, role, r]);
+
+  const can = useCallback((mod: ModuleId | string, perm: keyof Perm) => {
+    const rec = perms[role];
+    if (!rec) return false;
+    if (role === "SUPER_ADMIN") return true;
+    return !!rec[mod]?.[perm];
+  }, [perms, role]);
+
+  const log = useCallback((module: string, action: string, entity: string, detail: string) => {
+    setS((p) => ({
+      ...p,
+      audit: [{ id: "A-" + (5300 + p.audit.length), ts: new Date().toISOString(), user: r.person, role: r.label, module, action, entity, detail, ip: "10.20." + (4 + (r.person.length % 6)) + "." + (10 + r.person.length) }, ...p.audit],
+    }));
+  }, [r]);
+
+  const notify = useCallback((type: Notif["type"], text: string) => {
+    setS((p) => ({ ...p, notifs: [{ id: "n" + Date.now(), ts: new Date().toISOString(), type, text, read: false }, ...p.notifs] }));
+  }, []);
+
+  const markRead = useCallback((id?: string) => {
+    setS((p) => ({ ...p, notifs: p.notifs.map((n) => (!id || n.id === id) ? { ...n, read: true } : n) }));
+  }, []);
+
+  const nextCode = useCallback((prefix: string) => {
+    let code = prefix + "-0001";
+    setS((p) => {
+      const idx = p.series.findIndex((x) => x.prefix === prefix);
+      if (idx >= 0) {
+        const next = p.series[idx].next + 1;
+        code = `${prefix}-${String(p.series[idx].next).padStart(4, "0")}`;
+        return { ...p, series: p.series.map((x, i) => i === idx ? { ...x, next } : x) };
+      }
+      return p;
+    });
+    const cur = s.series.find((x) => x.prefix === prefix);
+    return cur ? `${prefix}-${String(cur.next).padStart(4, "0")}` : code;
+  }, [s.series]);
+
+  const resetAll = useCallback(() => {
+    try { localStorage.removeItem(LS_KEY); } catch { /* noop */ }
+    setS(seed());
+    window.location.reload();
+  }, []);
+
+  const value: ERP = {
+    s, setS, role, user, userRec, dark, setDark: setDarkState, can, log, notify, markRead, perms, setPerms, nextCode, intent, setIntent, resetAll,
+  };
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+}
