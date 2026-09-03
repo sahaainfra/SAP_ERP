@@ -47,7 +47,23 @@ export interface PODoc {
   status: POStatus; ts: number; acceptedBy?: string;
 }
 
-export interface Punch { id: string; user: string; date: string; inAt?: string; outAt?: string; breakStart?: string; breakEnd?: string; method: string; project: string; status: "Present" | "Late" | "Half Day" | "On Leave" | "Holiday" }
+export interface Punch {
+  id: string; user: string; date: string; inAt?: string; outAt?: string; breakStart?: string; breakEnd?: string;
+  method: string; project: string; site?: string; status: "Present" | "Late" | "Half Day" | "On Leave" | "Holiday";
+  /* geolocation record — immutable once captured */
+  lat?: number; lng?: number; acc?: number; dist?: number; radius?: number; siteLat?: number; siteLng?: number;
+  geo?: "Verified" | "Simulated" | "Offline" | "Manual"; device?: string; ip?: string;
+}
+export interface AttLocation {
+  id: string; locId: string; projectId: string; project: string; site: string;
+  type: "Project Site" | "Site Office" | "Head Office" | "Plant" | "RMC";
+  address: string; lat: number; lng: number; radius: number; gpsReq: number;
+  from: string; to: string; status: "Active" | "Inactive";
+  assignedRoles: string[]; assignedDepts: string[];
+  createdBy: string; createdDate: string; modifiedBy?: string; modifiedDate?: string; reason?: string;
+}
+export interface LocChange { id: string; locId: string; project: string; field: string; oldV: string; newV: string; by: string; ts: string; reason: string }
+export interface LocAttempt { id: string; user: string; date: string; time: string; project: string; site: string; dist: number; radius: number; acc: number; result: "Outside Geofence" | "Poor Accuracy" | "GPS Denied" | "GPS Unavailable" | "Stale Fix" | "No Assigned Site"; device: string }
 export interface Msg {
   id: string; ch: string; user: string; role: string; ts: string;
   kind: "text" | "update" | "issue" | "file";
@@ -177,10 +193,35 @@ const seed = () => ({
     ], freight: 22000, loading: 0, other: 0, terms: ["t1", "t2", "t7", "t12"].map((id) => TERMS_LIBRARY.find((t) => t.id === id)!.text), termsLocked: true, status: "Closed", ts: nowHrs(-580).getTime(), acceptedBy: "Rohit Salunkhe · UltraTech · " + dStr(-23) },
   ] as PODoc[],
   punches: [
-    { id: "pu1", user: "Sunita Deshmukh", date: dStr(-1), inAt: "09:02", outAt: "18:24", method: "GPS punch", project: "P1", status: "Present" },
-    { id: "pu2", user: "Sunita Deshmukh", date: dStr(-2), inAt: "09:41", outAt: "18:05", method: "Web punch", project: "P1", status: "Late" },
-    { id: "pu3", user: "Sunita Deshmukh", date: dStr(-3), inAt: "08:55", outAt: "20:10", method: "GPS punch", project: "P1", status: "Present" },
+    { id: "pu1", user: "Sunita Deshmukh", date: dStr(-1), inAt: "09:02", outAt: "18:24", method: "GPS punch", project: "P1", site: "Pachgaon Site", status: "Present", lat: 18.64151, lng: 73.81182, acc: 8, dist: 42, radius: 150, siteLat: 18.6412, siteLng: 73.812, geo: "Verified", device: "Chrome · Android · Mobile", ip: "10.20.9.44" },
+    { id: "pu2", user: "Sunita Deshmukh", date: dStr(-2), inAt: "09:41", outAt: "18:05", method: "GPS punch", project: "P1", site: "Pachgaon Site", status: "Late", lat: 18.64098, lng: 73.81226, acc: 11, dist: 58, radius: 150, siteLat: 18.6412, siteLng: 73.812, geo: "Verified", device: "Chrome · Android · Mobile", ip: "10.20.9.44" },
+    { id: "pu3", user: "Sunita Deshmukh", date: dStr(-3), inAt: "08:55", outAt: "20:10", method: "GPS punch", project: "P1", site: "Pachgaon Site", status: "Present", lat: 18.64132, lng: 73.81211, acc: 6, dist: 24, radius: 150, siteLat: 18.6412, siteLng: 73.812, geo: "Verified", device: "Chrome · Android · Mobile", ip: "10.20.9.44" },
+    { id: "pu4", user: "Dinesh Pawar", date: dStr(-1), inAt: "07:58", outAt: "19:12", method: "GPS punch", project: "P1", site: "Pachgaon Site", status: "Present", lat: 18.64088, lng: 73.81241, acc: 9, dist: 71, radius: 150, siteLat: 18.6412, siteLng: 73.812, geo: "Verified", device: "Chrome · Android · Mobile", ip: "10.20.9.51" },
+    { id: "pu5", user: "Rohan Bhosale", date: dStr(-1), inAt: "08:47", outAt: "18:31", method: "GPS punch", project: "P2", site: "Nashik Site", status: "Present", lat: 19.93812, lng: 73.83187, acc: 12, dist: 33, radius: 200, siteLat: 19.938, siteLng: 73.832, geo: "Verified", device: "Safari · iOS · Mobile", ip: "10.20.9.63" },
+    { id: "pu6", user: "Sandeep Kulkarni", date: dStr(-1), inAt: "06:12", outAt: "17:40", method: "GPS punch", project: "RMC-1", site: "Kharadi Plant", status: "Present", lat: 18.55116, lng: 73.92588, acc: 7, dist: 21, radius: 100, siteLat: 18.551, siteLng: 73.926, geo: "Verified", device: "Chrome · Android · Tablet", ip: "10.20.7.12" },
   ] as Punch[],
+  /* ── geolocation attendance master — Super Admin governed ── */
+  attLocations: [
+    { id: "gl1", locId: "LOC-001", projectId: "P1", project: "P1 — Mumbai–Pune Expressway Widening", site: "Pachgaon Site", type: "Project Site", address: "Pachgaon village, NH-48 KM 92, Dist. Pune", lat: 18.6412, lng: 73.812, radius: 150, gpsReq: 25, from: "01 Apr 2025", to: "31 Mar 2027", status: "Active", assignedRoles: ["PM", "SITE_ENG", "STORE", "EMPLOYEE"], assignedDepts: ["Project Execution", "Store Management", "Site Workforce"], createdBy: "Arvind Nair", createdDate: "28 Mar 2025", modifiedBy: "Arvind Nair", modifiedDate: "10 Nov 2025", reason: "Radius 100 m → 150 m — batching yard included after site expansion" },
+    { id: "gl2", locId: "LOC-002", projectId: "P2", project: "P2 — Nashik Ring Road Package 3", site: "Nashik Site", type: "Project Site", address: "Ambad MIDC junction, Nashik–Pune Hwy", lat: 19.938, lng: 73.832, radius: 200, gpsReq: 25, from: "01 Jun 2025", to: "31 Mar 2027", status: "Active", assignedRoles: ["PM", "SITE_ENG", "STORE", "EMPLOYEE"], assignedDepts: ["Project Execution", "Store Management", "Site Workforce"], createdBy: "Arvind Nair", createdDate: "25 May 2025" },
+    { id: "gl3", locId: "LOC-003", projectId: "P3", project: "P3 — Talegaon Logistics Park", site: "Talegaon Batching Plant", type: "Plant", address: "Survey 44, Chakan–Talegaon Rd, Pune", lat: 18.729, lng: 73.681, radius: 120, gpsReq: 20, from: "01 Apr 2025", to: "31 Mar 2027", status: "Active", assignedRoles: ["SITE_ENG", "STORE", "EMPLOYEE", "RMC"], assignedDepts: ["Project Execution", "RMC Operations"], createdBy: "Arvind Nair", createdDate: "28 Mar 2025" },
+    { id: "gl4", locId: "LOC-004", projectId: "RMC-1", project: "RMC-1 — Kharadi Batching Plant", site: "Kharadi Plant", type: "RMC", address: "Kharadi Bypass Rd, Pune East", lat: 18.551, lng: 73.926, radius: 100, gpsReq: 20, from: "01 Apr 2025", to: "31 Mar 2027", status: "Active", assignedRoles: ["RMC", "STORE", "EMPLOYEE"], assignedDepts: ["RMC Operations", "Site Workforce"], createdBy: "Arvind Nair", createdDate: "28 Mar 2025" },
+    { id: "gl5", locId: "LOC-005", projectId: "HO", project: "Head Office — Pune", site: "Head Office", type: "Head Office", address: "Meridian House, SB Road, Shivajinagar, Pune 411005", lat: 18.531, lng: 73.847, radius: 80, gpsReq: 30, from: "01 Apr 2025", to: "31 Mar 2028", status: "Active", assignedRoles: ["SUPER_ADMIN", "MD", "HR", "ACCOUNTS", "PROCUREMENT", "COMMERCIAL"], assignedDepts: ["IT & Systems", "Executive Office", "Human Resources", "Finance & Accounts", "Supply Chain", "Commercial & Contracts"], createdBy: "Arvind Nair", createdDate: "20 Mar 2025" },
+    { id: "gl6", locId: "LOC-006", projectId: "P4", project: "P4 — Wagholi Flyover", site: "Wagholi Site", type: "Project Site", address: "Wagholi–Nagar Rd junction, Pune", lat: 18.5836, lng: 73.9521, radius: 150, gpsReq: 25, from: "01 Apr 2025", to: "15 Oct 2025", status: "Inactive", assignedRoles: ["PM", "SITE_ENG", "EMPLOYEE"], assignedDepts: ["Project Execution"], createdBy: "Arvind Nair", createdDate: "28 Mar 2025", modifiedBy: "Arvind Nair", modifiedDate: "16 Oct 2025", reason: "Project completed — geofence retired" },
+  ] as AttLocation[],
+  locHistory: [
+    { id: "lh1", locId: "LOC-001", project: "P1 — Pachgaon Site", field: "Geofence radius", oldV: "100 m", newV: "150 m", by: "Arvind Nair", ts: new Date(Date.now() - 40 * 864e5).toISOString(), reason: "Batching yard included after site expansion" },
+    { id: "lh2", locId: "LOC-001", project: "P1 — Pachgaon Site", field: "GPS accuracy requirement", oldV: "≤ 50 m", newV: "≤ 25 m", by: "Arvind Nair", ts: new Date(Date.now() - 40 * 864e5).toISOString(), reason: "Tightened to match company GPS policy" },
+    { id: "lh3", locId: "LOC-006", project: "P4 — Wagholi Site", field: "Status", oldV: "Active", newV: "Inactive", by: "Arvind Nair", ts: new Date(Date.now() - 120 * 864e5).toISOString(), reason: "Project completed — geofence retired" },
+  ] as LocChange[],
+  locAttempts: [
+    { id: "la1", user: "Ganesh More", date: dStr(-1), time: "08:36", project: "P1", site: "Pachgaon Site", dist: 438, radius: 150, acc: 9, result: "Outside Geofence", device: "Chrome · Android · Mobile" },
+    { id: "la2", user: "Rohan Bhosale", date: dStr(-2), time: "09:12", project: "P2", site: "Nashik Site", dist: 0, radius: 200, acc: 68, result: "Poor Accuracy", device: "Safari · iOS · Mobile" },
+    { id: "la3", user: "Sagar Jadhav", date: dStr(-2), time: "07:58", project: "P1", site: "Pachgaon Site", dist: 0, radius: 150, acc: 0, result: "GPS Denied", device: "Chrome · Android · Mobile" },
+    { id: "la4", user: "Ganesh More", date: dStr(-3), time: "18:44", project: "P1", site: "Pachgaon Site", dist: 212, radius: 150, acc: 14, result: "Outside Geofence", device: "Chrome · Android · Mobile" },
+    { id: "la5", user: "Vinay Kadam", date: dStr(-4), time: "10:02", project: "—", site: "—", dist: 0, radius: 0, acc: 12, result: "No Assigned Site", device: "Chrome · Windows · Desktop" },
+  ] as LocAttempt[],
+  offlineQueue: [] as { id: string; user: string; kind: "Check-In" | "Check-Out"; project: string; site: string; ts: string; lat: number; lng: number; acc: number; status: "Pending Sync" }[],
   matrix: [
     { id: "mx1", doc: "Purchase Requisition", levels: [{ role: "Site Engineer", limit: "≤ ₹2 L", backup: "Project Engineer" }, { role: "Project Manager", limit: "≤ ₹10 L", backup: "Sr. Project Manager" }, { role: "Procurement Manager", limit: "≤ ₹50 L", backup: "Supply Chain Head" }, { role: "Managing Director", limit: "> ₹50 L", backup: "—" }] },
     { id: "mx2", doc: "Purchase Order", levels: [{ role: "Procurement Manager", limit: "≤ ₹25 L", backup: "Supply Chain Head" }, { role: "Accounts Manager", limit: "All (parallel)", backup: "—" }, { role: "Commercial Manager", limit: "≤ ₹75 L", backup: "—" }, { role: "Managing Director", limit: "> ₹75 L", backup: "—" }] },
@@ -656,7 +697,7 @@ export function ERPProvider({ role, children }: { role: RoleId; children: ReactN
   const [s, setS] = useState<ERPState>(() => {
     try {
       const raw = localStorage.getItem(LS_KEY);
-      if (raw) { const p = JSON.parse(raw); if (p && p.v === 8 && p.data) return p.data as ERPState; }
+      if (raw) { const p = JSON.parse(raw); if (p && p.v === 9 && p.data) return p.data as ERPState; }
     } catch { /* fall through to seed */ }
     return seed();
   });
@@ -665,7 +706,7 @@ export function ERPProvider({ role, children }: { role: RoleId; children: ReactN
   const [intent, setIntent] = useState<{ route: string; kind?: string } | null>(null);
 
   useEffect(() => {
-    try { localStorage.setItem(LS_KEY, JSON.stringify({ v: 8, data: s })); } catch { /* storage full — ignore */ }
+    try { localStorage.setItem(LS_KEY, JSON.stringify({ v: 9, data: s })); } catch { /* storage full — ignore */ }
   }, [s]);
 
   useEffect(() => {

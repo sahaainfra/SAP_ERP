@@ -16,7 +16,7 @@ export function ReportsPage() {
   const toast = useToast();
   const [preview, setPreview] = useState<string | null>(null);
 
-  const gen = (name: string): { head: string[]; rows: (string | number)[][] } => {
+  const gen = (name: string): { head: string[]; rows: any[][] } => {
     if (name.includes("Tender")) return { head: ["Tender", "Authority", "Value (₹ Cr)", "EMD", "Deadline", "Status"], rows: s.tenders.map((t) => [t.no, t.authority, t.value, t.emd, t.deadline, t.status]) };
     if (name.includes("Stock")) return { head: ["Material", "Store", "On Hand", "Unit", "Value (₹ Cr)"], rows: s.stock.map((x) => [x.material, x.store, x.onHand, x.unit, x.value]) };
     if (name.includes("PO Register") || name.includes("Purchase")) return { head: ["Doc", "Type", "Project", "Party", "Qty", "Value (₹ L)", "Status"], rows: s.proc.map((p) => [p.code, p.type, p.project, p.party, `${p.qty} ${p.unit}`, p.amount, p.status]) };
@@ -34,6 +34,10 @@ export function ReportsPage() {
     if (name.includes("Trial Balance")) return { head: ["Code", "Head", "Type", "Balance (₹ Cr)"], rows: s.coa.map((c) => [c.code, c.name, c.type, c.balance]) };
     if (name.includes("Voucher")) return { head: ["Voucher", "Type", "Date", "Dr", "Cr", "Amount (₹ L)", "Cost Centre", "Status"], rows: s.vouchers.map((v) => [v.no, v.type, v.date, v.debit, v.credit, v.amount, v.costCentre, v.status]) };
     if (name.includes("Corrections")) return { head: ["Employee", "Date", "Existing", "Requested", "Status"], rows: s.corrections.map((c) => [c.emp, c.date, c.existing, c.requested, c.status]) };
+    if (name.includes("Location Verified")) return { head: ["Employee", "Date", "Project/Site", "In", "Out", "Distance (m)", "Accuracy (m)", "Geo"], rows: s.punches.filter((p) => p.geo === "Verified").map((p) => [p.user, p.date, `${p.project} · ${p.site ?? ""}`, p.inAt ?? "—", p.outAt ?? "—", p.dist ?? "—", p.acc ?? "—", p.geo]) };
+    if (name.includes("Outside Geofence")) return { head: ["User", "Date", "Time", "Site", "Distance (m)", "Radius (m)", "Accuracy (m)", "Result"], rows: s.locAttempts.map((a) => [a.user, a.date, a.time, `${a.project} · ${a.site}`, a.dist, a.radius, a.acc, a.result]) };
+    if (name.includes("GPS Accuracy")) return { head: ["Employee", "Date", "Accuracy (m)", "Site", "Distance (m)", "Device"], rows: s.punches.filter((p) => p.acc).map((p) => [p.user, p.date, p.acc, p.site ?? "—", p.dist ?? "—", p.device ?? "—"]) };
+    if (name.includes("Geofence")) return { head: ["Loc ID", "Project", "Site", "Type", "Lat", "Lng", "Radius (m)", "Status"], rows: s.attLocations.map((l) => [l.locId, l.projectId, l.site, l.type, l.lat, l.lng, l.radius, l.status]) };
     if (name.includes("Project")) return { head: ["Code", "Project", "Client", "Value (₹ Cr)", "Progress %", "Status"], rows: s.projects.map((p) => [p.code, p.name, p.client, p.contractValue, p.progress, p.status]) };
     return { head: ["Material", "Category", "Unit", "ROL", "Rate"], rows: s.materials.map((m) => [m.name, m.cat, m.unit, m.rol, m.rate]) };
   };
@@ -45,6 +49,7 @@ export function ReportsPage() {
     { cat: "Store", items: ["Stock Register", "Low Stock Report"] },
     { cat: "Finance", items: ["Receivable Ageing", "Payable Ageing", "Trial Balance", "Voucher Register"] },
     { cat: "HR & Payroll", items: ["Attendance Report", "Payroll Register", "PF Register", "Labour Cost", "Attendance Corrections"] },
+    { cat: "Geo Attendance", items: ["Location Verified Attendance", "Outside Geofence Attempts", "GPS Accuracy Report", "Geofence Master"] },
     { cat: "Plant & RMC", items: ["Maintenance Schedule", "Fuel Register"] },
     { cat: "Quality & Safety", items: ["Quality Report", "Safety Report"] },
     { cat: "Tenders", items: ["Tender Register & Pipeline"] },

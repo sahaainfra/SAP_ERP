@@ -124,7 +124,7 @@ export function SignaturePage() {
 /* ── Approval queue model ──────────────────────────────────── */
 export interface QItem {
   key: string; ref: string; type: string; project: string; by: string; amount: string; date: string;
-  status: string; source: "pr" | "po" | "pay" | "leave" | "bill" | "att"; ts: number;
+  status: string; source: "pr" | "po" | "pay" | "leave" | "bill" | "att" | "corr"; ts: number;
 }
 export function buildQueue(s: ERPState): QItem[] {
   const q: QItem[] = [];
@@ -136,6 +136,8 @@ export function buildQueue(s: ERPState): QItem[] {
     q.push({ key: "pay:" + p.id, ref: p.no, type: "Vendor Payment", project: "—", by: "Accounts", amount: `₹${p.amount.toFixed(1)} L`, date: p.date, status: p.status, source: "pay", ts: Date.now() - 864e5 }));
   s.leaves.filter((l) => l.status === "Pending").forEach((l) =>
     q.push({ key: "leave:" + l.id, ref: `LV-${l.emp.split(" ")[0]}`, type: "Leave Request", project: "—", by: l.emp, amount: `${l.days} day(s)`, date: l.from, status: l.status, source: "leave", ts: Date.now() - 2 * 864e5 }));
+  s.corrections.filter((c) => c.status === "Pending").forEach((c) =>
+    q.push({ key: "corr:" + c.id, ref: `ATT-${c.emp.split(" ")[0].toUpperCase()}`, type: "Attendance Correction", project: "—", by: c.emp, amount: c.requested.replace("Present — ", ""), date: c.date, status: c.status, source: "corr", ts: Date.now() - 5 * 36e5 }));
   s.billDocs.filter((b) => b.status === "Submitted for Checking" || b.status === "Under Approval").forEach((b) =>
     q.push({ key: "bill:" + b.id, ref: b.no, type: b.type, project: b.project, by: b.by, amount: `₹${b.net.toFixed(2)} Cr`, date: b.date, status: b.status, source: "bill", ts: b.ts }));
   s.attendance.filter((a) => a.appr === "Pending").forEach((a) =>
@@ -184,6 +186,7 @@ export function ApprovalCentre() {
       if (item.source === "leave") n.leaves = p.leaves.map((x) => x.id === item.key.slice(6) ? { ...x, status: verdict } : x);
       if (item.source === "bill") n.billDocs = p.billDocs.map((x) => x.id === item.key.slice(5) ? { ...x, status: verdict === "Approved" ? "Approved" : "Rejected" } : x);
       if (item.source === "att") n.attendance = p.attendance.map((x) => x.id === item.key.slice(4) ? { ...x, appr: verdict } : x);
+      if (item.source === "corr") n.corrections = p.corrections.map((x) => x.id === item.key.slice(5) ? { ...x, status: verdict } : x);
       if (verdict === "Approved" && sig) n.signedLog = [{ id: "sg" + Date.now(), docRef: item.ref, name: user.name, desig: ROLES.find((r) => r.id === role)?.title ?? "", role, date: nowStr(), time: timeStr(), svg: sig.dataUrl, ip: "10.20.4.18", comment: comment || "Approved", action: "Approved" }, ...p.signedLog];
       return n;
     });

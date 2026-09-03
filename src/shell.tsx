@@ -223,6 +223,8 @@ export function Header({
   const pending = usePendingCount();
   const unread = s.notifs.filter((n) => !n.read).length;
   const chatUnread = useChatUnread();
+  const attToday = s.punches.find((p) => p.user === userRec.name && p.date === new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short" }));
+  const attIn = attToday && !attToday.outAt ? attToday.inAt : null;
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); inputRef.current?.focus(); } };
@@ -326,6 +328,15 @@ export function Header({
         <button onClick={() => onNav("approvals")} className="relative h-9 w-9 grid place-items-center rounded-lg text-ink-500 hover:bg-canvas active:scale-90 transition-all" aria-label="Approvals">
           <IInbox size={18} />
           {pending > 0 && <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-brand-600 text-white text-[9.5px] font-bold num grid place-items-center">{pending}</span>}
+        </button>
+
+        {/* Quick attendance — geo punch status */}
+        <button onClick={() => onNav("attendance")}
+          className={cx("hidden sm:inline-flex items-center gap-1.5 h-9 px-2.5 rounded-lg border text-[11px] font-bold transition-all active:scale-95",
+            attIn ? "border-ok-500/40 bg-ok-100/50 text-ok-700 hover:bg-ok-100" : "border-line text-ink-500 hover:border-brand-300 hover:text-brand-700 hover:bg-brand-50/40")}
+          aria-label="My attendance" title="My Attendance — geofenced check-in/out">
+          <span className={cx("h-2 w-2 rounded-full", attIn ? "bg-ok-500 animate-pulse-dot" : "bg-line-strong")} />
+          {attIn ? <span className="num">{attIn}</span> : "Check In"}
         </button>
 
         {/* Team chat */}
