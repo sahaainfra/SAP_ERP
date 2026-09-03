@@ -260,12 +260,7 @@ const seed = () => ({
     { id: "s2", no: "SB-121", sub: "Anand Earthworks", scope: "Earthwork — P5", amount: 9.2, adv: 0.9, retention: 0.46, net: 7.84, status: "Pending Certification" },
     { id: "s3", no: "SB-124", sub: "Vertex Waterproofing", scope: "Waterproofing — P1", amount: 4.6, adv: 0.4, retention: 0.23, net: 3.97, status: "Submitted" },
   ],
-  variations: [
-    { id: "v1", project: "P1", desc: "Additional box culvert at KM 12+400", amount: 3.8, status: "Approved" },
-    { id: "v2", project: "P2", desc: "Scope change — junction widening", amount: 5.2, status: "Submitted" },
-    { id: "v3", project: "P4", desc: "Extra item — rock excavation", amount: 2.1, status: "Under Review" },
-    { id: "v4", project: "P5", desc: "Granular sub-base qty increase", amount: 1.4, status: "Approved" },
-  ],
+
   equipment: [
     { code: "EQ-011", name: "Excavator CAT 320", reg: "MH-12-AB-4471", cap: "20 T", project: "P1", hrs: 1240, fuel: 18, status: "Operational", maintDue: dStr(-22) },
     { code: "EQ-014", name: "JCB 3DX", reg: "MH-13-CD-8820", cap: "7.5 T", project: "P5", hrs: 986, fuel: 11, status: "Operational", maintDue: dStr(6) },
@@ -325,7 +320,66 @@ const seed = () => ({
     { doc: "RA Bill", prefix: "RA", next: 43 },
     { doc: "Journal Voucher", prefix: "JV", next: 345 },
     { doc: "Payment Voucher", prefix: "PAY", next: 876 },
+    { doc: "Measurement Book", prefix: "MB", next: 1208 },
+    { doc: "Extra Item", prefix: "EI", next: 44 },
+    { doc: "Variation Order", prefix: "VO", next: 21 },
   ] as SeriesRec[],
+
+  /* ── Billing & RA Bill seed ────────────────────────────────── */
+  billingBoq: [
+    { id: "b1", project: "P1", itemNo: "2.1", desc: "Piling — Bored cast-in-situ (M30)", spec: "IS 2911, 1200 mm dia", unit: "R.M", contractQty: 4200, rate: 18400, prevQty: 2610, currentQty: 0 },
+    { id: "b2", project: "P1", itemNo: "2.4", desc: "RCC M40 in pier caps & piers", spec: "IS 456, pumped", unit: "Cu.M", contractQty: 6800, rate: 7150, prevQty: 3950, currentQty: 0 },
+    { id: "b3", project: "P1", itemNo: "2.6", desc: "Reinforcement Fe-550D", spec: "IS 1786, all dia", unit: "MT", contractQty: 3400, rate: 68200, prevQty: 1780, currentQty: 0 },
+    { id: "b4", project: "P1", itemNo: "2.9", desc: "Formwork & scaffolding", spec: "MS steel formwork", unit: "Sq.M", contractQty: 52000, rate: 210, prevQty: 31200, currentQty: 0 },
+    { id: "b5", project: "P2", itemNo: "4.1", desc: "Structural concrete M35", spec: "IS 456", unit: "Cu.M", contractQty: 9200, rate: 6800, prevQty: 4140, currentQty: 0 },
+    { id: "b6", project: "P2", itemNo: "4.4", desc: "Reinforcement Fe-550D", spec: "IS 1786", unit: "MT", contractQty: 2900, rate: 67900, prevQty: 1160, currentQty: 0 },
+    { id: "b7", project: "P3", itemNo: "7.2", desc: "Bituminous concrete — wearing course", spec: "MORTH 5th Rev, VG-40", unit: "MT", contractQty: 14500, rate: 6400, prevQty: 5800, currentQty: 0 },
+    { id: "b8", project: "P3", itemNo: "7.3", desc: "Granular sub-base (M-Sand)", spec: "MORTH 400", unit: "Cu.M", contractQty: 22000, rate: 1650, prevQty: 15400, currentQty: 0 },
+    { id: "b9", project: "P4", itemNo: "3.1", desc: "RCC M30 in retaining walls", spec: "IS 456", unit: "Cu.M", contractQty: 5400, rate: 6900, prevQty: 1620, currentQty: 0 },
+    { id: "b10", project: "P5", itemNo: "6.2", desc: "PCC M15 in footings", spec: "IS 456", unit: "Cu.M", contractQty: 3100, rate: 5400, prevQty: 2480, currentQty: 0 },
+  ] as BillBoqLine[],
+
+  mbs: [
+    { id: "m1", mbNo: "MB-1204/12", page: "12", date: dStr(-3), project: "P1", location: "Pier P4-P5, span 3", boqItem: "RCC M40 in pier caps & piers", boqNo: "2.4", desc: "Pier cap PC-114 concrete", drawing: "GFC-118 Rev C", unit: "Cu.M", by: "Rohan Bhosale", status: "Certified", meas: [{ id: "mm1", nos: 4, l: 8.2, b: 3.4, h: 1.6 }, { id: "mm2", nos: 2, l: 6.5, b: 3.4, h: 1.4 }] } as any,
+    { id: "m2", mbNo: "MB-1204/13", page: "13", date: dStr(-2), project: "P1", location: "Pile cap zone B", boqItem: "Piling — Bored cast-in-situ (M30)", boqNo: "2.1", desc: "Bored pile P-217 to P-224", drawing: "GFC-102 Rev B", unit: "R.M", by: "Rohan Bhosale", status: "Client", meas: [{ id: "mm1", nos: 8, l: 24.5, b: 1, h: 1 }] } as any,
+    { id: "m3", mbNo: "MB-1205/4", page: "4", date: dStr(-1), project: "P3", location: "Ch 12+400 to 12+900", boqItem: "Granular sub-base (M-Sand)", boqNo: "7.3", desc: "GSB layer 250 mm", drawing: "DWG-308", unit: "Cu.M", by: "Amit Bhosale", status: "Internal", meas: [{ id: "mm1", nos: 1, l: 500, b: 12.5, h: 0.25 }] } as any,
+  ] as unknown as MBEntry[],
+
+  extras: [
+    { id: "e1", no: "EI-041", project: "P1", desc: "Boulder apron below pier — additional scope", spec: "M20 PCC + rubble", unit: "Cu.M", qty: 320, rate: 4850, justification: "Ground condition at P4 required apron not in BOQ", drawing: "GFC-121", status: "Client Approval", approvalDate: dStr(-9) },
+    { id: "e2", no: "EI-042", project: "P3", desc: "Additional catch pit at low point", spec: "RCC M25 precast", unit: "Nos", qty: 6, rate: 88000, justification: "Drainage survey revision", drawing: "DWG-312", status: "Execution" },
+    { id: "e3", no: "EI-039", project: "P2", desc: "Extra shuttering cycles for deck", spec: "Steel formwork", unit: "Sq.M", qty: 4200, rate: 210, justification: "Cycle time revised by client", drawing: "GFC-204", status: "Billed", approvalDate: dStr(-40) },
+  ] as ExtraItem[],
+
+  variations: [
+    { id: "v1", no: "VO-018", project: "P1", desc: "Increase in pile depth — rocky strata", origQty: 4200, revQty: 4620, origRate: 18400, revRate: 18400, amount: 0.77, status: "Approved" },
+    { id: "v2", no: "VO-019", project: "P3", desc: "Asphalt grade VG-10 → VG-40", origQty: 14500, revQty: 14500, origRate: 6100, revRate: 6400, amount: 0.44, status: "Approved" },
+    { id: "v3", no: "VO-020", project: "P2", desc: "Column size revision C-12", origQty: 9200, revQty: 8970, origRate: 6800, revRate: 6800, amount: -0.16, status: "Proposed" },
+  ] as VariationItem[],
+
+  escalations: [
+    { id: "es1", no: "ESC-007", project: "P1", head: "Steel (TMT)", baseIndex: 132.4, currentIndex: 141.9, weightage: 18, eligibleAmt: 38400000 },
+    { id: "es2", no: "ESC-008", project: "P1", head: "Cement", baseIndex: 118.2, currentIndex: 122.6, weightage: 12, eligibleAmt: 21700000 },
+    { id: "es3", no: "ESC-009", project: "P3", head: "Bitumen", baseIndex: 96.8, currentIndex: 103.1, weightage: 22, eligibleAmt: 17200000 },
+  ] as EscalationItem[],
+
+  advances: [
+    { id: "ad1", no: "ADV-011", project: "P1", kind: "Mobilization", sanctioned: 120000000, paid: 120000000, recPct: 2, recovered: 46000000 },
+    { id: "ad2", no: "ADV-012", project: "P1", kind: "Material", sanctioned: 35000000, paid: 35000000, recPct: 5, recovered: 9800000 },
+    { id: "ad3", no: "ADV-013", project: "P3", kind: "Mobilization", sanctioned: 60000000, paid: 60000000, recPct: 2, recovered: 18400000 },
+  ] as AdvanceItem[],
+
+  deductionCfg: [
+    { id: "dcg1", head: "Retention", basis: "Pct of Gross", value: 5, active: true },
+    { id: "dcg2", head: "Security Deposit", basis: "Pct of Gross", value: 2.5, active: true },
+    { id: "dcg3", head: "Mobilization Advance Recovery", basis: "Cumulative Recovery", value: 2, active: true },
+    { id: "dcg4", head: "Material Advance Recovery", basis: "Cumulative Recovery", value: 5, active: true },
+    { id: "dcg5", head: "TDS @ 2%", basis: "Pct of Gross", value: 2, active: true },
+    { id: "dcg6", head: "Labour Cess", basis: "Pct of Gross", value: 1, active: true },
+    { id: "dcg7", head: "GST TDS", basis: "Pct of Gross", value: 0, active: false },
+  ] as DeductionCfg[],
+
+  billDocs: [] as BillDoc[],
   settings: { company: "SAHAA INFRA Ltd.", address: "Meridian House, Baner Road, Pune 411045", gstin: "27AAACS1429B1ZQ", currency: "INR (₹)", fy: "FY 2025–26", email: true, sms: false, whatsapp: false, backup: "Daily 02:00 IST — last run today" },
   audit: [
     { id: "A-5241", ts: dISO(14), user: "Prakash Rao", role: "Accounts Manager", module: "Finance", action: "Payment Released", entity: "PAY-0872", detail: "₹21.6 L → Bharat Bitumen against INV-V-3318", ip: "10.20.4.18" },
@@ -370,6 +424,27 @@ export interface Punch { id: string; user: string; date: string; inAt?: string; 
 
 export interface MatrixLevel { role: string; limit: string; backup: string }
 export interface MatrixRow { id: string; doc: string; levels: MatrixLevel[] }
+
+/* ── Billing & RA Bill ─────────────────────────────────────── */
+export interface MBMeas { id: string; nos: number; l: number; b: number; h: number }
+export interface MBEntry { id: string; mbNo: string; page: string; date: string; project: string; location: string; boqItem: string; boqNo: string; desc: string; drawing: string; unit: string; meas: MBMeas[]; by: string; status: "Contractor" | "Internal" | "Client" | "Certified"; qty: number }
+export interface BillBoqLine { id: string; project: string; itemNo: string; desc: string; spec: string; unit: string; contractQty: number; rate: number; prevQty: number; currentQty: number }
+export type BillStatus = "Draft" | "Under Preparation" | "Submitted for Checking" | "Under Approval" | "Approved" | "Submitted to Client" | "Under Client Certification" | "Certified" | "Partially Paid" | "Fully Paid" | "Returned" | "Rejected";
+export interface BillRevision { rev: string; date: string; reason: string; by: string }
+export interface BillDoc {
+  id: string; no: string; rev: number; project: string; client: string; contractNo: string; workOrder: string;
+  period: string; date: string; type: "RA Bill" | "Interim" | "Final" | "Supplementary" | "Extra Item" | "Variation" | "Escalation" | "Mobilization Advance" | "Material Advance";
+  lines: BillBoqLine[]; extraValue: number; variationValue: number; escalationValue: number;
+  retentionPct: number; sdPct: number; mobAdvRec: number; matAdvRec: number; tdsPct: number; gstTdsPct: number; labourCessPct: number; penalty: number; otherRec: number;
+  gstPct: number; status: BillStatus; submitted?: string; certifiedDate?: string; certifiedAmt?: number; paidAmt?: number;
+  checklist: Record<string, boolean>; revisions: BillRevision[]; returns: { date: string; reason: string; by: string; response?: string }[];
+  history: { ts: number; action: string; by: string }[];
+}
+export interface ExtraItem { id: string; no: string; project: string; desc: string; spec: string; unit: string; qty: number; rate: number; justification: string; drawing: string; status: "Proposal" | "Rate Analysis" | "Internal Approval" | "Client Approval" | "Execution" | "Measured" | "Billed"; approvalDate?: string }
+export interface VariationItem { id: string; no: string; project: string; desc: string; origQty: number; revQty: number; origRate: number; revRate: number; amount: number; status: "Proposed" | "Approved" | "Rejected" }
+export interface EscalationItem { id: string; no: string; project: string; head: string; baseIndex: number; currentIndex: number; weightage: number; eligibleAmt: number }
+export interface AdvanceItem { id: string; no: string; project: string; kind: "Mobilization" | "Material"; sanctioned: number; paid: number; recPct: number; recovered: number }
+export interface DeductionCfg { id: string; head: string; basis: "Pct of Gross" | "Fixed" | "Cumulative Recovery"; value: number; active: boolean }
 
 /* last purchase memory — used for vendor & rate suggestions */
 export const PURCHASE_MEMORY: Record<string, { vendor: string; rate: number; po: string; date: string }> = {
