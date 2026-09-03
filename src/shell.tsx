@@ -6,13 +6,14 @@ import { cx, Pop } from "./ui";
 import {
   IGrid, IHardhat, IGavel, IContract, ICart, ICube, IWarehouse, ICrane, IMixer, ICalCheck, IUsers,
   ILedger, IReceipt, INote, IStamp, IChart, ITrend, IFiles, ICog, IChevD, IUser, ILogout, IBuilding,
-  IMenu, ISearch, IBell, IHelp, ISun, IMoon, ITasks, ISig, IShield, ICollapse, IX, IInbox, IClock,
+  IMenu, ISearch, IBell, IHelp, ISun, IMoon, ITasks, ISig, IShield, ICollapse, IX, IInbox, IClock, ILock,
 } from "./icons";
 
 export type Route =
   | "dashboard" | "workspace" | "headoffice" | "site" | "projects" | "tenders" | "commercial" | "billing"
   | "procurement" | "materials" | "stores" | "plant" | "rmc" | "attendance" | "hr" | "finance" | "payroll"
-  | "approvals" | "signature" | "reports" | "analytics" | "documents" | "access" | "settings";
+  | "approvals" | "signature" | "reports" | "analytics" | "documents" | "access" | "settings"
+  | "boq" | "contracts" | "vendors" | "leave" | "pf" | "peopleops" | "quality" | "safety" | "accounts" | "tasks" | "audit";
 
 /* ── nav model ─────────────────────────────────────────────── */
 export interface NavItem { id: Route; label: string; icon: (p: { size?: number; className?: string }) => ReactNode; roles?: RoleId[] }
@@ -33,7 +34,8 @@ export const NAV: NavGroup[] = [
     items: [
       { id: "projects", label: "Projects", icon: IHardhat },
       { id: "tenders", label: "Tenders", icon: IGavel, roles: ["SUPER_ADMIN", "MD", "COMMERCIAL"] },
-      { id: "commercial", label: "Commercial & Contracts", icon: IContract, roles: ["SUPER_ADMIN", "MD", "COMMERCIAL", "ACCOUNTS", "PM"] },
+      { id: "contracts", label: "Contracts", icon: IContract, roles: ["SUPER_ADMIN", "MD", "COMMERCIAL", "ACCOUNTS", "PM"] },
+      { id: "boq", label: "BOQ & Rate Analysis", icon: ICalCheck, roles: ["SUPER_ADMIN", "MD", "COMMERCIAL", "PM", "SITE_ENG"] },
       { id: "billing", label: "Billing & RA Bills", icon: IReceipt, roles: ["SUPER_ADMIN", "MD", "ACCOUNTS", "COMMERCIAL", "PM"] },
     ],
   },
@@ -41,6 +43,7 @@ export const NAV: NavGroup[] = [
     title: "Supply Chain",
     items: [
       { id: "procurement", label: "Procurement", icon: ICart, roles: ["SUPER_ADMIN", "MD", "PROCUREMENT", "ACCOUNTS", "PM", "SITE_ENG"] },
+      { id: "vendors", label: "Vendors", icon: IUsers, roles: ["SUPER_ADMIN", "MD", "PROCUREMENT", "ACCOUNTS"] },
       { id: "materials", label: "Materials", icon: ICube },
       { id: "stores", label: "Stores & Inventory", icon: IWarehouse, roles: ["SUPER_ADMIN", "MD", "STORE", "PROCUREMENT", "PM", "RMC"] },
     ],
@@ -50,6 +53,8 @@ export const NAV: NavGroup[] = [
     items: [
       { id: "plant", label: "Plant & Machinery", icon: ICrane, roles: ["SUPER_ADMIN", "MD", "PM", "RMC", "SITE_ENG"] },
       { id: "rmc", label: "RMC Plant", icon: IMixer, roles: ["SUPER_ADMIN", "MD", "RMC", "STORE", "SITE_ENG"] },
+      { id: "quality", label: "Quality", icon: IShield, roles: ["SUPER_ADMIN", "MD", "PM", "SITE_ENG", "RMC"] },
+      { id: "safety", label: "Safety", icon: IShield, roles: ["SUPER_ADMIN", "MD", "PM", "SITE_ENG"] },
       { id: "attendance", label: "Attendance", icon: ICalCheck },
     ],
   },
@@ -57,18 +62,24 @@ export const NAV: NavGroup[] = [
     title: "People & Finance",
     items: [
       { id: "hr", label: "HR & People", icon: IUsers, roles: ["SUPER_ADMIN", "MD", "HR", "PM", "EMPLOYEE"] },
-      { id: "finance", label: "Finance & Accounts", icon: ILedger, roles: ["SUPER_ADMIN", "MD", "ACCOUNTS", "COMMERCIAL"] },
+      { id: "leave", label: "Leave", icon: ICalCheck, roles: ["SUPER_ADMIN", "MD", "HR", "PM", "EMPLOYEE"] },
       { id: "payroll", label: "Payroll", icon: INote, roles: ["SUPER_ADMIN", "MD", "HR", "ACCOUNTS", "EMPLOYEE"] },
+      { id: "pf", label: "PF", icon: INote, roles: ["SUPER_ADMIN", "MD", "HR", "ACCOUNTS"] },
+      { id: "peopleops", label: "People Operations", icon: IUsers, roles: ["SUPER_ADMIN", "MD", "HR"] },
+      { id: "accounts", label: "Accounts", icon: ILedger, roles: ["SUPER_ADMIN", "MD", "ACCOUNTS", "COMMERCIAL"] },
+      { id: "finance", label: "Finance & Accounts", icon: ILedger, roles: ["SUPER_ADMIN", "MD", "ACCOUNTS", "COMMERCIAL"] },
     ],
   },
   {
     title: "Control",
     items: [
-      { id: "approvals", label: "Approval Centre", icon: IStamp },
+      { id: "approvals", label: "Approvals", icon: IStamp },
+      { id: "tasks", label: "Tasks", icon: ITasks },
       { id: "signature", label: "Digital Signatures", icon: ISig },
       { id: "reports", label: "Reports", icon: IChart },
       { id: "analytics", label: "Analytics", icon: ITrend, roles: ["SUPER_ADMIN", "MD", "COMMERCIAL", "ACCOUNTS"] },
       { id: "documents", label: "Documents", icon: IFiles },
+      { id: "audit", label: "Audit Logs", icon: ILock, roles: ["SUPER_ADMIN", "MD", "ACCOUNTS", "HR"] },
       { id: "access", label: "Access & Permissions", icon: IShield, roles: ["SUPER_ADMIN"] },
       { id: "settings", label: "Settings", icon: ICog, roles: ["SUPER_ADMIN", "MD"] },
     ],

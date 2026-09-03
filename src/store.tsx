@@ -427,6 +427,71 @@ const seed = () => ({
     { id: "n4", ts: dISO(120), type: "project", text: "RA-04/PRJ-016 returned for correction — quantity query open", read: false },
     { id: "n5", ts: dISO(300), type: "hr", text: "Mar 2026 payroll processing — verify overtime by Friday", read: true },
   ] as Notif[],
+
+  /* ── Part 2 collections ─────────────────────────────────────── */
+  costCentres: [
+    { code: "CC-P1", name: "Pune Metro Viaduct — Pkg 4", kind: "Project" },
+    { code: "CC-P2", name: "NH-60 Flyover & Junction", kind: "Project" },
+    { code: "CC-P3", name: "Industrial Park — Phase II", kind: "Project" },
+    { code: "CC-P5", name: "Water Treatment Plant 40 MLD", kind: "Project" },
+    { code: "HO", name: "Head Office — Admin", kind: "Company" },
+  ],
+  vouchers: [
+    { id: "vc1", no: "PV-0876", type: "Payment", date: dStr(-1), debit: "Sundry Creditors", credit: "Cash & Bank", amount: 21.6, costCentre: "CC-P3", project: "P3", narr: "Bharat Bitumen — INV-V-3318", by: "Prakash Rao", status: "Posted" },
+    { id: "vc2", no: "RV-0412", type: "Receipt", date: dStr(-2), debit: "Cash & Bank", credit: "Accounts Receivable", amount: 6.4, costCentre: "CC-P1", project: "P1", narr: "MahaMetro — part payment INV-C-2198", by: "Prakash Rao", status: "Posted" },
+    { id: "vc3", no: "CN-0108", type: "Credit Note", date: dStr(-4), debit: "Sundry Creditors", credit: "Inventory — Materials", amount: 0.6, costCentre: "CC-P1", project: "P1", narr: "UltraTech — freight double-charge reversal", by: "Prakash Rao", status: "Posted" },
+    { id: "vc4", no: "JV-0345", type: "Journal", date: dStr(0), debit: "Project Revenue", credit: "GST Payable", amount: 8.6, costCentre: "HO", project: "HO", narr: "GST provision — March billing", by: "Prakash Rao", status: "Draft" },
+  ],
+  pf: [
+    { id: "pf1", emp: "Sunita Deshmukh", pfNo: "MHAPP0012345", month: "Feb 2026", wage: 15417, empShare: 1850, erShare: 1850, status: "Paid", paidOn: dStr(-9) },
+    { id: "pf2", emp: "Rohan Bhosale", pfNo: "MHAPP0009821", month: "Feb 2026", wage: 6000, empShare: 720, erShare: 720, status: "Paid", paidOn: dStr(-9) },
+    { id: "pf3", emp: "Dinesh Pawar", pfNo: "MHAPP0007712", month: "Mar 2026", wage: 4500, empShare: 540, erShare: 540, status: "Pending", paidOn: "" },
+    { id: "pf4", emp: "Kavita Iyer", pfNo: "MHAPP0005501", month: "Mar 2026", wage: 11833, empShare: 1420, erShare: 1420, status: "Pending", paidOn: "" },
+    { id: "pf5", emp: "Prakash Rao", pfNo: "MHAPP0003310", month: "Mar 2026", wage: 14000, empShare: 1680, erShare: 1680, status: "Pending", paidOn: "" },
+  ],
+  corrections: [
+    { id: "cr1", emp: "Rohan Bhosale", date: dStr(-2), existing: "Absent (missed punch)", requested: "Present — 8.5 hrs", reason: "Biometric device offline at Nashik gate", status: "Pending" },
+    { id: "cr2", emp: "Dinesh Pawar", date: dStr(-5), existing: "Half Day", requested: "Present — 9 hrs", reason: "Store audit extended the shift; supervisor confirmed", status: "Approved" },
+    { id: "cr3", emp: "Sandeep Kulkarni", date: dStr(-1), existing: "In 07:02", requested: "In 06:12", reason: "Batching started early; kiosk clock drift", status: "Pending" },
+  ],
+  salaryHist: [
+    { id: "sh1", emp: "Sunita Deshmukh", effective: "Apr 2025", basic: 128000, allowances: 57000, gross: 185000, pf: 15417, net: 167233, reason: "Annual revision FY 2025–26", by: "Kavita Iyer" },
+    { id: "sh2", emp: "Sunita Deshmukh", effective: "Apr 2024", basic: 118000, allowances: 50000, gross: 168000, pf: 14000, net: 151800, reason: "Annual revision FY 2024–25", by: "Kavita Iyer" },
+    { id: "sh3", emp: "Rohan Bhosale", effective: "Aug 2025", basic: 42000, allowances: 18000, gross: 60000, pf: 5040, net: 53460, reason: "Promotion — Site Engineer II", by: "Kavita Iyer" },
+  ],
+  assignments: [
+    { id: "as1", emp: "Sunita Deshmukh", project: "P1", role: "Project Manager", from: "Apr 2021", to: "", reason: "Promotion from P7" },
+    { id: "as2", emp: "Rohan Bhosale", project: "P2", role: "Site Engineer", from: "Aug 2023", to: "", reason: "Initial assignment" },
+    { id: "as3", emp: "Dinesh Pawar", project: "P1", role: "Store In-charge", from: "Jan 2020", to: "", reason: "Transfer from P7 store" },
+    { id: "as4", emp: "Rohan Bhosale", project: "P7", role: "Jr. Engineer", from: "Aug 2021", to: "Jul 2023", reason: "First posting" },
+  ],
+  exits: [
+    { id: "ex1", emp: "Vinay Kadam", lastDay: dStr(-45), reason: "Resignation — personal", fnf: 1.24, status: "Completed" },
+    { id: "ex2", emp: "Sagar Jadhav", lastDay: dStr(12), reason: "Contract completion — P7", fnf: 0.86, status: "In Progress" },
+  ],
+  quality: [
+    { id: "qa1", no: "QI-118", type: "Inspection", project: "P1", item: "Pier cap P4-P5 — formwork & reinforcement", date: dStr(-1), status: "Passed", result: "Cover blocks OK; staging certified by SE" },
+    { id: "qa2", no: "NCR-021", type: "NCR", project: "P3", item: "GSB layer compaction below specification", date: dStr(-3), status: "Open", result: "Root cause: roller breakdown; re-rolling scheduled" },
+    { id: "qa3", no: "CT-0291", type: "Cube Test", project: "RMC-1", item: "M40 — Batch BT-0291 (7-day)", date: dStr(-2), status: "Passed", result: "31.2 MPa vs 26.7 MPa target" },
+    { id: "qa4", no: "CT-0287", type: "Cube Test", project: "RMC-1", item: "M25 — Batch BT-0287 (28-day)", date: dStr(-6), status: "Failed", result: "19.8 MPa vs 22.5 MPa target — mix design review raised" },
+    { id: "qa5", no: "QI-121", type: "Inspection", project: "P5", item: "Clarifier wall waterproofing", date: dStr(0), status: "Pending", result: "" },
+  ],
+  safety: [
+    { id: "sf1", kind: "Toolbox Talk", project: "P1", date: dStr(0), desc: "Working at height — harness & lifeline checks", severity: "—", status: "Completed" },
+    { id: "sf2", kind: "Near Miss", project: "P2", date: dStr(-2), desc: "Scaffold tag missing on junction span — barricaded immediately", severity: "Medium", status: "Closed" },
+    { id: "sf3", kind: "Observation", project: "P4", date: dStr(-1), desc: "Housekeeping poor near rebar yard", severity: "Low", status: "Open" },
+    { id: "sf4", kind: "Incident", project: "P3", date: dStr(-9), desc: "Minor hand injury — first aid given, no lost time", severity: "High", status: "Closed" },
+  ],
+  fuel: [
+    { id: "fu1", eq: "EQ-011", date: dStr(-1), type: "Diesel", ltrs: 38, hrs: 7.5, cost: 3610 },
+    { id: "fu2", eq: "EQ-014", date: dStr(-1), type: "Diesel", ltrs: 22, hrs: 6.0, cost: 2090 },
+    { id: "fu3", eq: "EQ-021", date: dStr(-3), type: "Diesel", ltrs: 0, hrs: 0, cost: 0 },
+  ],
+  maint: [
+    { id: "mt1", eq: "EQ-011", service: "500-hr service", due: dStr(6), cost: 1.8, status: "Scheduled" },
+    { id: "mt2", eq: "EQ-021", service: "Hydraulic hose replacement", due: dStr(-2), cost: 0.9, status: "Overdue" },
+    { id: "mt3", eq: "EQ-014", service: "1000-hr overhaul", due: dStr(21), cost: 4.2, status: "Planned" },
+  ],
 });
 
 export type ERPState = ReturnType<typeof seed>;

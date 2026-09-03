@@ -25,6 +25,15 @@ export function ReportsPage() {
     if (name.includes("Payable")) return { head: ["Invoice", "Vendor", "Ref", "Amount", "Due", "Status"], rows: s.apInvoices.map((a) => [a.no, a.vendor, a.ref, a.amount, a.due, a.status]) };
     if (name.includes("Attendance")) return { head: ["Employee", "Project", "Hours", "OT", "Status", "Approval"], rows: s.attendance.map((a) => [a.name, a.project, a.hours, a.ot, a.status, a.appr]) };
     if (name.includes("Payroll")) return { head: ["Period", "Employees", "Gross", "Deductions", "Net", "Status"], rows: s.payRuns.map((r) => [r.period, r.employees, r.gross, r.deductions, r.net, r.status]) };
+    if (name.includes("PF")) return { head: ["Employee", "PF No.", "Month", "PF Wage", "Employee", "Employer", "Status"], rows: s.pf.map((p) => [p.emp, p.pfNo, p.month, p.wage, p.empShare, p.erShare, p.status]) };
+    if (name.includes("Quality")) return { head: ["Ref", "Type", "Project", "Item", "Date", "Status", "Result"], rows: s.quality.map((q) => [q.no, q.type, q.project, q.item, q.date, q.status, q.result || "—"]) };
+    if (name.includes("Safety")) return { head: ["Kind", "Project", "Date", "Description", "Severity", "Status"], rows: s.safety.map((x) => [x.kind, x.project, x.date, x.desc, x.severity, x.status]) };
+    if (name.includes("Maintenance")) return { head: ["Equipment", "Service", "Due", "Cost (₹ L)", "Status"], rows: s.maint.map((m) => [m.eq, m.service, m.due, m.cost, m.status]) };
+    if (name.includes("Fuel")) return { head: ["Equipment", "Date", "Litres", "Hours", "L/hr", "Cost (₹)"], rows: s.fuel.map((f) => [f.eq, f.date, f.ltrs, f.hrs, f.hrs ? (f.ltrs / f.hrs).toFixed(1) : "—", f.cost]) };
+    if (name.includes("Labour Cost")) return { head: ["Employee", "Project", "Designation", "Gross (₹/yr)", "PF", "Net"], rows: s.employees.map((e) => [e.name, e.project, e.designation, (e.base * 1e5).toFixed(0), (e.base * 1e5 * 0.12).toFixed(0), (e.base * 1e5 * 0.88).toFixed(0)]) };
+    if (name.includes("Trial Balance")) return { head: ["Code", "Head", "Type", "Balance (₹ Cr)"], rows: s.coa.map((c) => [c.code, c.name, c.type, c.balance]) };
+    if (name.includes("Voucher")) return { head: ["Voucher", "Type", "Date", "Dr", "Cr", "Amount (₹ L)", "Cost Centre", "Status"], rows: s.vouchers.map((v) => [v.no, v.type, v.date, v.debit, v.credit, v.amount, v.costCentre, v.status]) };
+    if (name.includes("Corrections")) return { head: ["Employee", "Date", "Existing", "Requested", "Status"], rows: s.corrections.map((c) => [c.emp, c.date, c.existing, c.requested, c.status]) };
     if (name.includes("Project")) return { head: ["Code", "Project", "Client", "Value (₹ Cr)", "Progress %", "Status"], rows: s.projects.map((p) => [p.code, p.name, p.client, p.contractValue, p.progress, p.status]) };
     return { head: ["Material", "Category", "Unit", "ROL", "Rate"], rows: s.materials.map((m) => [m.name, m.cat, m.unit, m.rol, m.rate]) };
   };
@@ -34,8 +43,10 @@ export function ReportsPage() {
     { cat: "Commercial", items: ["RA Bill Register", "Contract & Variation Report"] },
     { cat: "Procurement", items: ["Purchase Register", "PO Register"] },
     { cat: "Store", items: ["Stock Register", "Low Stock Report"] },
-    { cat: "Finance", items: ["Receivable Ageing", "Payable Ageing"] },
-    { cat: "HR & Payroll", items: ["Attendance Report", "Payroll Register"] },
+    { cat: "Finance", items: ["Receivable Ageing", "Payable Ageing", "Trial Balance", "Voucher Register"] },
+    { cat: "HR & Payroll", items: ["Attendance Report", "Payroll Register", "PF Register", "Labour Cost", "Attendance Corrections"] },
+    { cat: "Plant & RMC", items: ["Maintenance Schedule", "Fuel Register"] },
+    { cat: "Quality & Safety", items: ["Quality Report", "Safety Report"] },
     { cat: "Tenders", items: ["Tender Register & Pipeline"] },
   ];
 

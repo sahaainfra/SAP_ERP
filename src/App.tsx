@@ -16,8 +16,10 @@ import CommercialPage from "./modules/commercial";
 import BillingPage from "./modules/billingpg";
 import { AttendancePage, HRPage, PayrollPage } from "./modules/hrpages";
 import { ReportsPage, AnalyticsPage, DocumentsPage, SettingsPage } from "./modules/system";
+import AccountsPage from "./modules/accounts";
+import { PFPage, PeopleOpsPage, QualityPage, SafetyPage, PlantOpsPage, VendorsPage, AuditPage } from "./modules/p2";
 import { Seg } from "./modules/core";
-import { IGrid, ITasks, IStamp, ISig, IBuilding } from "./icons";
+import { IGrid, ITasks, IStamp, ISig, IBuilding, ICalCheck, IMenu } from "./icons";
 
 const ls = {
   get<T>(k: string, fb: T): T { try { const v = localStorage.getItem(k); return v ? (JSON.parse(v) as T) : fb; } catch { return fb; } },
@@ -102,7 +104,7 @@ function Shell({ role, setRole, dark, setDark }: { role: RoleId; setRole: (r: Ro
     case "procurement": page = <ProcurementHub />; break;
     case "materials": page = <MaterialsPage />; break;
     case "stores": page = <MaterialsPage initialTab="stock" />; break;
-    case "plant": page = <PlantPage />; break;
+    case "plant": page = <PlantOpsPage />; break;
     case "rmc": page = <RmcPage />; break;
     case "attendance": page = <AttendancePage />; break;
     case "hr": page = <HRPage />; break;
@@ -115,6 +117,16 @@ function Shell({ role, setRole, dark, setDark }: { role: RoleId; setRole: (r: Ro
     case "documents": page = <DocumentsPage />; break;
     case "access": page = <AccessPage />; break;
     case "settings": page = <SettingsPage />; break;
+    case "accounts": page = <AccountsPage />; break;
+    case "boq": case "contracts": page = <CommercialPage />; break;
+    case "vendors": page = <VendorsPage />; break;
+    case "leave": page = <HRPage />; break;
+    case "pf": page = <PFPage />; break;
+    case "peopleops": page = <PeopleOpsPage />; break;
+    case "quality": page = <QualityPage />; break;
+    case "safety": page = <SafetyPage />; break;
+    case "tasks": page = <Workspace go={nav} />; break;
+    case "audit": page = <AuditPage />; break;
     default: page = <RoleDashboard go={nav} />;
   }
 
@@ -132,21 +144,26 @@ function Shell({ role, setRole, dark, setDark }: { role: RoleId; setRole: (r: Ro
         </main>
       </div>
 
-      {/* Mobile quick actions */}
+      {/* Mobile quick actions — Home · Tasks · Approvals · Punch · More */}
       <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-surface border-t border-line grid grid-cols-5 no-print">
         {([
-          ["dashboard", "Home"], ["workspace", "Workspace"], ["approvals", "Approvals"], ["signature", "Sign"], ["headoffice", "Office"],
+          ["dashboard", "Home"], ["workspace", "Tasks"], ["approvals", "Approvals"], ["attendance", "Punch"],
         ] as [Route, string][]).map(([id, label]) => {
           const allowed = visibleNav(role).flatMap((g) => g.items.map((i) => i.id));
           const show = allowed.includes(id);
           return (
             <button key={id} onClick={() => show && nav(id)}
               className={"py-2.5 flex flex-col items-center gap-0.5 text-[9.5px] font-semibold transition-colors " + (route === id ? "text-brand-700" : show ? "text-ink-400" : "text-ink-200")}>
-              {id === "dashboard" ? <IGrid size={17} /> : id === "workspace" ? <ITasks size={17} /> : id === "approvals" ? <IStamp size={17} /> : id === "signature" ? <ISig size={17} /> : <IBuilding size={17} />}
+              {id === "dashboard" ? <IGrid size={17} /> : id === "workspace" ? <ITasks size={17} /> : id === "approvals" ? <IStamp size={17} /> : <ICalCheck size={17} />}
               {label}
             </button>
           );
         })}
+        <button onClick={() => setMobileNav(true)} className="relative py-2.5 flex flex-col items-center gap-0.5 text-[9.5px] font-semibold text-ink-400 transition-colors active:scale-95">
+          <IMenu size={17} />
+          More
+          {erp.s.notifs.filter((n) => !n.read).length > 0 && <span className="absolute top-1.5 right-[22%] h-1.5 w-1.5 rounded-full bg-danger-500" />}
+        </button>
       </nav>
     </div>
   );
