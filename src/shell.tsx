@@ -14,7 +14,7 @@ export type Route =
   | "dashboard" | "workspace" | "headoffice" | "site" | "projects" | "tenders" | "commercial" | "billing"
   | "procurement" | "materials" | "stores" | "plant" | "rmc" | "attendance" | "hr" | "finance" | "payroll"
   | "approvals" | "signature" | "reports" | "analytics" | "documents" | "access" | "settings"
-  | "boq" | "contracts" | "vendors" | "leave" | "pf" | "peopleops" | "quality" | "safety" | "accounts" | "tasks" | "audit";
+  | "boq" | "contracts" | "vendors" | "leave" | "pf" | "peopleops" | "quality" | "safety" | "accounts" | "tasks" | "audit" | "users" | "chain";
 
 /* ── nav model ─────────────────────────────────────────────── */
 export interface NavItem { id: Route; label: string; icon: (p: { size?: number; className?: string }) => ReactNode; roles?: RoleId[] }
@@ -82,6 +82,8 @@ export const NAV: NavGroup[] = [
       { id: "documents", label: "Documents", icon: IFiles },
       { id: "audit", label: "Audit Logs", icon: ILock, roles: ["SUPER_ADMIN", "MD", "ACCOUNTS", "HR"] },
       { id: "access", label: "Access & Permissions", icon: IShield, roles: ["SUPER_ADMIN"] },
+      { id: "users", label: "Users & Accounts", icon: IUser, roles: ["SUPER_ADMIN", "MD", "HR"] },
+      { id: "chain", label: "Management Chain", icon: IChevD, roles: ["SUPER_ADMIN", "MD", "HR", "ACCOUNTS"] },
       { id: "settings", label: "Settings", icon: ICog, roles: ["SUPER_ADMIN", "MD"] },
     ],
   },
@@ -210,8 +212,8 @@ export function Sidebar({
 
 /* ── Header ────────────────────────────────────────────────── */
 export function Header({
-  route, onNav, onMenu, onRole,
-}: { route: Route; onNav: (r: Route) => void; onMenu: () => void; onRole: (r: RoleId) => void }) {
+  route, onNav, onMenu, onRole, onLogout,
+}: { route: Route; onNav: (r: Route) => void; onMenu: () => void; onRole: (r: RoleId) => void; onLogout?: () => void }) {
   const { role, userRec, dark, setDark, s, markRead, notify } = useERP();
   const [q, setQ] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -421,7 +423,7 @@ export function Header({
                 <div className="py-1.5">
                   <button onClick={() => setPop("roles")} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[12.5px] text-ink-700 hover:bg-canvas transition-colors"><IUser size={15} className="text-ink-400" /> Switch role view</button>
                   <button onClick={() => { onNav("signature"); setPop(""); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[12.5px] text-ink-700 hover:bg-canvas transition-colors"><ISig size={15} className="text-ink-400" /> My signature</button>
-                  <button onClick={() => setPop("")} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[12.5px] text-danger-600 hover:bg-danger-100/50 transition-colors"><ILogout size={15} /> Sign out</button>
+                  <button onClick={() => { setPop(""); onLogout?.(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[12.5px] text-danger-600 hover:bg-danger-100/50 transition-colors"><ILogout size={15} /> Sign out</button>
                 </div>
               </div>
             )}

@@ -56,6 +56,15 @@ export interface Msg {
   reactions: Record<string, number>;
   replyTo?: string; pinned?: boolean;
 }
+
+/* identity & authority */
+export const demoHash = (s: string) => { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return "fnv1a$" + h.toString(16).padStart(8, "0"); };
+export interface Cred { username: string; hash: string; mobile: string; mustChange: boolean; failed: number; lockedUntil?: number; joinDate: string; status: "Active" | "Inactive" | "Locked" }
+export interface LoginRec { id: string; user: string; ts: string; device: string; ip: string; status: "Success" | "Failed" | "Locked" | "Password Changed" }
+export interface SessionRec { id: string; user: string; device: string; ip: string; started: string; lastActive: string; current?: boolean }
+export interface AssignmentRec { id: string; user: string; empId: string; project: string; site: string; role: string; responsibility: string; manager: string; finLimit: string; from: string; to: string; status: "Active" | "Closed" }
+export interface DelegationRec { id: string; from: string; to: string; txn: string; project: string; fromD: string; toD: string; reason: string; status: "Active" | "Expired"; approvedBy: string }
+export interface AttLock { period: string; lockedBy: string; ts: string; reason: string; unlockedBy?: string }
 export interface MatrixLevel { role: string; limit: string; backup: string }
 export interface MatrixRow { id: string; doc: string; levels: MatrixLevel[] }
 
@@ -400,7 +409,50 @@ const seed = () => ({
     { id: "u9", name: "Sandeep Kulkarni", email: "sandeep.k@sahaainfra.com", role: "RMC", dept: "RMC Operations", project: "RMC-1", site: "Kharadi Plant", office: "RMC Plant", finLimit: 1, active: true, lastLogin: "Today 06:12" },
     { id: "u10", name: "Rohan Bhosale", email: "rohan.b@sahaainfra.com", role: "SITE_ENG", dept: "Project Execution", project: "P2", site: "Nashik Site", office: "Site Office", finLimit: 2, active: true, lastLogin: "Today 08:16", manager: "Vikas Thorat" },
     { id: "u11", name: "Ganesh More", email: "ganesh.m@sahaainfra.com", role: "EMPLOYEE", dept: "Site Workforce", project: "P1", site: "Pachgaon Site", office: "Site Office", finLimit: 0, active: true, lastLogin: "Today 07:55", manager: "Sunita Deshmukh" },
+    { id: "u12", name: "Aarav Joshi", email: "aarav.j@sahaainfra.com", role: "SITE_ENG", dept: "Project Execution", project: "P3", site: "Solapur Site", office: "Site Office", finLimit: 2, active: true, lastLogin: "Never", manager: "Nilesh Kamble" },
   ] as UserRec[],
+  creds: {
+    u1: { username: "arvind.n", hash: demoHash("Welcome@123"), mobile: "+91 98220 11001", mustChange: false, failed: 0, joinDate: "01 Apr 2019", status: "Active" },
+    u2: { username: "rajesh.m", hash: demoHash("Welcome@123"), mobile: "+91 98220 11002", mustChange: false, failed: 0, joinDate: "12 Jan 2018", status: "Active" },
+    u3: { username: "sunita.d", hash: demoHash("Welcome@123"), mobile: "+91 98220 11003", mustChange: false, failed: 0, joinDate: "03 Jul 2020", status: "Active" },
+    u4: { username: "kavita.i", hash: demoHash("Welcome@123"), mobile: "+91 98220 11004", mustChange: false, failed: 0, joinDate: "21 Sep 2021", status: "Active" },
+    u5: { username: "prakash.r", hash: demoHash("Welcome@123"), mobile: "+91 98220 11005", mustChange: false, failed: 0, joinDate: "15 Feb 2020", status: "Active" },
+    u6: { username: "imran.s", hash: demoHash("Welcome@123"), mobile: "+91 98220 11006", mustChange: false, failed: 0, joinDate: "08 Nov 2021", status: "Active" },
+    u7: { username: "dinesh.p", hash: demoHash("Welcome@123"), mobile: "+91 98220 11007", mustChange: false, failed: 0, joinDate: "25 May 2022", status: "Active" },
+    u8: { username: "meera.k", hash: demoHash("Welcome@123"), mobile: "+91 98220 11008", mustChange: false, failed: 0, joinDate: "17 Mar 2021", status: "Active" },
+    u9: { username: "sandeep.k", hash: demoHash("Welcome@123"), mobile: "+91 98220 11009", mustChange: false, failed: 0, joinDate: "30 Aug 2022", status: "Active" },
+    u10: { username: "rohan.b", hash: demoHash("Welcome@123"), mobile: "+91 98220 11010", mustChange: false, failed: 0, joinDate: "11 Dec 2022", status: "Active" },
+    u11: { username: "ganesh.m", hash: demoHash("Welcome@123"), mobile: "+91 98220 11011", mustChange: false, failed: 0, joinDate: "05 Jun 2023", status: "Active" },
+    u12: { username: "aarav.j", hash: demoHash("Temp@90210"), mobile: "+91 98220 11012", mustChange: true, failed: 0, joinDate: "01 Mar 2026", status: "Active" },
+  } as Record<string, Cred>,
+  loginHistory: [
+    { id: "lh1", user: "Rajesh Malhotra", ts: new Date(Date.now() - 5 * 36e5).toISOString(), device: "Chrome · Windows 11 · Head Office", ip: "10.20.4.18", status: "Success" },
+    { id: "lh2", user: "Sunita Deshmukh", ts: new Date(Date.now() - 6 * 36e5).toISOString(), device: "Safari · iPad · Pachgaon Site", ip: "10.20.9.44", status: "Success" },
+    { id: "lh3", user: "ganesh.m", ts: new Date(Date.now() - 8 * 36e5).toISOString(), device: "Chrome · Android · Pachgaon Site", ip: "10.20.9.51", status: "Success" },
+    { id: "lh4", user: "prakash.r", ts: new Date(Date.now() - 26 * 36e5).toISOString(), device: "Edge · Windows 11 · Head Office", ip: "10.20.4.22", status: "Failed" },
+    { id: "lh5", user: "Aarav Joshi", ts: new Date(Date.now() - 30 * 36e5).toISOString(), device: "Provisioning · HR Console", ip: "10.20.4.10", status: "Password Changed" },
+  ] as LoginRec[],
+  sessions: [
+    { id: "ss1", user: "Rajesh Malhotra", device: "Chrome · Windows 11", ip: "10.20.4.18", started: new Date(Date.now() - 5 * 36e5).toISOString(), lastActive: "2 min ago" },
+    { id: "ss2", user: "Sunita Deshmukh", device: "Safari · iPad", ip: "10.20.9.44", started: new Date(Date.now() - 6 * 36e5).toISOString(), lastActive: "14 min ago" },
+    { id: "ss3", user: "Imran Shaikh", device: "Chrome · macOS", ip: "10.20.4.31", started: new Date(Date.now() - 9 * 36e5).toISOString(), lastActive: "3 hr ago" },
+  ] as SessionRec[],
+  assignments: [
+    { id: "as1", user: "Sunita Deshmukh", empId: "u3", project: "P1", site: "Pachgaon Site", role: "Project Manager", responsibility: "Full execution authority — DPR, MB, billing, procurement", manager: "Rajesh Malhotra", finLimit: "₹10 L", from: "01 Jul 2024", to: "—", status: "Active" },
+    { id: "as2", user: "Rohan Bhosale", empId: "u10", project: "P2", site: "Nashik Site", role: "Site Engineer", responsibility: "DPR, measurements, material requests, labour attendance", manager: "Vikas Thorat", finLimit: "₹2 L", from: "15 Dec 2024", to: "—", status: "Active" },
+    { id: "as3", user: "Rohan Bhosale", empId: "u10", project: "P3", site: "Solapur Site", role: "Site Engineer", responsibility: "DPR & measurements (temporary support)", manager: "Nilesh Kamble", finLimit: "₹2 L", from: "12 Dec 2022", to: "14 Dec 2024", status: "Closed" },
+    { id: "as4", user: "Dinesh Pawar", empId: "u7", project: "P1", site: "Pachgaon Store", role: "Store Keeper", responsibility: "GRN, issue, returns, physical verification", manager: "Sunita Deshmukh", finLimit: "₹0.5 L", from: "25 May 2022", to: "—", status: "Active" },
+    { id: "as5", user: "Ganesh More", empId: "u11", project: "P1", site: "Pachgaon Site", role: "Supervisor — Civil", responsibility: "Gang supervision, attendance marking, site issues", manager: "Sunita Deshmukh", finLimit: "—", from: "05 Jun 2023", to: "—", status: "Active" },
+    { id: "as6", user: "Sandeep Kulkarni", empId: "u9", project: "RMC-1", site: "Kharadi Plant", role: "RMC Plant Manager", responsibility: "Production, dispatch, QC, raw materials", manager: "Rajesh Malhotra", finLimit: "₹1 L", from: "30 Aug 2022", to: "—", status: "Active" },
+  ] as AssignmentRec[],
+  delegations: [
+    { id: "dl1", from: "Rajesh Malhotra", to: "Prakash Rao", txn: "Vendor Payments ≤ ₹25 L", project: "All", fromD: "10 Mar 2026", toD: "24 Mar 2026", reason: "On leave — Diwali break coverage", status: "Active", approvedBy: "Arvind Nair (Super Admin)" },
+    { id: "dl2", from: "Sunita Deshmukh", to: "Rohan Bhosale", txn: "Material Requests", project: "P1", fromD: "01 Feb 2026", toD: "28 Feb 2026", reason: "Site audit week", status: "Expired", approvedBy: "Rajesh Malhotra" },
+  ] as DelegationRec[],
+  attLocks: [
+    { period: "Feb 2026", lockedBy: "Kavita Iyer", ts: new Date(Date.now() - 12 * 864e5).toISOString(), reason: "Monthly close — payroll processed" },
+    { period: "Jan 2026", lockedBy: "Kavita Iyer", ts: new Date(Date.now() - 42 * 864e5).toISOString(), reason: "Monthly close — payroll processed" },
+  ] as AttLock[],
   workflows: [
     { id: "w1", name: "Purchase Requisition", module: "Procurement", levels: "PM → Procurement Head → MD (>₹25 L)", basis: "Amount-tiered", active: true },
     { id: "w2", name: "Purchase Order", module: "Procurement", levels: "Procurement → Accounts → MD (>₹50 L)", basis: "Amount-tiered", active: true },
@@ -478,12 +530,6 @@ const seed = () => ({
     { id: "sh1", emp: "Sunita Deshmukh", effective: "Apr 2025", basic: 128000, allowances: 57000, gross: 185000, pf: 15417, net: 167233, reason: "Annual revision FY 2025–26", by: "Kavita Iyer" },
     { id: "sh2", emp: "Sunita Deshmukh", effective: "Apr 2024", basic: 118000, allowances: 50000, gross: 168000, pf: 14000, net: 151800, reason: "Annual revision FY 2024–25", by: "Kavita Iyer" },
     { id: "sh3", emp: "Rohan Bhosale", effective: "Aug 2025", basic: 42000, allowances: 18000, gross: 60000, pf: 5040, net: 53460, reason: "Promotion — Site Engineer II", by: "Kavita Iyer" },
-  ],
-  assignments: [
-    { id: "as1", emp: "Sunita Deshmukh", project: "P1", role: "Project Manager", from: "Apr 2021", to: "", reason: "Promotion from P7" },
-    { id: "as2", emp: "Rohan Bhosale", project: "P2", role: "Site Engineer", from: "Aug 2023", to: "", reason: "Initial assignment" },
-    { id: "as3", emp: "Dinesh Pawar", project: "P1", role: "Store In-charge", from: "Jan 2020", to: "", reason: "Transfer from P7 store" },
-    { id: "as4", emp: "Rohan Bhosale", project: "P7", role: "Jr. Engineer", from: "Aug 2021", to: "Jul 2023", reason: "First posting" },
   ],
   exits: [
     { id: "ex1", emp: "Vinay Kadam", lastDay: dStr(-45), reason: "Resignation — personal", fnf: 1.24, status: "Completed" },

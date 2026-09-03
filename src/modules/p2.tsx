@@ -78,7 +78,7 @@ export function PeopleOpsPage() {
       <PageHead title="People Operations" crumbs={["Meridian", "People", "Operations"]}
         desc="Attendance corrections, salary history, project assignments and exits — historical records are never overwritten.">
         <Stat label="Open corrections" value={`${s.corrections.filter((c) => c.status === "Pending").length}`} tone="warn" />
-        <Stat label="Active assignments" value={`${s.assignments.filter((a) => !a.to).length}`} />
+        <Stat label="Active assignments" value={`${s.assignments.filter((a) => a.status === "Active").length}`} />
         <Stat label="Exits (FY)" value={`${s.exits.length}`} />
       </PageHead>
       <Widget title={tab === "corr" ? "Attendance Corrections" : tab === "sal" ? "Salary History" : tab === "asg" ? "Project Assignments" : "Exit / Full & Final"}
@@ -119,12 +119,13 @@ export function PeopleOpsPage() {
 
         {tab === "asg" && (
           <DataTable pageKey="asg" rows={s.assignments} cols={[
-            { key: "emp", label: "Employee", render: (a) => <span className="text-[12.5px] font-semibold text-ink-900">{a.emp}</span> },
+            { key: "user", label: "Employee", render: (a) => <div><p className="text-[12.5px] font-semibold text-ink-900">{a.user}</p><p className="text-[10px] num text-ink-400">{a.site} · reports to {a.manager}</p></div> },
             { key: "project", label: "Project", render: (a) => <span className="num text-[12px] text-brand-700 font-semibold">{a.project}</span> },
-            { key: "role", label: "Role on Project", render: (a) => <span className="text-[12px] text-ink-700">{a.role}</span> },
+            { key: "role", label: "Role on Project", render: (a) => <div><p className="text-[12px] text-ink-700">{a.role}</p><p className="text-[10px] text-ink-400 max-w-[240px] truncate">{a.responsibility}</p></div> },
+            { key: "finLimit", label: "Fin. Limit", render: (a) => <span className="num text-[11.5px] text-ink-700 font-semibold">{a.finLimit}</span> },
             { key: "from", label: "From", render: (a) => <span className="num text-[11.5px] text-ink-500">{a.from}</span> },
-            { key: "to", label: "To", render: (a) => <span className="num text-[11.5px] text-ink-500">{a.to || "Current"}</span> },
-            { key: "reason", label: "Reason", render: (a) => <span className="text-[11.5px] text-ink-500">{a.reason}</span> },
+            { key: "to", label: "To", render: (a) => <span className="num text-[11.5px] text-ink-500">{a.to === "—" ? "Current" : a.to}</span> },
+            { key: "status", label: "Status", render: (a) => <Pill value={a.status === "Active" ? "On Track" : "Completed"} />, csv: (a) => a.status },
           ] as Col[]} />
         )}
 
