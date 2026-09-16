@@ -163,6 +163,22 @@
 |---|---|---|---|---|
 | GET | `/api/dx/v1/profile` | ✅ | authenticated | User profile panel payload |
 
+### Real-time Engine (Part 4)
+
+| Method | Path | Auth | Permission | Description |
+|---|---|---|---|---|
+| WS | `/api/dx/v1/ws` | ✅ | authenticated | WebSocket gateway for real-time updates |
+| GET | `/api/dx/v1/realtime/token` | ✅ | authenticated | Short-lived WebSocket connection token |
+| GET | `/api/dx/v1/kpi/{kpiKey}` | ✅ | KPI-specific | Single KPI value for active scope |
+| POST | `/api/dx/v1/kpi/batch` | ✅ | multiple | Batch fetch multiple KPIs in one request |
+| GET | `/api/dx/v1/kpi/{kpiKey}/history` | ✅ | KPI-specific | KPI historical trend data |
+| GET | `/api/dx/v1/kpi/{kpiKey}/drill` | ✅ | KPI-specific | Drill-down to underlying records |
+| GET | `/api/dx/v1/alerts` | ✅ | authenticated | Active alerts for user's scope |
+| POST | `/api/dx/v1/alerts/{id}/acknowledge` | ✅ | authenticated | Acknowledge an alert |
+| POST | `/api/dx/v1/alerts/{id}/resolve` | ✅ | authenticated | Resolve an alert with note |
+| GET | `/api/dx/v1/sla/summary` | ✅ | authenticated | SLA compliance summary |
+| GET | `/api/dx/v1/system/health` | ✅ | admin | System health and queue status |
+
 ---
 
 ## Planned Endpoints (Future Parts)

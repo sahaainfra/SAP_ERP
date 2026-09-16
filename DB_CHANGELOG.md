@@ -503,5 +503,317 @@ DROP TABLE IF EXISTS dx_assignment_audit;
 
 ---
 
-**Document Status:** ✅ Complete (Part 3 Updated)  
-**Next Step:** Part 4 — Real-time Data Engine
+### Migration 013 — dx_event_outbox (Event Outbox)
+
+**Date:** 2026-02-10  
+**File:** `migrations/013_create_dx_event_outbox.sql`  
+**Tables Touched:** `dx_event_outbox` (NEW)  
+**Reason:** Transactional outbox pattern for reliable event publishing. Events are written inside the business transaction, then relayed to the event bus.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_event_outbox (
+  id             BIGSERIAL PRIMARY KEY,
+  event_id       VARCHAR(40)  NOT NULL UNIQUE,
+  event_type     VARCHAR(100) NOT NULL,
+  entity_type    VARCHAR(80)  NOT NULL,
+  entity_id      BIGINT       NOT NULL,
+  actor_user_id  BIGINT,
+  company_id     BIGINT,
+  project_id     BIGINT,
+  site_id        BIGINT,
+  payload        JSONB        NOT NULL,
+  occurred_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  published_at   TIMESTAMPTZ,
+  publish_attempts INT        NOT NULL DEFAULT 0,
+  last_error     TEXT,
+  status         VARCHAR(20)  NOT NULL DEFAULT 'PENDING'
+);
+CREATE INDEX IF NOT EXISTS ix_dx_outbox_pending
+  ON dx_event_outbox (status, occurred_at) WHERE status = 'PENDING';
+CREATE INDEX IF NOT EXISTS ix_dx_outbox_entity
+  ON dx_event_outbox (entity_type, entity_id, occurred_at DESC);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_event_outbox;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 014 — dx_kpi_definition (KPI Definitions)
+
+**Date:** 2026-02-10  
+**File:** `migrations/014_create_dx_kpi_definition.sql`  
+**Tables Touched:** `dx_kpi_definition` (NEW)  
+**Reason:** Data-driven KPI definitions with calculation rules, thresholds, and refresh strategies.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_kpi_definition (
+  id                  BIGSERIAL PRIMARY KEY,
+  kpi_key             VARCHAR(120) NOT NULL UNIQUE,
+  kpi_name            VARCHAR(200) NOT NULL,
+  module              VARCHAR(50)  NOT NULL,
+  description         TEXT,
+  calculation_type    VARCHAR(30)  NOT NULL,
+  value_type          VARCHAR(20)  NOT NULL,
+  unit                VARCHAR(20),
+  aggregation_level   VARCHAR(30)  NOT NULL,
+  good_direction      VARCHAR(10)  NOT NULL,
+  threshold_green     NUMERIC(18,4),
+  threshold_amber     NUMERIC(18,4),
+  threshold_red       NUMERIC(18,4),
+  threshold_type      VARCHAR(20)  NOT NULL DEFAULT 'PERCENT_OF_TARGET',
+  refresh_strategy    VARCHAR(20)  NOT NULL DEFAULT 'EVENT',
+  refresh_interval_s  INT,
+  cache_ttl_s         INT NOT NULL DEFAULT 300,
+  required_permission VARCHAR(150) NOT NULL,
+  drill_route         VARCHAR(255),
+  is_active           BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS ix_dx_kpi_module ON dx_kpi_definition (module, is_active);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_kpi_definition;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 015 — dx_kpi_snapshot (KPI Snapshots)
+
+**Date:** 2026-02-10  
+**File:** `migrations/015_create_dx_kpi_snapshot.sql`  
+**Tables Touched:** `dx_kpi_snapshot` (NEW)  
+**Reason:** Precomputed KPI snapshots for trend analysis and fast dashboard loading.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_kpi_snapshot (
+  id             BIGSERIAL PRIMARY KEY,
+  kpi_key        VARCHAR(120) NOT NULL,
+  company_id     BIGINT,
+  project_id     BIGINT,
+  site_id        BIGINT,
+  period_start   DATE,
+  period_end     DATE,
+  value          NUMERIC(20,4),
+  target_value   NUMERIC(20,4),
+  computed_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  compute_ms     INT,
+  row_count      BIGINT
+);
+CREATE INDEX IF NOT EXISTS ix_dx_kpi_snap
+  ON dx_kpi_snapshot (kpi_key, project_id, computed_at DESC);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_kpi_snapshot;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 016 — dx_alert_rule (Alert Rules)
+
+**Date:** 2026-02-10  
+**File:** `migrations/016_create_dx_alert_rule.sql`  
+**Tables Touched:** `dx_alert_rule` (NEW)  
+**Reason:** Configurable alert rules with trigger conditions, severity, and targeting.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_alert_rule (
+  id                  BIGSERIAL PRIMARY KEY,
+  rule_code           VARCHAR(60) NOT NULL UNIQUE,
+  rule_name           VARCHAR(200) NOT NULL,
+  module              VARCHAR(50) NOT NULL,
+  trigger_type        VARCHAR(20) NOT NULL,
+  trigger_event       VARCHAR(100),
+  condition_json      JSONB NOT NULL,
+  severity            VARCHAR(20) NOT NULL,
+  message_template    TEXT NOT NULL,
+  target_rule         VARCHAR(50) NOT NULL,
+  target_config       JSONB,
+  project_id          BIGINT,
+  cooldown_minutes    INT NOT NULL DEFAULT 60,
+  auto_clear          BOOLEAN NOT NULL DEFAULT TRUE,
+  is_active           BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS ix_dx_alert_rule_module ON dx_alert_rule (module, is_active);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_alert_rule;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 017 — dx_alert (Alerts)
+
+**Date:** 2026-02-10  
+**File:** `migrations/017_create_dx_alert.sql`  
+**Tables Touched:** `dx_alert` (NEW)  
+**Reason:** Active alerts raised by the alert engine with status tracking and resolution.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_alert (
+  id              BIGSERIAL PRIMARY KEY,
+  rule_id         BIGINT NOT NULL REFERENCES dx_alert_rule(id),
+  severity        VARCHAR(20) NOT NULL,
+  title           VARCHAR(255) NOT NULL,
+  message         TEXT NOT NULL,
+  entity_type     VARCHAR(80),
+  entity_id       BIGINT,
+  company_id      BIGINT,
+  project_id      BIGINT,
+  site_id         BIGINT,
+  status          VARCHAR(20) NOT NULL DEFAULT 'OPEN',
+  raised_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  acknowledged_by BIGINT,
+  acknowledged_at TIMESTAMPTZ,
+  resolved_by     BIGINT,
+  resolved_at     TIMESTAMPTZ,
+  resolution_note TEXT,
+  occurrence_count INT NOT NULL DEFAULT 1,
+  last_occurred_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS ix_dx_alert_open
+  ON dx_alert (status, severity, project_id, raised_at DESC);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_alert;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 018 — dx_sla_tracking (SLA Tracking)
+
+**Date:** 2026-02-10  
+**File:** `migrations/018_create_dx_sla_tracking.sql`  
+**Tables Touched:** `dx_sla_tracking` (NEW)  
+**Reason:** Track SLA compliance for workflow items with escalation support.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_sla_tracking (
+  id              BIGSERIAL PRIMARY KEY,
+  entity_type     VARCHAR(80) NOT NULL,
+  entity_id       BIGINT NOT NULL,
+  workflow_step   VARCHAR(80),
+  assigned_to     BIGINT,
+  project_id      BIGINT,
+  started_at      TIMESTAMPTZ NOT NULL,
+  due_at          TIMESTAMPTZ NOT NULL,
+  paused_at       TIMESTAMPTZ,
+  total_paused_minutes INT NOT NULL DEFAULT 0,
+  completed_at    TIMESTAMPTZ,
+  state           VARCHAR(20) NOT NULL DEFAULT 'ON_TRACK',
+  escalation_level INT NOT NULL DEFAULT 0,
+  escalated_to    BIGINT,
+  escalated_at    TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS ix_dx_sla_open
+  ON dx_sla_tracking (state, due_at) WHERE completed_at IS NULL;
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_sla_tracking;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 019 — dx_working_calendar (Working Calendar)
+
+**Date:** 2026-02-10  
+**File:** `migrations/019_create_dx_working_calendar.sql`  
+**Tables Touched:** `dx_working_calendar`, `dx_calendar_holiday` (NEW)  
+**Reason:** Define working hours and holidays for SLA calculations.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_working_calendar (
+  id            BIGSERIAL PRIMARY KEY,
+  company_id    BIGINT NOT NULL,
+  project_id    BIGINT,
+  working_days  VARCHAR(20) NOT NULL DEFAULT '1,2,3,4,5,6',
+  day_start     TIME NOT NULL DEFAULT '09:00',
+  day_end       TIME NOT NULL DEFAULT '18:00',
+  timezone      VARCHAR(60) NOT NULL DEFAULT 'Asia/Kolkata',
+  is_active     BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+CREATE TABLE IF NOT EXISTS dx_calendar_holiday (
+  id            BIGSERIAL PRIMARY KEY,
+  calendar_id   BIGINT NOT NULL REFERENCES dx_working_calendar(id),
+  holiday_date  DATE NOT NULL,
+  description   VARCHAR(150),
+  CONSTRAINT uq_dx_holiday UNIQUE (calendar_id, holiday_date)
+);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_calendar_holiday;
+DROP TABLE IF EXISTS dx_working_calendar;
+```
+
+**Status:** ✅ Documented
+
+---
+
+## Summary
+
+| Migration | Table | Type | Status |
+|---|---|---|---|
+| 001 | `dx_user_preference` | NEW | ✅ Documented |
+| 002 | `dx_kpi_definition` | NEW | ✅ Documented |
+| 003 | `dx_dashboard_layout` | NEW | ✅ Documented |
+| 004 | `dx_user_context` | NEW | ✅ Documented |
+| 005 | `dx_search_history` | NEW | ✅ Documented |
+| 006 | `dx_menu_item` | NEW | ✅ Documented |
+| 007 | `dx_permission` | NEW | ✅ Documented |
+| 008 | `dx_responsibility_template` | NEW | ✅ Documented |
+| 009 | `dx_project_assignment` | NEW | ✅ Documented |
+| 010 | `dx_approval_authority` | NEW | ✅ Documented |
+| 011 | `dx_sod_rule` | NEW | ✅ Documented |
+| 012 | `dx_assignment_audit` | NEW | ✅ Documented |
+| 013 | `dx_event_outbox` | NEW | ✅ Documented |
+| 014 | `dx_kpi_definition` | NEW | ✅ Documented |
+| 015 | `dx_kpi_snapshot` | NEW | ✅ Documented |
+| 016 | `dx_alert_rule` | NEW | ✅ Documented |
+| 017 | `dx_alert` | NEW | ✅ Documented |
+| 018 | `dx_sla_tracking` | NEW | ✅ Documented |
+| 019 | `dx_working_calendar` | NEW | ✅ Documented |
+
+**Total new tables:** 19  
+**Total tables modified:** 0  
+**Total rows affected:** 0
+
+---
+
+**Document Status:** ✅ Complete (Part 4 Updated)  
+**Next Step:** Part 5 — Component Library
