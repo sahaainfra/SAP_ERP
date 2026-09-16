@@ -228,6 +228,121 @@ DROP TABLE IF EXISTS dx_menu_item;
 
 ---
 
+### Migration 020 — dx_dashboard
+
+**Date:** 2026-02-10  
+**File:** `migrations/020_create_dx_dashboard.sql`  
+**Tables Touched:** `dx_dashboard` (NEW)  
+**Reason:** Store dashboard definitions with layout configurations for personalization.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_dashboard (
+  id                BIGSERIAL PRIMARY KEY,
+  dashboard_key     VARCHAR(100) NOT NULL UNIQUE,
+  dashboard_name    VARCHAR(150) NOT NULL,
+  owner_user_id     BIGINT,
+  template_id       BIGINT,
+  project_id        BIGINT,
+  company_id        BIGINT,
+  is_default        BOOLEAN NOT NULL DEFAULT FALSE,
+  is_system         BOOLEAN NOT NULL DEFAULT FALSE,
+  layout_json       JSONB NOT NULL,
+  refresh_interval_s INT NOT NULL DEFAULT 300,
+  created_by        BIGINT NOT NULL,
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  version           INT NOT NULL DEFAULT 1
+);
+
+CREATE INDEX IF NOT EXISTS ix_dx_dash_owner ON dx_dashboard (owner_user_id, project_id);
+CREATE INDEX IF NOT EXISTS ix_dx_dash_template ON dx_dashboard (template_id, project_id);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_dashboard;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 021 — dx_dashboard_widget
+
+**Date:** 2026-02-10  
+**File:** `migrations/021_create_dx_dashboard_widget.sql`  
+**Tables Touched:** `dx_dashboard_widget` (NEW)  
+**Reason:** Store individual widget configurations within dashboards.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_dashboard_widget (
+  id              BIGSERIAL PRIMARY KEY,
+  dashboard_id    BIGINT NOT NULL REFERENCES dx_dashboard(id) ON DELETE CASCADE,
+  widget_key      VARCHAR(120) NOT NULL,
+  widget_type     VARCHAR(40)  NOT NULL,
+  kpi_key         VARCHAR(120),
+  title_override  VARCHAR(200),
+  grid_x          INT NOT NULL,
+  grid_y          INT NOT NULL,
+  grid_w          INT NOT NULL DEFAULT 1,
+  grid_h          INT NOT NULL DEFAULT 1,
+  config_json     JSONB,
+  is_mandatory    BOOLEAN NOT NULL DEFAULT FALSE,
+  sort_order      INT NOT NULL DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS ix_dx_widget_dash ON dx_dashboard_widget (dashboard_id);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_dashboard_widget;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 022 — dx_saved_view
+
+**Date:** 2026-02-10  
+**File:** `migrations/022_create_dx_saved_view.sql`  
+**Tables Touched:** `dx_saved_view` (NEW)  
+**Reason:** Store saved table views with filters, sorting, and column configurations.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_saved_view (
+  id              BIGSERIAL PRIMARY KEY,
+  view_key        VARCHAR(120) NOT NULL UNIQUE,
+  screen_key      VARCHAR(120) NOT NULL,
+  view_name       VARCHAR(150) NOT NULL,
+  owner_user_id   BIGINT,
+  template_id     BIGINT,
+  project_id      BIGINT,
+  is_shared       BOOLEAN NOT NULL DEFAULT FALSE,
+  is_default      BOOLEAN NOT NULL DEFAULT FALSE,
+  config_json     JSONB NOT NULL,
+  created_by      BIGINT NOT NULL,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS ix_dx_view_screen ON dx_saved_view (screen_key, owner_user_id);
+CREATE INDEX IF NOT EXISTS ix_dx_view_template ON dx_saved_view (template_id, screen_key);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_saved_view;
+```
+
+**Status:** ✅ Documented
+
+---
+
 ## Summary
 
 | Migration | Table | Type | Status |
@@ -808,12 +923,15 @@ DROP TABLE IF EXISTS dx_working_calendar;
 | 017 | `dx_alert` | NEW | ✅ Documented |
 | 018 | `dx_sla_tracking` | NEW | ✅ Documented |
 | 019 | `dx_working_calendar` | NEW | ✅ Documented |
+| 020 | `dx_dashboard` | NEW | ✅ Documented |
+| 021 | `dx_dashboard_widget` | NEW | ✅ Documented |
+| 022 | `dx_saved_view` | NEW | ✅ Documented |
 
-**Total new tables:** 19  
+**Total new tables:** 22  
 **Total tables modified:** 0  
 **Total rows affected:** 0
 
 ---
 
-**Document Status:** ✅ Complete (Part 4 Updated)  
-**Next Step:** Part 5 — Component Library
+**Document Status:** ✅ Complete (Part 5 Updated)  
+**Next Step:** Part 6 — Role Dashboards & Object Pages

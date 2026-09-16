@@ -179,6 +179,25 @@
 | GET | `/api/dx/v1/sla/summary` | ✅ | authenticated | SLA compliance summary |
 | GET | `/api/dx/v1/system/health` | ✅ | admin | System health and queue status |
 
+### Component Library (Part 5)
+
+| Method | Path | Auth | Permission | Description |
+|---|---|---|---|---|
+| GET | `/api/dx/v1/dashboards` | ✅ | authenticated | List user's dashboards |
+| POST | `/api/dx/v1/dashboards` | ✅ | dashboard.create | Create new dashboard |
+| GET | `/api/dx/v1/dashboards/{id}` | ✅ | dashboard.view | Get dashboard with widgets |
+| PUT | `/api/dx/v1/dashboards/{id}` | ✅ | dashboard.edit | Update dashboard layout |
+| DELETE | `/api/dx/v1/dashboards/{id}` | ✅ | dashboard.delete | Delete dashboard |
+| POST | `/api/dx/v1/dashboards/{id}/widgets` | ✅ | dashboard.edit | Add widget to dashboard |
+| PUT | `/api/dx/v1/dashboards/{id}/widgets/{widgetId}` | ✅ | dashboard.edit | Update widget configuration |
+| DELETE | `/api/dx/v1/dashboards/{id}/widgets/{widgetId}` | ✅ | dashboard.edit | Remove widget from dashboard |
+| GET | `/api/dx/v1/widgets/catalogue` | ✅ | authenticated | Available widget types |
+| GET | `/api/dx/v1/views` | ✅ | authenticated | List saved table views |
+| POST | `/api/dx/v1/views` | ✅ | view.create | Create saved view |
+| PUT | `/api/dx/v1/views/{id}` | ✅ | view.edit | Update saved view |
+| DELETE | `/api/dx/v1/views/{id}` | ✅ | view.delete | Delete saved view |
+| POST | `/api/dx/v1/views/{id}/share` | ✅ | view.share | Share view with team |
+
 ---
 
 ## Planned Endpoints (Future Parts)
@@ -196,10 +215,6 @@
 - `WS /api/dx/v1/ws` — WebSocket gateway
 - `GET /api/dx/v1/kpis/{code}` — KPI values
 - `GET /api/dx/v1/alerts` — Active alerts
-
-### Part 5 — Component Library
-- `GET /api/dx/v1/dashboard/layouts` — Dashboard layouts
-- `PUT /api/dx/v1/dashboard/layouts/{id}` — Update layout
 
 ### Part 6 — Role Dashboards
 - `GET /api/dx/v1/dashboards/{role}` — Role-specific dashboard
@@ -248,5 +263,5 @@
 
 ---
 
-**Document Status:** ✅ Complete  
-**Next Step:** Part 2 — Global Shell and Navigation (will add navigation and search endpoints)
+**Document Status:** ✅ Complete (Part 5 Updated)  
+**Next Step:** Part 6 — Role Dashboards & Object Pages
