@@ -1,222 +1,414 @@
-import { useState } from 'react';
+/**
+ * Enhanced Shell Bar - Part 2
+ * 
+ * Features:
+ * - Left region: Nav toggle, logo, product title
+ * - Center region: Global search
+ * - Right region: AI Copilot, Messages, Tasks, Approvals, Notifications, Help, User avatar
+ * - Popovers for each badge item
+ * - Keyboard accessible
+ * - Responsive
+ */
+
+import { useState, useRef, useEffect } from 'react';
 import {
-  Search, Bell, Settings, User, ChevronDown, Menu,
-  Moon, Sun, Maximize, HelpCircle, Grid3X3
+  Search, Bell, Settings, User, ChevronDown, Menu, X,
+  Moon, Sun, Maximize2, HelpCircle, Grid3X3, MessageSquare,
+  CheckSquare, Bot, LogOut, Key, Monitor
 } from 'lucide-react';
-import { alerts } from '../data/mockData';
+import { alerts, approvals, tasks } from '../data/mockData';
 
 interface ShellBarProps {
   onToggleSidebar: () => void;
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
-  currentProject: string;
-  onProjectChange: (project: string) => void;
+  onOpenProfile: () => void;
+  onOpenSearch: () => void;
 }
 
-const projectList = [
-  { id: 'all', name: 'All Projects' },
-  { id: 'MLE-P2', name: 'Metro Line Extension' },
-  { id: 'HBR-01', name: 'Highway Bridge' },
-  { id: 'CTC-03', name: 'Commercial Tower' },
-  { id: 'WTP-04', name: 'Water Treatment Plant' },
-  { id: 'ATE-05', name: 'Airport Terminal' },
-  { id: 'SFI-06', name: 'Solar Farm' },
-];
+export default function ShellBar({ 
+  onToggleSidebar, 
+  theme, 
+  onToggleTheme, 
+  onOpenProfile,
+  onOpenSearch 
+}: ShellBarProps) {
+  const [activePopover, setActivePopover] = useState<string | null>(null);
+  const [badgeCounts] = useState({
+    messages: 2,
+    tasks: tasks.filter(t => t.status !== 'completed').length,
+    approvals: approvals.filter(a => a.status === 'pending').length,
+    notifications: alerts.filter(a => !a.read).length,
+  });
 
-export default function ShellBar({ onToggleSidebar, theme, onToggleTheme, currentProject, onProjectChange }: ShellBarProps) {
-  const [showSearch, setShowSearch] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [showProjectSwitcher, setShowProjectSwitcher] = useState(false);
-  const [showUserMenu, setShowUserMenu] = useState(false);
-  const unreadAlerts = alerts.filter(a => !a.read).length;
+  // Close popover on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('[data-popover]') && !target.closest('[data-popover-trigger]')) {
+        setActivePopover(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Close popover on Escape
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setActivePopover(null);
+      }
+    };
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, []);
+
+  const togglePopover = (id: string) => {
+    setActivePopover(activePopover === id ? null : id);
+  };
+
+  const renderBadge = (count: number, critical?: boolean) => {
+    if (count === 0) return null;
+    const displayCount = count > 99 ? '99+' : count;
+    return (
+      <span 
+        className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold flex items-center justify-center"
+        style={{ 
+          background: critical ? 'var(--erp-priority-critical)' : 'var(--sapNegativeColor)',
+          color: '#ffffff'
+        }}
+      >
+        {displayCount}
+      </span>
+    );
+  };
 
   return (
     <header
-      className="fixed top-0 left-0 right-0 z-50 flex items-center h-14 px-3"
-      style={{ background: 'var(--sapShell)', color: '#fff' }}
+      className="fixed top-0 left-0 right-0 z-50 flex items-center px-3"
+      style={{ 
+        background: 'var(--sapShell_Background)', 
+        color: 'var(--sapShell_TextColor)',
+        height: 'var(--sapElement_Height)',
+        boxShadow: 'var(--sapShell_Shadow)',
+        borderBottom: '1px solid var(--sapShell_BorderColor)'
+      }}
     >
-      {/* Left Section */}
+      {/* Left Region */}
       <div className="flex items-center gap-2">
         <button
           onClick={onToggleSidebar}
-          className="p-2 rounded-md hover:bg-white/10 transition-colors"
+          className="p-2 rounded-md hover:bg-[var(--sapShell_Hover_Background)] transition-colors"
+          style={{ width: '36px', height: '36px' }}
           aria-label="Toggle navigation"
         >
           <Menu size={18} />
         </button>
 
-        {/* Logo / Product Name */}
+        {/* Logo */}
         <div className="flex items-center gap-2 ml-1">
-          <div className="w-7 h-7 rounded bg-white/20 flex items-center justify-center">
-            <Grid3X3 size={16} className="text-blue-300" />
+          <div 
+            className="w-8 h-8 rounded-lg flex items-center justify-center"
+            style={{ background: 'var(--sapAccentColor6)' }}
+          >
+            <Grid3X3 size={16} className="text-white" />
           </div>
           <div className="hidden sm:flex flex-col leading-tight">
-            <span className="text-sm font-semibold tracking-tight">Construction ERP</span>
-            <span className="text-[10px] text-white/60 -mt-0.5">SAP S/4HANA Aligned</span>
-          </div>
-        </div>
-
-        {/* Context Switcher */}
-        <div className="relative ml-4 hidden md:block">
-          <button
-            onClick={() => setShowProjectSwitcher(!showProjectSwitcher)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white/10 hover:bg-white/15 transition-colors text-sm"
-          >
-            <span className="text-white/70 text-xs">Project:</span>
-            <span className="font-medium">
-              {projectList.find(p => p.id === currentProject)?.name || 'All Projects'}
+            <span className="text-sm font-semibold" style={{ color: 'var(--sapShell_TextColor)' }}>
+              Construction ERP
             </span>
-            <ChevronDown size={14} />
-          </button>
-
-          {showProjectSwitcher && (
-            <div className="absolute top-full left-0 mt-1 w-64 rounded-lg shadow-lg py-1 z-50"
-              style={{ background: 'var(--sapGroupContentBG)', border: '1px solid var(--sapBaseColor)' }}>
-              <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--sapContentLabelColor)' }}>
-                Switch Project Context
-              </div>
-              {projectList.map(project => (
-                <button
-                  key={project.id}
-                  onClick={() => { onProjectChange(project.id); setShowProjectSwitcher(false); }}
-                  className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors ${
-                    currentProject === project.id ? 'font-semibold text-blue-600' : ''
-                  }`}
-                  style={{ color: currentProject === project.id ? 'var(--sapBrand)' : 'var(--sapFontColor)' }}
-                >
-                  {project.name}
-                </button>
-              ))}
-            </div>
-          )}
+            <span className="text-[10px] opacity-60 -mt-0.5">SAP Fiori Horizon</span>
+          </div>
         </div>
       </div>
 
-      {/* Spacer */}
-      <div className="flex-1" />
+      {/* Center Region - Global Search */}
+      <div className="flex-1 flex justify-center px-4">
+        <button
+          onClick={onOpenSearch}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors w-full max-w-md"
+          style={{ 
+            background: 'var(--sapField_Background)',
+            border: '1px solid var(--sapField_BorderColor)',
+            color: 'var(--sapField_PlaceholderTextColor)'
+          }}
+        >
+          <Search size={16} />
+          <span className="hidden sm:inline">Search projects, documents, tasks...</span>
+          <span className="sm:hidden">Search...</span>
+          <kbd className="hidden md:inline ml-auto px-1.5 py-0.5 text-[10px] rounded" 
+            style={{ background: 'var(--sapBaseColor)', color: 'var(--sapContent_LabelColor)' }}>
+            ⌘K
+          </kbd>
+        </button>
+      </div>
 
-      {/* Right Section */}
+      {/* Right Region */}
       <div className="flex items-center gap-1">
-        {/* Search */}
-        <div className="relative">
-          {showSearch && (
-            <input
-              type="text"
-              placeholder="Search projects, tasks, documents..."
-              className="absolute right-0 top-1/2 -translate-y-1/2 w-72 px-3 py-1.5 rounded-md text-sm bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:border-blue-400"
-              autoFocus
-              onBlur={() => setShowSearch(false)}
-            />
-          )}
+        {/* AI Copilot */}
+        <button 
+          className="p-2 rounded-md hover:bg-[var(--sapShell_Hover_Background)] transition-colors hidden md:flex"
+          style={{ width: '36px', height: '36px' }}
+          aria-label="AI Copilot"
+        >
+          <Bot size={18} />
+        </button>
+
+        {/* Messages */}
+        <div className="relative" data-popover-trigger>
           <button
-            onClick={() => setShowSearch(!showSearch)}
-            className="p-2 rounded-md hover:bg-white/10 transition-colors"
-            aria-label="Search"
+            onClick={() => togglePopover('messages')}
+            className="p-2 rounded-md hover:bg-[var(--sapShell_Hover_Background)] transition-colors relative"
+            style={{ width: '36px', height: '36px' }}
+            aria-label="Messages"
           >
-            <Search size={18} />
+            <MessageSquare size={18} />
+            {renderBadge(badgeCounts.messages)}
           </button>
+          {activePopover === 'messages' && (
+            <MessagesPopover onClose={() => setActivePopover(null)} />
+          )}
         </div>
+
+        {/* Tasks */}
+        <div className="relative" data-popover-trigger>
+          <button
+            onClick={() => togglePopover('tasks')}
+            className="p-2 rounded-md hover:bg-[var(--sapShell_Hover_Background)] transition-colors relative"
+            style={{ width: '36px', height: '36px' }}
+            aria-label="Tasks"
+          >
+            <CheckSquare size={18} />
+            {renderBadge(badgeCounts.tasks)}
+          </button>
+          {activePopover === 'tasks' && (
+            <TasksPopover onClose={() => setActivePopover(null)} />
+          )}
+        </div>
+
+        {/* Approvals */}
+        <div className="relative" data-popover-trigger>
+          <button
+            onClick={() => togglePopover('approvals')}
+            className="p-2 rounded-md hover:bg-[var(--sapShell_Hover_Background)] transition-colors relative"
+            style={{ width: '36px', height: '36px' }}
+            aria-label="Approvals"
+          >
+            <CheckSquare size={18} />
+            {renderBadge(badgeCounts.approvals, true)}
+          </button>
+          {activePopover === 'approvals' && (
+            <ApprovalsPopover onClose={() => setActivePopover(null)} />
+          )}
+        </div>
+
+        {/* Notifications */}
+        <div className="relative" data-popover-trigger>
+          <button
+            onClick={() => togglePopover('notifications')}
+            className="p-2 rounded-md hover:bg-[var(--sapShell_Hover_Background)] transition-colors relative"
+            style={{ width: '36px', height: '36px' }}
+            aria-label="Notifications"
+          >
+            <Bell size={18} />
+            {renderBadge(badgeCounts.notifications)}
+          </button>
+          {activePopover === 'notifications' && (
+            <NotificationsPopover onClose={() => setActivePopover(null)} />
+          )}
+        </div>
+
+        {/* Help */}
+        <button 
+          className="p-2 rounded-md hover:bg-[var(--sapShell_Hover_Background)] transition-colors hidden sm:flex"
+          style={{ width: '36px', height: '36px' }}
+          aria-label="Help"
+        >
+          <HelpCircle size={18} />
+        </button>
 
         {/* Theme Toggle */}
         <button
           onClick={onToggleTheme}
-          className="p-2 rounded-md hover:bg-white/10 transition-colors"
+          className="p-2 rounded-md hover:bg-[var(--sapShell_Hover_Background)] transition-colors"
+          style={{ width: '36px', height: '36px' }}
           aria-label="Toggle theme"
         >
           {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
         </button>
 
-        {/* Fullscreen */}
-        <button className="p-2 rounded-md hover:bg-white/10 transition-colors hidden sm:block" aria-label="Fullscreen">
-          <Maximize size={18} />
-        </button>
-
-        {/* Help */}
-        <button className="p-2 rounded-md hover:bg-white/10 transition-colors hidden sm:block" aria-label="Help">
-          <HelpCircle size={18} />
-        </button>
-
-        {/* Notifications */}
-        <div className="relative">
-          <button
-            onClick={() => setShowNotifications(!showNotifications)}
-            className="p-2 rounded-md hover:bg-white/10 transition-colors relative"
-            aria-label="Notifications"
+        {/* User Avatar */}
+        <button
+          onClick={onOpenProfile}
+          className="flex items-center gap-2 p-1 rounded-md hover:bg-[var(--sapShell_Hover_Background)] transition-colors ml-1"
+          aria-label="User profile"
+        >
+          <div 
+            className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white"
+            style={{ background: 'var(--sapAccentColor6)' }}
           >
-            <Bell size={18} />
-            {unreadAlerts > 0 && (
-              <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] font-bold flex items-center justify-center">
-                {unreadAlerts}
-              </span>
-            )}
-          </button>
-
-          {showNotifications && (
-            <div className="absolute top-full right-0 mt-1 w-80 rounded-lg shadow-lg z-50 overflow-hidden"
-              style={{ background: 'var(--sapGroupContentBG)', border: '1px solid var(--sapBaseColor)' }}>
-              <div className="px-4 py-3 flex items-center justify-between border-b" style={{ borderColor: 'var(--sapBaseColor)' }}>
-                <span className="font-semibold text-sm" style={{ color: 'var(--sapFontColor)' }}>Notifications</span>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-600">{unreadAlerts} new</span>
-              </div>
-              <div className="max-h-80 overflow-y-auto">
-                {alerts.slice(0, 5).map(alert => (
-                  <div key={alert.id} className={`px-4 py-3 border-b last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ${!alert.read ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}
-                    style={{ borderColor: 'var(--sapBaseColor)' }}>
-                    <div className="flex items-start gap-2">
-                      <span className={`status-indicator mt-1.5 ${
-                        alert.type === 'critical' ? 'status-error' :
-                        alert.type === 'warning' ? 'status-warning' :
-                        alert.type === 'success' ? 'status-active' : 'status-inactive'
-                      }`} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm leading-snug" style={{ color: 'var(--sapFontColor)' }}>{alert.message}</p>
-                        <p className="text-xs mt-1" style={{ color: 'var(--sapContentLabelColor)' }}>{alert.timestamp}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="px-4 py-2 text-center border-t" style={{ borderColor: 'var(--sapBaseColor)' }}>
-                <button className="text-sm font-medium" style={{ color: 'var(--sapBrand)' }}>View All Notifications</button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* User Menu */}
-        <div className="relative">
-          <button
-            onClick={() => setShowUserMenu(!showUserMenu)}
-            className="flex items-center gap-2 p-1.5 rounded-md hover:bg-white/10 transition-colors ml-1"
-          >
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-xs font-bold">
-              AK
-            </div>
-            <span className="text-sm hidden lg:block">Admin User</span>
-            <ChevronDown size={14} className="hidden lg:block" />
-          </button>
-
-          {showUserMenu && (
-            <div className="absolute top-full right-0 mt-1 w-56 rounded-lg shadow-lg py-1 z-50"
-              style={{ background: 'var(--sapGroupContentBG)', border: '1px solid var(--sapBaseColor)' }}>
-              <div className="px-4 py-3 border-b" style={{ borderColor: 'var(--sapBaseColor)' }}>
-                <p className="font-semibold text-sm" style={{ color: 'var(--sapFontColor)' }}>Admin User</p>
-                <p className="text-xs" style={{ color: 'var(--sapContentLabelColor)' }}>Super Administrator</p>
-              </div>
-              <button className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800/50 flex items-center gap-2" style={{ color: 'var(--sapFontColor)' }}>
-                <User size={14} /> Profile Settings
-              </button>
-              <button className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800/50 flex items-center gap-2" style={{ color: 'var(--sapFontColor)' }}>
-                <Settings size={14} /> System Settings
-              </button>
-              <div className="border-t my-1" style={{ borderColor: 'var(--sapBaseColor)' }} />
-              <button className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2">
-                <User size={14} /> Sign Out
-              </button>
-            </div>
-          )}
-        </div>
+            AK
+          </div>
+          <span className="text-sm hidden lg:block">Admin User</span>
+        </button>
       </div>
     </header>
+  );
+}
+
+// Popover Components
+function PopoverWrapper({ children, onClose, title, footer }: {
+  children: React.ReactNode;
+  onClose: () => void;
+  title: string;
+  footer?: React.ReactNode;
+}) {
+  return (
+    <div
+      data-popover
+      className="absolute top-full right-0 mt-2 w-96 max-w-[calc(100vw-2rem)] rounded-lg shadow-lg overflow-hidden"
+      style={{ 
+        background: 'var(--sapTile_Background)',
+        border: '1px solid var(--sapGroup_ContentBorderColor)',
+        boxShadow: 'var(--sapContent_Shadow2)'
+      }}
+    >
+      <div className="px-4 py-3 flex items-center justify-between border-b" 
+        style={{ borderColor: 'var(--sapList_BorderColor)' }}>
+        <span className="font-semibold text-sm" style={{ color: 'var(--sapTile_TitleTextColor)' }}>{title}</span>
+        <button onClick={onClose} className="p-1 rounded hover:bg-[var(--sapHoverColor)]">
+          <X size={14} />
+        </button>
+      </div>
+      <div className="max-h-96 overflow-y-auto">
+        {children}
+      </div>
+      {footer && (
+        <div className="px-4 py-2 text-center border-t" style={{ borderColor: 'var(--sapList_BorderColor)' }}>
+          {footer}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function NotificationsPopover({ onClose }: { onClose: () => void }) {
+  return (
+    <PopoverWrapper 
+      onClose={onClose} 
+      title="Notifications"
+      footer={<button className="text-sm font-medium" style={{ color: 'var(--sapLinkColor)' }}>View All</button>}
+    >
+      {alerts.slice(0, 5).map(alert => (
+        <div key={alert.id} className="px-4 py-3 border-b hover:bg-[var(--sapList_Hover_Background)]"
+          style={{ borderColor: 'var(--sapList_BorderColor)' }}>
+          <div className="flex items-start gap-2">
+            <span className={`status-indicator mt-1.5 ${
+              alert.type === 'critical' ? 'status-error' :
+              alert.type === 'warning' ? 'status-warning' :
+              alert.type === 'success' ? 'status-active' : 'status-inactive'
+            }`} />
+            <div className="flex-1">
+              <p className="text-sm" style={{ color: 'var(--sapList_TextColor)' }}>{alert.message}</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--sapContent_LabelColor)' }}>{alert.timestamp}</p>
+            </div>
+          </div>
+        </div>
+      ))}
+    </PopoverWrapper>
+  );
+}
+
+function ApprovalsPopover({ onClose }: { onClose: () => void }) {
+  return (
+    <PopoverWrapper 
+      onClose={onClose} 
+      title="Pending Approvals"
+      footer={<button className="text-sm font-medium" style={{ color: 'var(--sapLinkColor)' }}>View All</button>}
+    >
+      {approvals.filter(a => a.status === 'pending').slice(0, 5).map(approval => (
+        <div key={approval.id} className="px-4 py-3 border-b hover:bg-[var(--sapList_Hover_Background)]"
+          style={{ borderColor: 'var(--sapList_BorderColor)' }}>
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium" style={{ color: 'var(--sapList_TextColor)' }}>
+              {approval.title}
+            </span>
+            {approval.priority === 'urgent' && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded" 
+                style={{ background: 'var(--sapErrorBackground)', color: 'var(--sapNegativeTextColor)' }}>
+                URGENT
+              </span>
+            )}
+          </div>
+          <div className="flex items-center justify-between mt-1">
+            <span className="text-xs" style={{ color: 'var(--sapContent_LabelColor)' }}>
+              {approval.requester} • ${(approval.amount / 1000000).toFixed(1)}M
+            </span>
+          </div>
+        </div>
+      ))}
+    </PopoverWrapper>
+  );
+}
+
+function TasksPopover({ onClose }: { onClose: () => void }) {
+  return (
+    <PopoverWrapper 
+      onClose={onClose} 
+      title="My Tasks"
+      footer={<button className="text-sm font-medium" style={{ color: 'var(--sapLinkColor)' }}>View All</button>}
+    >
+      {tasks.filter(t => t.status !== 'completed').slice(0, 5).map(task => (
+        <div key={task.id} className="px-4 py-3 border-b hover:bg-[var(--sapList_Hover_Background)]"
+          style={{ borderColor: 'var(--sapList_BorderColor)' }}>
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium" style={{ color: 'var(--sapList_TextColor)' }}>
+              {task.title}
+            </span>
+            <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+              task.status === 'overdue' 
+                ? 'bg-[var(--sapErrorBackground)] text-[var(--sapNegativeTextColor)]'
+                : task.status === 'in-progress'
+                ? 'bg-[var(--sapInformationBackground)] text-[var(--sapInformativeTextColor)]'
+                : 'bg-[var(--sapNeutralBackground)] text-[var(--sapNeutralTextColor)]'
+            }`}>
+              {task.status}
+            </span>
+          </div>
+          <p className="text-xs mt-1" style={{ color: 'var(--sapContent_LabelColor)' }}>
+            Due: {task.dueDate} • {task.project}
+          </p>
+        </div>
+      ))}
+    </PopoverWrapper>
+  );
+}
+
+function MessagesPopover({ onClose }: { onClose: () => void }) {
+  const messages = [
+    { id: 1, from: 'Sarah Chen', subject: 'Metro Line progress update', time: '10 min ago' },
+    { id: 2, from: 'System', subject: 'Backup completed successfully', time: '1 hour ago' },
+  ];
+
+  return (
+    <PopoverWrapper 
+      onClose={onClose} 
+      title="Messages"
+      footer={<button className="text-sm font-medium" style={{ color: 'var(--sapLinkColor)' }}>View All</button>}
+    >
+      {messages.map(msg => (
+        <div key={msg.id} className="px-4 py-3 border-b hover:bg-[var(--sapList_Hover_Background)]"
+          style={{ borderColor: 'var(--sapList_BorderColor)' }}>
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium" style={{ color: 'var(--sapList_TextColor)' }}>
+              {msg.from}
+            </span>
+            <span className="text-xs" style={{ color: 'var(--sapContent_LabelColor)' }}>{msg.time}</span>
+          </div>
+          <p className="text-sm mt-1" style={{ color: 'var(--sapList_TextColor)' }}>{msg.subject}</p>
+        </div>
+      ))}
+    </PopoverWrapper>
   );
 }

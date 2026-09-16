@@ -128,6 +128,41 @@
 }
 ```
 
+### Navigation
+
+| Method | Path | Auth | Permission | Description |
+|---|---|---|---|---|
+| GET | `/api/dx/v1/navigation` | ✅ | authenticated | Server-driven menu filtered by user permissions |
+
+### Context
+
+| Method | Path | Auth | Permission | Description |
+|---|---|---|---|---|
+| GET | `/api/dx/v1/context/available` | ✅ | authenticated | Available companies/projects/sites/FYs |
+| PUT | `/api/dx/v1/context` | ✅ | authenticated | Persist and validate context selection |
+
+### Global Search
+
+| Method | Path | Auth | Permission | Description |
+|---|---|---|---|---|
+| GET | `/api/dx/v1/search` | ✅ | authenticated | Permission-filtered global search |
+| GET | `/api/dx/v1/search/recent` | ✅ | authenticated | Recent searches for current user |
+
+### Shell Counts
+
+| Method | Path | Auth | Permission | Description |
+|---|---|---|---|---|
+| GET | `/api/dx/v1/shell/counts` | ✅ | authenticated | Badge counts (notifications, approvals, tasks, messages) |
+| GET | `/api/dx/v1/shell/notifications` | ✅ | authenticated | Latest 10 notifications for popover |
+| GET | `/api/dx/v1/shell/approvals` | ✅ | authenticated | Latest 10 pending approvals |
+| GET | `/api/dx/v1/shell/tasks` | ✅ | authenticated | Latest 10 open tasks |
+
+### Profile
+
+| Method | Path | Auth | Permission | Description |
+|---|---|---|---|---|
+| GET | `/api/dx/v1/profile` | ✅ | authenticated | User profile panel payload |
+
 ---
 
 ## Planned Endpoints (Future Parts)
