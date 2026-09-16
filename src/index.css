@@ -1,1 +1,226 @@
 @import "tailwindcss";
+
+/* SAP Fiori Horizon Design Tokens */
+:root {
+  /* Brand Colors */
+  --sapBrand: #0070f2;
+  --sapBrandHover: #0064d9;
+  --sapBrandActive: #0054b6;
+  --sapHighlight: #0070f2;
+  --sapFocus: #0032a4;
+
+  /* Semantic Colors */
+  --sapPositive: #107e3e;
+  --sapPositiveBG: #e8f5e9;
+  --sapCritical: #e9730c;
+  --sapCriticalBG: #fff3e0;
+  --sapNegative: #bb0000;
+  --sapNegativeBG: #ffebee;
+  --sapInformation: #0070f2;
+  --sapInformationBG: #e3f2fd;
+
+  /* Shell Colors */
+  --sapShell: #354a5f;
+  --sapShellHover: #2c3e50;
+  --sapShellActive: #1a2b3c;
+
+  /* Content Colors */
+  --sapBackgroundColor: #f7f7f7;
+  --sapGroupContentBG: #ffffff;
+  --sapBaseColor: #ededed;
+  --sapFontColor: #32363a;
+  --sapContentLabelColor: #6a6d70;
+  --sapContentIconColor: #0854a0;
+
+  /* Typography */
+  --sapFontFamily: '72', '72full', Arial, Helvetica, sans-serif;
+  --sapFontSmallSize: 0.75rem;
+  --sapFontMediumSize: 0.875rem;
+  --sapFontLargeSize: 1rem;
+  --sapFontHeader1Size: 2.25rem;
+  --sapFontHeader2Size: 1.5rem;
+  --sapFontHeader3Size: 1.25rem;
+  --sapFontHeader4Size: 1.125rem;
+  --sapFontHeader5Size: 1rem;
+  --sapFontHeader6Size: 0.875rem;
+
+  /* Spacing */
+  --sapSpacingXS: 0.25rem;
+  --sapSpacingS: 0.5rem;
+  --sapSpacingM: 1rem;
+  --sapSpacingL: 1.5rem;
+  --sapSpacingXL: 2rem;
+
+  /* Border Radius */
+  --sapElementBorderRadius: 0.5rem;
+  --sapElementBorderRadiusSmall: 0.25rem;
+
+  /* Shadows */
+  --sapShadow1: 0 0 0 1px rgba(0, 0, 0, 0.08);
+  --sapShadow2: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --sapShadow3: 0 6px 24px rgba(0, 0, 0, 0.12);
+
+  /* Transitions */
+  --sapTransition: 150ms ease-in-out;
+}
+
+/* Dark Theme */
+[data-theme="dark"] {
+  --sapShell: #1c2228;
+  --sapShellHover: #252c33;
+  --sapShellActive: #2d353d;
+  --sapBackgroundColor: #12171c;
+  --sapGroupContentBG: #1c2228;
+  --sapBaseColor: #2c3540;
+  --sapFontColor: #edf0f3;
+  --sapContentLabelColor: #a9adb1;
+  --sapContentIconColor: #5b9bd5;
+  --sapBrand: #5b9bd5;
+  --sapBrandHover: #6ba8de;
+  --sapPositiveBG: #1a3a1a;
+  --sapCriticalBG: #3a2a0a;
+  --sapNegativeBG: #3a1a1a;
+  --sapInformationBG: #1a2a3a;
+  --sapShadow1: 0 0 0 1px rgba(255, 255, 255, 0.05);
+  --sapShadow2: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --sapShadow3: 0 6px 24px rgba(0, 0, 0, 0.4);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--sapFontFamily);
+  background-color: var(--sapBackgroundColor);
+  color: var(--sapFontColor);
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* Utility Classes */
+.sap-card {
+  background: var(--sapGroupContentBG);
+  border-radius: var(--sapElementBorderRadius);
+  box-shadow: var(--sapShadow1);
+  transition: box-shadow var(--sapTransition);
+}
+
+.sap-card:hover {
+  box-shadow: var(--sapShadow2);
+}
+
+.sap-tile {
+  background: var(--sapGroupContentBG);
+  border-radius: var(--sapElementBorderRadius);
+  box-shadow: var(--sapShadow1);
+  transition: all var(--sapTransition);
+  cursor: pointer;
+}
+
+.sap-tile:hover {
+  box-shadow: var(--sapShadow2);
+  transform: translateY(-1px);
+}
+
+.sap-tile:active {
+  transform: translateY(0);
+}
+
+.sap-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: var(--sapFontSmallSize);
+  font-weight: 500;
+}
+
+.sap-badge-positive {
+  background: var(--sapPositiveBG);
+  color: var(--sapPositive);
+}
+
+.sap-badge-critical {
+  background: var(--sapCriticalBG);
+  color: var(--sapCritical);
+}
+
+.sap-badge-negative {
+  background: var(--sapNegativeBG);
+  color: var(--sapNegative);
+}
+
+.sap-badge-information {
+  background: var(--sapInformationBG);
+  color: var(--sapInformation);
+}
+
+/* Pulse animation for real-time indicators */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+/* Progress bar animation */
+@keyframes progress-fill {
+  from { width: 0; }
+}
+
+.animate-progress {
+  animation: progress-fill 1s ease-out;
+}
+
+/* Slide in animation */
+@keyframes slide-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out forwards;
+}
+
+/* Number counter animation */
+@keyframes count-up {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Status indicator */
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-active { background: var(--sapPositive); }
+.status-warning { background: var(--sapCritical); }
+.status-error { background: var(--sapNegative); }
+.status-inactive { background: var(--sapContentLabelColor); }
