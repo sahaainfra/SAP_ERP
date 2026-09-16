@@ -17,6 +17,7 @@ import {
   CheckSquare, Bot, LogOut, Key, Monitor
 } from 'lucide-react';
 import { alerts, approvals, tasks } from '../data/mockData';
+import NotificationPanel from './NotificationPanel';
 
 interface ShellBarProps {
   onToggleSidebar: () => void;
@@ -34,6 +35,7 @@ export default function ShellBar({
   onOpenSearch 
 }: ShellBarProps) {
   const [activePopover, setActivePopover] = useState<string | null>(null);
+  const [showNotificationPanel, setShowNotificationPanel] = useState(false);
   const [badgeCounts] = useState({
     messages: 2,
     tasks: tasks.filter(t => t.status !== 'completed').length,
@@ -206,7 +208,7 @@ export default function ShellBar({
         {/* Notifications */}
         <div className="relative" data-popover-trigger>
           <button
-            onClick={() => togglePopover('notifications')}
+            onClick={() => setShowNotificationPanel(!showNotificationPanel)}
             className="p-2 rounded-md hover:bg-[var(--sapShell_Hover_Background)] transition-colors relative"
             style={{ width: '36px', height: '36px' }}
             aria-label="Notifications"
@@ -214,9 +216,6 @@ export default function ShellBar({
             <Bell size={18} />
             {renderBadge(badgeCounts.notifications)}
           </button>
-          {activePopover === 'notifications' && (
-            <NotificationsPopover onClose={() => setActivePopover(null)} />
-          )}
         </div>
 
         {/* Help */}
@@ -253,6 +252,11 @@ export default function ShellBar({
           <span className="text-sm hidden lg:block">Admin User</span>
         </button>
       </div>
+
+      {/* Notification Panel */}
+      {showNotificationPanel && (
+        <NotificationPanel onClose={() => setShowNotificationPanel(false)} />
+      )}
     </header>
   );
 }

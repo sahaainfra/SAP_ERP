@@ -37,8 +37,9 @@ export const navigationData: NavGroup[] = [
       { key: 'home', label: 'Home', route: '/dashboard', icon: 'home', permission: 'dashboard.view' },
       { key: 'universalhome', label: 'Universal Home', route: '/universal-home', icon: 'layout-dashboard', permission: 'dashboard.view' },
       { key: 'workspace', label: 'My Workspace', route: '/workspace', icon: 'layout-dashboard', permission: 'workspace.view' },
-      { key: 'my-tasks', label: 'My Tasks', route: '/tasks', icon: 'check-square', badge: 3, permission: 'tasks.view' },
-      { key: 'my-approvals', label: 'My Approvals', route: '/approvals', icon: 'file-check', badge: 4, permission: 'approvals.view' },
+      { key: 'my-tasks', label: 'Task Centre', route: '/tasks', icon: 'check-square', badge: 3, permission: 'tasks.view' },
+      { key: 'my-approvals', label: 'Approval Centre', route: '/approvals', icon: 'file-check', badge: 4, permission: 'approvals.view' },
+      { key: 'exceptions', label: 'Exception Centre', route: '/exceptions', icon: 'alert-triangle', badge: 2, permission: 'exceptions.view' },
     ],
   },
   {

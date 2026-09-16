@@ -509,6 +509,298 @@ DROP TABLE IF EXISTS dx_document_chain;
 
 ---
 
+### Migration 028 — dx_task (Tasks)
+
+**Date:** 2026-02-10  
+**File:** `migrations/028_create_dx_task.sql`  
+**Tables Touched:** `dx_task` (NEW)  
+**Reason:** Task management with multiple sources (manual, system, workflow, alert, recurring, checklist).
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_task (
+  id                BIGSERIAL PRIMARY KEY,
+  task_number       VARCHAR(40) NOT NULL UNIQUE,
+  title             VARCHAR(255) NOT NULL,
+  description       TEXT,
+  task_type         VARCHAR(40) NOT NULL,
+  source_entity     VARCHAR(80),
+  source_id         BIGINT,
+  company_id        BIGINT,
+  project_id        BIGINT,
+  site_id           BIGINT,
+  assigned_to       BIGINT,
+  assigned_by       BIGINT,
+  assigned_at       TIMESTAMPTZ,
+  due_at            TIMESTAMPTZ,
+  priority          VARCHAR(20) NOT NULL DEFAULT 'MEDIUM',
+  status            VARCHAR(20) NOT NULL DEFAULT 'OPEN',
+  progress_percent  INT NOT NULL DEFAULT 0,
+  completed_at      TIMESTAMPTZ,
+  completed_by      BIGINT,
+  completion_note   TEXT,
+  blocked_reason    TEXT,
+  parent_task_id    BIGINT REFERENCES dx_task(id),
+  recurrence_rule   VARCHAR(100),
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS ix_dx_task_assignee ON dx_task (assigned_to, status, due_at);
+CREATE INDEX IF NOT EXISTS ix_dx_task_project  ON dx_task (project_id, status);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_task;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 029 — dx_task_comment (Task Comments)
+
+**Date:** 2026-02-10  
+**File:** `migrations/029_create_dx_task_comment.sql`  
+**Tables Touched:** `dx_task_comment` (NEW)  
+**Reason:** Task comments and discussions.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_task_comment (
+  id          BIGSERIAL PRIMARY KEY,
+  task_id     BIGINT NOT NULL REFERENCES dx_task(id) ON DELETE CASCADE,
+  user_id     BIGINT NOT NULL,
+  comment     TEXT NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS ix_dx_task_comment_task ON dx_task_comment (task_id, created_at DESC);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_task_comment;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 030 — dx_notification (Notifications)
+
+**Date:** 2026-02-10  
+**File:** `migrations/030_create_dx_notification.sql`  
+**Tables Touched:** `dx_notification` (NEW)  
+**Reason:** Multi-channel notification system with grouping and deduplication.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_notification (
+  id              BIGSERIAL PRIMARY KEY,
+  user_id         BIGINT NOT NULL,
+  category        VARCHAR(50) NOT NULL,
+  priority        VARCHAR(20) NOT NULL DEFAULT 'NORMAL',
+  title           VARCHAR(255) NOT NULL,
+  body            TEXT,
+  entity_type     VARCHAR(80),
+  entity_id       BIGINT,
+  action_route    VARCHAR(255),
+  project_id      BIGINT,
+  is_read         BOOLEAN NOT NULL DEFAULT FALSE,
+  read_at         TIMESTAMPTZ,
+  is_actioned     BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  expires_at      TIMESTAMPTZ,
+  group_key       VARCHAR(120)
+);
+CREATE INDEX IF NOT EXISTS ix_dx_notif_user ON dx_notification (user_id, is_read, created_at DESC);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_notification;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 031 — dx_notification_delivery (Notification Delivery Tracking)
+
+**Date:** 2026-02-10  
+**File:** `migrations/031_create_dx_notification_delivery.sql`  
+**Tables Touched:** `dx_notification_delivery` (NEW)  
+**Reason:** Track delivery status across multiple channels (in-app, push, email, SMS).
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_notification_delivery (
+  id              BIGSERIAL PRIMARY KEY,
+  notification_id BIGINT NOT NULL REFERENCES dx_notification(id) ON DELETE CASCADE,
+  channel         VARCHAR(20) NOT NULL,
+  status          VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+  attempts        INT NOT NULL DEFAULT 0,
+  sent_at         TIMESTAMPTZ,
+  error           TEXT
+);
+CREATE INDEX IF NOT EXISTS ix_dx_notif_delivery_notif ON dx_notification_delivery (notification_id);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_notification_delivery;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 032 — dx_notification_preference (Notification Preferences)
+
+**Date:** 2026-02-10  
+**File:** `migrations/032_create_dx_notification_preference.sql`  
+**Tables Touched:** `dx_notification_preference` (NEW)  
+**Reason:** User preferences for notification channels and frequency per category.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_notification_preference (
+  id              BIGSERIAL PRIMARY KEY,
+  user_id         BIGINT NOT NULL,
+  category        VARCHAR(50) NOT NULL,
+  in_app          BOOLEAN NOT NULL DEFAULT TRUE,
+  push            BOOLEAN NOT NULL DEFAULT TRUE,
+  email           BOOLEAN NOT NULL DEFAULT FALSE,
+  sms             BOOLEAN NOT NULL DEFAULT FALSE,
+  frequency       VARCHAR(20) NOT NULL DEFAULT 'IMMEDIATE',
+  quiet_start     TIME,
+  quiet_end       TIME,
+  CONSTRAINT uq_dx_notif_pref UNIQUE (user_id, category)
+);
+CREATE INDEX IF NOT EXISTS ix_dx_notif_pref_user ON dx_notification_preference (user_id);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_notification_preference;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 033 — dx_notification_template (Notification Templates)
+
+**Date:** 2026-02-10  
+**File:** `migrations/033_create_dx_notification_template.sql`  
+**Tables Touched:** `dx_notification_template` (NEW)  
+**Reason:** Template-driven notification content with variable substitution.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_notification_template (
+  id              BIGSERIAL PRIMARY KEY,
+  category        VARCHAR(50) NOT NULL,
+  channel         VARCHAR(20) NOT NULL,
+  subject         VARCHAR(255),
+  body            TEXT NOT NULL,
+  variables       JSONB NOT NULL DEFAULT '[]',
+  is_active       BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT uq_dx_notif_template UNIQUE (category, channel)
+);
+CREATE INDEX IF NOT EXISTS ix_dx_notif_template_category ON dx_notification_template (category, is_active);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_notification_template;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 034 — dx_exception (Exceptions)
+
+**Date:** 2026-02-10  
+**File:** `migrations/034_create_dx_exception.sql`  
+**Tables Touched:** `dx_exception` (NEW)  
+**Reason:** Management view of all exceptions (financial, operational, compliance, process).
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_exception (
+  id                        BIGSERIAL PRIMARY KEY,
+  category                  VARCHAR(50) NOT NULL,
+  type                      VARCHAR(100) NOT NULL,
+  title                     VARCHAR(255) NOT NULL,
+  description               TEXT,
+  impact                    NUMERIC(18,2),
+  impact_unit               VARCHAR(20),
+  entity_type               VARCHAR(80),
+  entity_id                 BIGINT,
+  entity_number             VARCHAR(100),
+  project_id                BIGINT,
+  owner_id                  BIGINT,
+  raised_at                 TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  status                    VARCHAR(20) NOT NULL DEFAULT 'OPEN',
+  target_resolution_date    TIMESTAMPTZ,
+  resolution_note           TEXT,
+  acceptance_justification  TEXT,
+  acceptance_expiry         TIMESTAMPTZ,
+  created_at                TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at                TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS ix_dx_exception_category ON dx_exception (category, status);
+CREATE INDEX IF NOT EXISTS ix_dx_exception_project ON dx_exception (project_id, status);
+CREATE INDEX IF NOT EXISTS ix_dx_exception_owner ON dx_exception (owner_id, status);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_exception;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 035 — dx_out_of_office (Out of Office)
+
+**Date:** 2026-02-10  
+**File:** `migrations/035_create_dx_out_of_office.sql`  
+**Tables Touched:** `dx_out_of_office` (NEW)  
+**Reason:** Out-of-office settings with substitute approver assignment.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_out_of_office (
+  id              BIGSERIAL PRIMARY KEY,
+  user_id         BIGINT NOT NULL,
+  start_date      DATE NOT NULL,
+  end_date        DATE NOT NULL,
+  substitute_id   BIGINT NOT NULL,
+  reason          TEXT,
+  is_active       BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT uq_dx_ooo_user_dates UNIQUE (user_id, start_date, end_date)
+);
+CREATE INDEX IF NOT EXISTS ix_dx_ooo_user ON dx_out_of_office (user_id, is_active);
+CREATE INDEX IF NOT EXISTS ix_dx_ooo_substitute ON dx_out_of_office (substitute_id, is_active);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_out_of_office;
+```
+
+**Status:** ✅ Documented
+
+---
+
 ## Summary
 
 | Migration | Table | Type | Status |
@@ -1097,12 +1389,20 @@ DROP TABLE IF EXISTS dx_working_calendar;
 | 025 | `dx_health_score_history` | NEW | ✅ Documented |
 | 026 | `dx_object_page_config` | NEW | ✅ Documented |
 | 027 | `dx_document_chain` | NEW | ✅ Documented |
+| 028 | `dx_task` | NEW | ✅ Documented |
+| 029 | `dx_task_comment` | NEW | ✅ Documented |
+| 030 | `dx_notification` | NEW | ✅ Documented |
+| 031 | `dx_notification_delivery` | NEW | ✅ Documented |
+| 032 | `dx_notification_preference` | NEW | ✅ Documented |
+| 033 | `dx_notification_template` | NEW | ✅ Documented |
+| 034 | `dx_exception` | NEW | ✅ Documented |
+| 035 | `dx_out_of_office` | NEW | ✅ Documented |
 
-**Total new tables:** 27  
+**Total new tables:** 35  
 **Total tables modified:** 0  
 **Total rows affected:** 0
 
 ---
 
-**Document Status:** ✅ Complete (Part 6 Updated)  
-**Next Step:** Part 7 — Approval Centre & Workflow Engine
+**Document Status:** ✅ Complete (Part 7 Updated)  
+**Next Step:** Part 8 — Analytics & Reporting

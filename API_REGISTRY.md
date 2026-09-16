@@ -218,6 +218,31 @@
 | GET | `/api/dx/v1/health/config` | ✅ | admin | Health score configuration |
 | PUT | `/api/dx/v1/health/config` | ✅ | admin | Update health score weights |
 
+### Approval Centre, Task Centre & Notifications (Part 7)
+
+| Method | Path | Auth | Permission | Description |
+|---|---|---|---|---|
+| GET | `/api/dx/v1/approvals` | ✅ | authenticated | Approval queue for current user |
+| GET | `/api/dx/v1/approvals/{entity}/{id}` | ✅ | authenticated | Full approval detail with risk flags |
+| POST | `/api/dx/v1/approvals/{entity}/{id}/decide` | ✅ | authenticated | Make approval decision |
+| POST | `/api/dx/v1/approvals/bulk-decide` | ✅ | authenticated | Bulk approve with safeguards |
+| GET | `/api/dx/v1/approvals/history` | ✅ | authenticated | User's decision history |
+| GET | `/api/dx/v1/approvals/bottlenecks` | ✅ | admin | Approval bottleneck analysis |
+| POST | `/api/dx/v1/out-of-office` | ✅ | authenticated | Set out-of-office with substitute |
+| GET | `/api/dx/v1/tasks` | ✅ | authenticated | Task list with filters |
+| POST | `/api/dx/v1/tasks` | ✅ | authenticated | Create new task |
+| PUT | `/api/dx/v1/tasks/{id}` | ✅ | authenticated | Update task |
+| POST | `/api/dx/v1/tasks/{id}/complete` | ✅ | authenticated | Complete task with note |
+| POST | `/api/dx/v1/tasks/{id}/reassign` | ✅ | authenticated | Reassign task |
+| GET | `/api/dx/v1/exceptions` | ✅ | authenticated | Exception list for permitted scope |
+| POST | `/api/dx/v1/exceptions/{id}/assign` | ✅ | authenticated | Assign exception owner |
+| POST | `/api/dx/v1/exceptions/{id}/resolve` | ✅ | authenticated | Resolve exception |
+| POST | `/api/dx/v1/exceptions/{id}/accept` | ✅ | authenticated | Accept as known exception |
+| GET | `/api/dx/v1/notifications` | ✅ | authenticated | Paginated notifications |
+| POST | `/api/dx/v1/notifications/read` | ✅ | authenticated | Mark notifications as read |
+| GET | `/api/dx/v1/notifications/preferences` | ✅ | authenticated | Get notification preferences |
+| PUT | `/api/dx/v1/notifications/preferences` | ✅ | authenticated | Update notification preferences |
+
 ---
 
 ## Planned Endpoints (Future Parts)
@@ -235,11 +260,6 @@
 - `WS /api/dx/v1/ws` — WebSocket gateway
 - `GET /api/dx/v1/kpis/{code}` — KPI values
 - `GET /api/dx/v1/alerts` — Active alerts
-
-### Part 7 — Approval Centre
-- `GET /api/dx/v1/approvals` — Pending approvals
-- `POST /api/dx/v1/approvals/{id}/approve` — Approve
-- `POST /api/dx/v1/approvals/{id}/reject` — Reject
 
 ### Part 8 — Analytics
 - `GET /api/dx/v1/analytics/evm` — EVM data
@@ -279,5 +299,5 @@
 
 ---
 
-**Document Status:** ✅ Complete (Part 6 Updated)  
-**Next Step:** Part 7 — Approval Centre & Workflow Engine
+**Document Status:** ✅ Complete (Part 7 Updated)  
+**Next Step:** Part 8 — Analytics & Reporting
