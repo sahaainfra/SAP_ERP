@@ -322,4 +322,46 @@
 ---
 
 **Document Status:** ✅ Complete (Part 8 Updated)  
-**Next Step:** Part 9 — Backup & Restore
+**Next Step:** Part 9 — Data Backup & Restore Tool
+
+---
+
+### Data Backup & Restore (Part 9)
+
+| Method | Path | Auth | Permission | Description |
+|---|---|---|---|---|
+| GET | `/api/dx/v1/backups` | ✅ | admin.backup.view | List all backups with pagination |
+| GET | `/api/dx/v1/backups/{id}` | ✅ | admin.backup.view | Get backup details and manifest |
+| POST | `/api/dx/v1/backups` | ✅ | admin.backup.create | Create new backup |
+| POST | `/api/dx/v1/backups/{id}/cancel` | ✅ | admin.backup.create | Cancel running backup |
+| POST | `/api/dx/v1/backups/{id}/validate` | ✅ | admin.backup.create | Re-validate backup |
+| POST | `/api/dx/v1/backups/{id}/lock` | ✅ | admin.backup.delete | Lock backup (legal hold) |
+| POST | `/api/dx/v1/backups/{id}/unlock` | ✅ | admin.backup.delete | Unlock backup |
+| DELETE | `/api/dx/v1/backups/{id}` | ✅ | admin.backup.delete | Delete backup (with reason) |
+| POST | `/api/dx/v1/backups/{id}/download-request` | ✅ | admin.backup.download | Request download with reason |
+| POST | `/api/dx/v1/download-requests/{id}/approve` | ✅ | admin.backup.download | Approve download request |
+| POST | `/api/dx/v1/download-requests/{id}/deny` | ✅ | admin.backup.download | Deny download request |
+| GET | `/api/dx/v1/backups/download/{token}` | ✅ | token-based | Download backup (single-use) |
+| GET | `/api/dx/v1/backup-schedules` | ✅ | admin.backup.view | List backup schedules |
+| POST | `/api/dx/v1/backup-schedules` | ✅ | admin.backup.create | Create backup schedule |
+| PUT | `/api/dx/v1/backup-schedules/{id}` | ✅ | admin.backup.create | Update schedule |
+| DELETE | `/api/dx/v1/backup-schedules/{id}` | ✅ | admin.backup.create | Delete schedule |
+| POST | `/api/dx/v1/backup-schedules/{id}/toggle` | ✅ | admin.backup.create | Enable/disable schedule |
+| GET | `/api/dx/v1/restores` | ✅ | admin.backup.view | List restore operations |
+| POST | `/api/dx/v1/restores` | ✅ | admin.backup.restore | Request restore |
+| POST | `/api/dx/v1/restores/{id}/approve` | ✅ | admin.backup.restore | Approve restore (2nd admin) |
+| POST | `/api/dx/v1/restores/{id}/reject` | ✅ | admin.backup.restore | Reject restore |
+| POST | `/api/dx/v1/restores/{id}/execute` | ✅ | admin.backup.restore | Execute approved restore |
+| POST | `/api/dx/v1/restores/{id}/rollback` | ✅ | admin.backup.restore | Rollback restore |
+| GET | `/api/dx/v1/restores/{id}/progress` | ✅ | admin.backup.view | Get restore progress |
+| GET | `/api/dx/v1/backup-audit` | ✅ | admin.audit.view | Get backup audit trail |
+| GET | `/api/dx/v1/storage-targets` | ✅ | admin.backup.view | List storage targets |
+| POST | `/api/dx/v1/storage-targets` | ✅ | admin.backup.create | Create storage target |
+| PUT | `/api/dx/v1/storage-targets/{id}` | ✅ | admin.backup.create | Update storage target |
+| DELETE | `/api/dx/v1/storage-targets/{id}` | ✅ | admin.backup.create | Delete storage target |
+| POST | `/api/dx/v1/storage-targets/{id}/test` | ✅ | admin.backup.create | Test storage connection |
+
+---
+
+**Document Status:** ✅ Complete (Part 9 Updated)  
+**Next Step:** Part 10 — Security, Performance & Deployment

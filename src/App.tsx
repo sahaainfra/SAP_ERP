@@ -19,6 +19,7 @@ import Project360 from './components/Project360';
 import ProjectManagerDashboard from './components/ProjectManagerDashboard';
 import ObjectPage from './components/ObjectPage';
 import AnalyticsDashboard from './components/AnalyticsDashboard';
+import BackupDashboard from './components/BackupDashboard';
 
 function App() {
   const { theme, resolvedTheme, density, setTheme, setDensity } = useThemeEngine();
@@ -123,7 +124,7 @@ function App() {
       case 'permissions':
         return <SuperAdminConsole />;
       case 'backup':
-        return <PlaceholderPage title="Backup & Restore" description="Data backup scheduling, encryption, download, restore, and validation tools." />;
+        return <BackupDashboard />;
       case 'settings':
         return <PlaceholderPage title="System Settings" description="System configuration, user preferences, notification settings, and integrations." />;
       case 'universalhome':

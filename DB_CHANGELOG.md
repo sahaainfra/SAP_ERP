@@ -1868,4 +1868,296 @@ DROP TABLE IF EXISTS dx_working_calendar;
 ---
 
 **Document Status:** ✅ Complete (Part 8 Updated)  
-**Next Step:** Part 9 — Backup & Restore
+**Next Step:** Part 9 — Data Backup & Restore Tool
+
+---
+
+### Migration 048 — dx_backup (Backup Records)
+
+**Date:** 2026-02-10  
+**File:** `migrations/048_create_dx_backup.sql`  
+**Tables Touched:** `dx_backup` (NEW)  
+**Reason:** Store backup metadata, status, and validation results.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_backup (
+  id                    BIGSERIAL PRIMARY KEY,
+  backup_code           VARCHAR(60) NOT NULL UNIQUE,
+  backup_type           VARCHAR(30) NOT NULL,
+  trigger_type          VARCHAR(20) NOT NULL,
+  schedule_id           BIGINT,
+  scope_json            JSONB,
+  company_id            BIGINT,
+  status                VARCHAR(20) NOT NULL DEFAULT 'queued',
+  progress_percent      INT NOT NULL DEFAULT 0,
+  current_stage         VARCHAR(80),
+  started_at            TIMESTAMPTZ,
+  completed_at          TIMESTAMPTZ,
+  duration_seconds      INT,
+  file_path             TEXT,
+  file_name             VARCHAR(255),
+  file_size_bytes       BIGINT,
+  compressed_size_bytes BIGINT,
+  compression_ratio     NUMERIC(6,3),
+  checksum_sha256       VARCHAR(64),
+  encryption_algorithm  VARCHAR(40),
+  encryption_key_id     VARCHAR(100),
+  table_count           INT,
+  row_count             BIGINT,
+  file_count            INT,
+  schema_version        VARCHAR(40),
+  app_version           VARCHAR(40),
+  db_engine_version     VARCHAR(60),
+  manifest_json         JSONB,
+  validation_status     VARCHAR(20),
+  validation_details    JSONB,
+  validated_at          TIMESTAMPTZ,
+  retention_until       DATE,
+  is_locked             BOOLEAN NOT NULL DEFAULT FALSE,
+  lock_reason           TEXT,
+  error_message         TEXT,
+  error_stack           TEXT,
+  created_by            BIGINT NOT NULL,
+  created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  notes                 TEXT
+);
+CREATE INDEX IF NOT EXISTS ix_dx_backup_status ON dx_backup (status, created_at DESC);
+CREATE INDEX IF NOT EXISTS ix_dx_backup_type ON dx_backup (backup_type, created_at DESC);
+CREATE INDEX IF NOT EXISTS ix_dx_backup_retain ON dx_backup (retention_until) WHERE is_locked = FALSE;
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_backup;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 049 — dx_backup_schedule (Backup Schedules)
+
+**Date:** 2026-02-10  
+**File:** `migrations/049_create_dx_backup_schedule.sql`  
+**Tables Touched:** `dx_backup_schedule` (NEW)  
+**Reason:** Store automated backup schedules with cron expressions.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_backup_schedule (
+  id                  BIGSERIAL PRIMARY KEY,
+  schedule_name       VARCHAR(150) NOT NULL,
+  backup_type         VARCHAR(30) NOT NULL,
+  scope_json          JSONB,
+  cron_expression     VARCHAR(100) NOT NULL,
+  timezone            VARCHAR(60) NOT NULL DEFAULT 'Asia/Kolkata',
+  retention_days      INT NOT NULL DEFAULT 30,
+  retention_count     INT,
+  storage_target      VARCHAR(40) NOT NULL DEFAULT 'local',
+  storage_config_id   BIGINT,
+  notify_on_success   BOOLEAN NOT NULL DEFAULT FALSE,
+  notify_on_failure   BOOLEAN NOT NULL DEFAULT TRUE,
+  notify_user_ids     TEXT,
+  is_active           BOOLEAN NOT NULL DEFAULT TRUE,
+  last_run_at         TIMESTAMPTZ,
+  last_run_status     VARCHAR(20),
+  next_run_at         TIMESTAMPTZ,
+  consecutive_failures INT NOT NULL DEFAULT 0,
+  created_by          BIGINT NOT NULL,
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS ix_dx_backup_schedule_active ON dx_backup_schedule (is_active, next_run_at);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_backup_schedule;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 050 — dx_backup_download (Download Requests)
+
+**Date:** 2026-02-10  
+**File:** `migrations/050_create_dx_backup_download.sql`  
+**Tables Touched:** `dx_backup_download` (NEW)  
+**Reason:** Track backup download requests with approval workflow.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_backup_download (
+  id              BIGSERIAL PRIMARY KEY,
+  backup_id       BIGINT NOT NULL REFERENCES dx_backup(id),
+  token           VARCHAR(128) NOT NULL UNIQUE,
+  requested_by    BIGINT NOT NULL,
+  requested_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  expires_at      TIMESTAMPTZ NOT NULL,
+  reason          TEXT NOT NULL,
+  approved_by     BIGINT,
+  approved_at     TIMESTAMPTZ,
+  downloaded_at   TIMESTAMPTZ,
+  download_ip     VARCHAR(64),
+  download_agent  TEXT,
+  bytes_served    BIGINT,
+  status          VARCHAR(20) NOT NULL DEFAULT 'pending'
+);
+CREATE INDEX IF NOT EXISTS ix_dx_backup_download_backup ON dx_backup_download (backup_id, requested_at DESC);
+CREATE INDEX IF NOT EXISTS ix_dx_backup_download_token ON dx_backup_download (token);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_backup_download;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 051 — dx_restore (Restore Operations)
+
+**Date:** 2026-02-10  
+**File:** `migrations/051_create_dx_restore.sql`  
+**Tables Touched:** `dx_restore` (NEW)  
+**Reason:** Track restore operations with approval workflow and verification.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_restore (
+  id                    BIGSERIAL PRIMARY KEY,
+  restore_code          VARCHAR(60) NOT NULL UNIQUE,
+  backup_id             BIGINT NOT NULL REFERENCES dx_backup(id),
+  restore_type          VARCHAR(30) NOT NULL,
+  scope_json            JSONB,
+  target_environment    VARCHAR(30) NOT NULL,
+  status                VARCHAR(30) NOT NULL DEFAULT 'requested',
+  progress_percent      INT NOT NULL DEFAULT 0,
+  current_stage         VARCHAR(80),
+  requested_by          BIGINT NOT NULL,
+  requested_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  justification         TEXT NOT NULL,
+  approved_by           BIGINT,
+  approved_at           TIMESTAMPTZ,
+  approval_note         TEXT,
+  rejected_by           BIGINT,
+  rejected_at           TIMESTAMPTZ,
+  rejection_reason      TEXT,
+  pre_restore_backup_id BIGINT REFERENCES dx_backup(id),
+  validation_report     JSONB,
+  started_at            TIMESTAMPTZ,
+  completed_at          TIMESTAMPTZ,
+  duration_seconds      INT,
+  rows_restored         BIGINT,
+  tables_restored       INT,
+  verification_report   JSONB,
+  error_message         TEXT,
+  rollback_performed    BOOLEAN NOT NULL DEFAULT FALSE,
+  rollback_at           TIMESTAMPTZ,
+  created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS ix_dx_restore_status ON dx_restore (status, created_at DESC);
+CREATE INDEX IF NOT EXISTS ix_dx_restore_backup ON dx_restore (backup_id);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_restore;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 052 — dx_backup_audit (Backup Audit Trail)
+
+**Date:** 2026-02-10  
+**File:** `migrations/052_create_dx_backup_audit.sql`  
+**Tables Touched:** `dx_backup_audit` (NEW)  
+**Reason:** Immutable audit trail for all backup and restore operations.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_backup_audit (
+  id            BIGSERIAL PRIMARY KEY,
+  backup_id     BIGINT,
+  restore_id    BIGINT,
+  action        VARCHAR(50) NOT NULL,
+  performed_by  BIGINT NOT NULL,
+  performed_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  ip_address    VARCHAR(64),
+  user_agent    TEXT,
+  details_json  JSONB,
+  result        VARCHAR(20) NOT NULL DEFAULT 'success'
+);
+CREATE INDEX IF NOT EXISTS ix_dx_backup_audit_performed ON dx_backup_audit (performed_at DESC);
+CREATE INDEX IF NOT EXISTS ix_dx_backup_audit_backup ON dx_backup_audit (backup_id);
+CREATE INDEX IF NOT EXISTS ix_dx_backup_audit_restore ON dx_backup_audit (restore_id);
+-- Note: This table should be append-only. Revoke UPDATE and DELETE permissions.
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_backup_audit;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 053 — dx_storage_target (Storage Targets)
+
+**Date:** 2026-02-10  
+**File:** `migrations/053_create_dx_storage_target.sql`  
+**Tables Touched:** `dx_storage_target` (NEW)  
+**Reason:** Configure storage targets for backups (S3, Azure, GCS, etc.).
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_storage_target (
+  id              BIGSERIAL PRIMARY KEY,
+  target_name     VARCHAR(100) NOT NULL UNIQUE,
+  target_type     VARCHAR(30) NOT NULL,
+  config_json     JSONB NOT NULL,
+  credential_ref  VARCHAR(150),
+  is_primary      BOOLEAN NOT NULL DEFAULT FALSE,
+  is_active       BOOLEAN NOT NULL DEFAULT TRUE,
+  last_tested_at  TIMESTAMPTZ,
+  last_test_ok    BOOLEAN,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS ix_dx_storage_target_active ON dx_storage_target (is_active);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_storage_target;
+```
+
+**Status:** ✅ Documented
+
+---
+
+## Summary (Updated)
+
+| Migration | Table | Type | Status |
+|---|---|---|---|
+| 001-047 | (Previous parts) | Various | ✅ Documented |
+| 048 | `dx_backup` | NEW | ✅ Documented |
+| 049 | `dx_backup_schedule` | NEW | ✅ Documented |
+| 050 | `dx_backup_download` | NEW | ✅ Documented |
+| 051 | `dx_restore` | NEW | ✅ Documented |
+| 052 | `dx_backup_audit` | NEW | ✅ Documented |
+| 053 | `dx_storage_target` | NEW | ✅ Documented |
+
+**Total new tables:** 53  
+**Total tables modified:** 0  
+**Total rows affected:** 0
+
+---
+
+**Document Status:** ✅ Complete (Part 9 Updated)  
+**Next Step:** Part 10 — Security, Performance & Deployment
