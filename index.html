@@ -1,45 +1,82 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="morning-horizon" data-density="cozy">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Construction ERP — SAP S/4HANA Aligned Dashboard</title>
+    <title>Construction ERP — SAP Fiori Horizon Aligned Dashboard</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏗️</text></svg>" />
     <style>
+      /* Critical CSS - prevents FOUC */
       html, body {
         margin: 0;
         padding: 0;
         width: 100%;
         height: 100%;
       }
-      html.light, html.light body {
-        background-color: #f7f7f7 !important;
-        color: #32363a;
+      
+      /* Default theme (Morning Horizon) */
+      html[data-theme="morning-horizon"] body {
+        background-color: #f5f6f7;
+        color: #131e29;
       }
-      html.dark, html.dark body {
-        background-color: #12171c !important;
+      
+      html[data-theme="evening-horizon"] body {
+        background-color: #12171c;
         color: #edf0f3;
+      }
+      
+      html[data-theme="hc-black"] body {
+        background-color: #000000;
+        color: #ffffff;
+      }
+      
+      html[data-theme="hc-white"] body {
+        background-color: #ffffff;
+        color: #000000;
       }
     </style>
     <script>
+      // Blocking script to prevent FOUC - runs before any rendering
       (function () {
-        const isInIframe = window.self !== window.top;
-        function applyThemeToDOM(theme) {
-          document.documentElement.classList.remove("light", "dark");
-          document.documentElement.classList.add(theme);
-          document.documentElement.setAttribute("data-theme", theme);
+        const STORAGE_KEY = 'erp_user_preferences';
+        
+        function applyThemeToDOM(theme, density) {
+          // Resolve 'system' theme
+          let resolvedTheme = theme;
+          if (theme === 'system') {
+            resolvedTheme = window.matchMedia('(prefers-color-scheme: dark)').matches 
+              ? 'evening-horizon' 
+              : 'morning-horizon';
+          }
+          
+          document.documentElement.setAttribute('data-theme', resolvedTheme);
+          document.documentElement.setAttribute('data-density', density || 'cozy');
         }
-        if (isInIframe) {
+
+        // Load saved preferences
+        try {
+          const stored = localStorage.getItem(STORAGE_KEY);
+          if (stored) {
+            const prefs = JSON.parse(stored);
+            applyThemeToDOM(prefs.theme || 'morning-horizon', prefs.density || 'cozy');
+          } else {
+            applyThemeToDOM('morning-horizon', 'cozy');
+          }
+        } catch (e) {
+          applyThemeToDOM('morning-horizon', 'cozy');
+        }
+
+        // Listen for theme messages from parent (iframe mode)
+        if (window.self !== window.top) {
           window.addEventListener("message", function (event) {
             if (event.data && typeof event.data.theme === "string") {
               const theme = event.data.theme;
-              if (theme === "light" || theme === "dark") {
+              const validThemes = ['morning-horizon', 'evening-horizon', 'hc-black', 'hc-white', 'system'];
+              if (validThemes.includes(theme)) {
                 applyThemeToDOM(theme);
               }
             }
           });
-        } else {
-          applyThemeToDOM("light");
         }
       })();
     </script>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useThemeEngine } from './hooks/useThemeEngine';
 import ShellBar from './components/ShellBar';
 import SideNav from './components/SideNav';
 import Dashboard from './components/Dashboard';
@@ -8,17 +9,13 @@ import TaskCentre from './components/TaskCentre';
 import AnalyticsPage from './components/AnalyticsPage';
 import ExceptionCentre from './components/ExceptionCentre';
 import PlaceholderPage from './components/PlaceholderPage';
+import DesignSystemShowcase from './components/DesignSystemShowcase';
 
 function App() {
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const { theme, resolvedTheme, density, setTheme, setDensity } = useThemeEngine();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeNav, setActiveNav] = useState('dashboard');
   const [currentProject, setCurrentProject] = useState('all');
-
-  // Apply theme to document
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
 
   // Handle responsive sidebar
   useEffect(() => {
@@ -32,8 +29,13 @@ function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  const handleThemeToggle = () => {
+    // Toggle between morning and evening horizon
+    if (resolvedTheme === 'morning-horizon') {
+      setTheme('evening-horizon');
+    } else {
+      setTheme('morning-horizon');
+    }
   };
 
   const renderPage = () => {
@@ -50,6 +52,8 @@ function App() {
         return <AnalyticsPage />;
       case 'exceptions':
         return <ExceptionCentre />;
+      case 'design-system':
+        return <DesignSystemShowcase />;
       case 'resources':
         return <PlaceholderPage title="Resource Management" description="Workforce planning, allocation, and utilization tracking across all projects." />;
       case 'procurement':
@@ -78,8 +82,8 @@ function App() {
       {/* Shell Bar */}
       <ShellBar
         onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
-        theme={theme}
-        onToggleTheme={toggleTheme}
+        theme={resolvedTheme === 'morning-horizon' ? 'light' : 'dark'}
+        onToggleTheme={handleThemeToggle}
         currentProject={currentProject}
         onProjectChange={setCurrentProject}
       />
@@ -99,21 +103,23 @@ function App() {
       >
         <div className="p-5 max-w-[1600px] mx-auto">
           {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-xs mb-4" style={{ color: 'var(--sapContentLabelColor)' }}>
-            <span className="hover:underline cursor-pointer">Home</span>
-            <span>/</span>
-            <span className="font-medium" style={{ color: 'var(--sapFontColor)' }}>
-              {activeNav.charAt(0).toUpperCase() + activeNav.slice(1).replace(/([A-Z])/g, ' $1')}
-            </span>
-            {currentProject !== 'all' && (
-              <>
-                <span>/</span>
-                <span className="font-medium" style={{ color: 'var(--sapFontColor)' }}>
-                  {currentProject}
-                </span>
-              </>
-            )}
-          </div>
+          {activeNav !== 'design-system' && (
+            <div className="flex items-center gap-2 text-xs mb-4" style={{ color: 'var(--sapContent_LabelColor)' }}>
+              <span className="hover:underline cursor-pointer">Home</span>
+              <span>/</span>
+              <span className="font-medium" style={{ color: 'var(--sapTextColor)' }}>
+                {activeNav.charAt(0).toUpperCase() + activeNav.slice(1).replace(/([A-Z])/g, ' $1')}
+              </span>
+              {currentProject !== 'all' && (
+                <>
+                  <span>/</span>
+                  <span className="font-medium" style={{ color: 'var(--sapTextColor)' }}>
+                    {currentProject}
+                  </span>
+                </>
+              )}
+            </div>
+          )}
 
           {/* Page Content */}
           {renderPage()}

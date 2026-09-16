@@ -27,6 +27,7 @@ const navItems = [
   { id: 'permissions', label: 'Permissions', icon: Shield },
   { id: 'backup', label: 'Backup & Restore', icon: Database },
   { id: 'settings', label: 'Settings', icon: Settings },
+  { id: 'design-system', label: 'Design System', icon: LayoutDashboard },
 ];
 
 export default function SideNav({ collapsed, activeItem, onNavigate }: SideNavProps) {
