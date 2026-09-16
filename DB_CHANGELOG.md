@@ -801,6 +801,457 @@ DROP TABLE IF EXISTS dx_out_of_office;
 
 ---
 
+### Migration 036 — dx_evm_baseline (EVM Baselines)
+
+**Date:** 2026-02-10  
+**File:** `migrations/036_create_dx_evm_baseline.sql`  
+**Tables Touched:** `dx_evm_baseline` (NEW)  
+**Reason:** Store project baselines for Earned Value Management calculations.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_evm_baseline (
+  id              BIGSERIAL PRIMARY KEY,
+  project_id      BIGINT NOT NULL,
+  baseline_date   DATE NOT NULL,
+  bac             NUMERIC(18,2) NOT NULL,
+  planned_schedule JSONB NOT NULL,
+  planned_cost_distribution JSONB NOT NULL,
+  created_by      BIGINT NOT NULL,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  is_active       BOOLEAN NOT NULL DEFAULT TRUE,
+  CONSTRAINT uq_dx_evm_baseline UNIQUE (project_id, baseline_date)
+);
+CREATE INDEX IF NOT EXISTS ix_dx_evm_baseline_project ON dx_evm_baseline (project_id, is_active);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_evm_baseline;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 037 — dx_evm_snapshot (EVM Snapshots)
+
+**Date:** 2026-02-10  
+**File:** `migrations/037_create_dx_evm_snapshot.sql`  
+**Tables Touched:** `dx_evm_snapshot` (NEW)  
+**Reason:** Store periodic EVM calculations for trend analysis.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_evm_snapshot (
+  id              BIGSERIAL PRIMARY KEY,
+  project_id      BIGINT NOT NULL,
+  snapshot_date   DATE NOT NULL,
+  pv              NUMERIC(18,2) NOT NULL,
+  ev              NUMERIC(18,2) NOT NULL,
+  ac              NUMERIC(18,2) NOT NULL,
+  sv              NUMERIC(18,2) NOT NULL,
+  cv              NUMERIC(18,2) NOT NULL,
+  spi             NUMERIC(10,4) NOT NULL,
+  cpi             NUMERIC(10,4) NOT NULL,
+  eac             NUMERIC(18,2) NOT NULL,
+  etc             NUMERIC(18,2) NOT NULL,
+  vac             NUMERIC(18,2) NOT NULL,
+  tcpi            NUMERIC(10,4) NOT NULL,
+  computed_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT uq_dx_evm_snapshot UNIQUE (project_id, snapshot_date)
+);
+CREATE INDEX IF NOT EXISTS ix_dx_evm_snapshot_project ON dx_evm_snapshot (project_id, snapshot_date DESC);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_evm_snapshot;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 038 — dx_forecast (Forecasts)
+
+**Date:** 2026-02-10  
+**File:** `migrations/038_create_dx_forecast.sql`  
+**Tables Touched:** `dx_forecast` (NEW)  
+**Reason:** Store forecasts with methods, inputs, and confidence levels.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_forecast (
+  id              BIGSERIAL PRIMARY KEY,
+  type            VARCHAR(50) NOT NULL,
+  scope_id        BIGINT NOT NULL,
+  scope_type      VARCHAR(20) NOT NULL,
+  method_name     VARCHAR(200) NOT NULL,
+  method_description TEXT,
+  inputs          JSONB NOT NULL,
+  point_estimate  NUMERIC(18,4) NOT NULL,
+  range_low       NUMERIC(18,4),
+  range_high      NUMERIC(18,4),
+  confidence      VARCHAR(20) NOT NULL,
+  confidence_reason TEXT,
+  horizon         VARCHAR(100),
+  unit            VARCHAR(50),
+  computed_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS ix_dx_forecast_scope ON dx_forecast (scope_type, scope_id, computed_at DESC);
+CREATE INDEX IF NOT EXISTS ix_dx_forecast_type ON dx_forecast (type, computed_at DESC);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_forecast;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 039 — dx_forecast_accuracy (Forecast Backtesting)
+
+**Date:** 2026-02-10  
+**File:** `migrations/039_create_dx_forecast_accuracy.sql`  
+**Tables Touched:** `dx_forecast_accuracy` (NEW)  
+**Reason:** Track forecast accuracy for backtesting and improvement.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_forecast_accuracy (
+  id              BIGSERIAL PRIMARY KEY,
+  forecast_id     BIGINT NOT NULL REFERENCES dx_forecast(id),
+  forecast_date   DATE NOT NULL,
+  actual_date     DATE,
+  forecast_value  NUMERIC(18,4) NOT NULL,
+  actual_value    NUMERIC(18,4),
+  variance        NUMERIC(18,4),
+  variance_percent NUMERIC(10,4),
+  accuracy        NUMERIC(10,4),
+  recorded_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS ix_dx_forecast_accuracy_forecast ON dx_forecast_accuracy (forecast_id);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_forecast_accuracy;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 040 — dx_insight (Cross-Module Insights)
+
+**Date:** 2026-02-10  
+**File:** `migrations/040_create_dx_insight.sql`  
+**Tables Touched:** `dx_insight` (NEW)  
+**Reason:** Store cross-module intelligence insights.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_insight (
+  id              BIGSERIAL PRIMARY KEY,
+  type            VARCHAR(50) NOT NULL,
+  title           VARCHAR(255) NOT NULL,
+  finding         TEXT NOT NULL,
+  evidence        JSONB NOT NULL,
+  affected_records JSONB NOT NULL,
+  recommended_action TEXT,
+  action_route    VARCHAR(255),
+  severity        VARCHAR(20) NOT NULL,
+  project_id      BIGINT,
+  computed_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  is_active       BOOLEAN NOT NULL DEFAULT TRUE
+);
+CREATE INDEX IF NOT EXISTS ix_dx_insight_type ON dx_insight (type, is_active);
+CREATE INDEX IF NOT EXISTS ix_dx_insight_project ON dx_insight (project_id, is_active);
+CREATE INDEX IF NOT EXISTS ix_dx_insight_severity ON dx_insight (severity, is_active);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_insight;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 041 — dx_anomaly (Anomaly Detection)
+
+**Date:** 2026-02-10  
+**File:** `migrations/041_create_dx_anomaly.sql`  
+**Tables Touched:** `dx_anomaly` (NEW)  
+**Reason:** Store detected anomalies across transactional, behavioral, and operational categories.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_anomaly (
+  id              BIGSERIAL PRIMARY KEY,
+  category        VARCHAR(50) NOT NULL,
+  type            VARCHAR(100) NOT NULL,
+  title           VARCHAR(255) NOT NULL,
+  description     TEXT,
+  baseline        TEXT NOT NULL,
+  actual_value    TEXT NOT NULL,
+  deviation       TEXT NOT NULL,
+  deviation_percent NUMERIC(10,4),
+  entity_type     VARCHAR(80),
+  entity_id       BIGINT,
+  entity_number   VARCHAR(100),
+  project_id      BIGINT,
+  detected_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  severity        VARCHAR(20) NOT NULL,
+  status          VARCHAR(20) NOT NULL DEFAULT 'OPEN',
+  dismissed_by    BIGINT,
+  dismissed_at    TIMESTAMPTZ,
+  dismissal_reason TEXT,
+  resolved_at     TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS ix_dx_anomaly_category ON dx_anomaly (category, status);
+CREATE INDEX IF NOT EXISTS ix_dx_anomaly_project ON dx_anomaly (project_id, status);
+CREATE INDEX IF NOT EXISTS ix_dx_anomaly_severity ON dx_anomaly (severity, status);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_anomaly;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 042 — dx_copilot_session (AI Copilot Sessions)
+
+**Date:** 2026-02-10  
+**File:** `migrations/042_create_dx_copilot_session.sql`  
+**Tables Touched:** `dx_copilot_session`, `dx_copilot_message` (NEW)  
+**Reason:** Store AI copilot conversations for audit and analysis.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_copilot_session (
+  id              BIGSERIAL PRIMARY KEY,
+  session_id      VARCHAR(100) NOT NULL UNIQUE,
+  user_id         BIGINT NOT NULL,
+  started_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  ended_at        TIMESTAMPTZ,
+  message_count   INT NOT NULL DEFAULT 0,
+  disclaimer_shown BOOLEAN NOT NULL DEFAULT FALSE
+);
+CREATE INDEX IF NOT EXISTS ix_dx_copilot_session_user ON dx_copilot_session (user_id, started_at DESC);
+
+CREATE TABLE IF NOT EXISTS dx_copilot_message (
+  id              BIGSERIAL PRIMARY KEY,
+  session_id      VARCHAR(100) NOT NULL REFERENCES dx_copilot_session(session_id),
+  role            VARCHAR(20) NOT NULL,
+  content         TEXT NOT NULL,
+  sources         JSONB,
+  query           TEXT,
+  data_scope      JSONB,
+  timestamp       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS ix_dx_copilot_message_session ON dx_copilot_message (session_id, timestamp);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_copilot_message;
+DROP TABLE IF EXISTS dx_copilot_session;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 043 — dx_report_definition (Report Definitions)
+
+**Date:** 2026-02-10  
+**File:** `migrations/043_create_dx_report_definition.sql`  
+**Tables Touched:** `dx_report_definition` (NEW)  
+**Reason:** Store user-defined report configurations.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_report_definition (
+  id              BIGSERIAL PRIMARY KEY,
+  name            VARCHAR(200) NOT NULL,
+  description     TEXT,
+  data_source     VARCHAR(50) NOT NULL,
+  columns         JSONB NOT NULL,
+  filters         JSONB NOT NULL,
+  group_by        JSONB,
+  sort_by         JSONB,
+  aggregations    JSONB,
+  calculated_columns JSONB,
+  visualization   VARCHAR(20),
+  chart_type      VARCHAR(50),
+  is_shared       BOOLEAN NOT NULL DEFAULT FALSE,
+  shared_with     JSONB,
+  created_by      BIGINT NOT NULL,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  schedule        JSONB
+);
+CREATE INDEX IF NOT EXISTS ix_dx_report_definition_creator ON dx_report_definition (created_by);
+CREATE INDEX IF NOT EXISTS ix_dx_report_definition_shared ON dx_report_definition (is_shared);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_report_definition;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 044 — dx_report_execution (Report Execution Log)
+
+**Date:** 2026-02-10  
+**File:** `migrations/044_create_dx_report_execution.sql`  
+**Tables Touched:** `dx_report_execution` (NEW)  
+**Reason:** Log report executions for audit and performance tracking.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_report_execution (
+  id              BIGSERIAL PRIMARY KEY,
+  report_id       BIGINT NOT NULL REFERENCES dx_report_definition(id),
+  executed_by     BIGINT NOT NULL,
+  executed_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  parameters      JSONB,
+  row_count       INT,
+  duration_ms     INT,
+  status          VARCHAR(20) NOT NULL,
+  error_message   TEXT,
+  is_background   BOOLEAN NOT NULL DEFAULT FALSE
+);
+CREATE INDEX IF NOT EXISTS ix_dx_report_execution_report ON dx_report_execution (report_id, executed_at DESC);
+CREATE INDEX IF NOT EXISTS ix_dx_report_execution_user ON dx_report_execution (executed_by, executed_at DESC);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_report_execution;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 045 — dx_print_template (Print Templates)
+
+**Date:** 2026-02-10  
+**File:** `migrations/045_create_dx_print_template.sql`  
+**Tables Touched:** `dx_print_template` (NEW)  
+**Reason:** Store document print templates.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_print_template (
+  id              BIGSERIAL PRIMARY KEY,
+  entity_type     VARCHAR(50) NOT NULL,
+  name            VARCHAR(200) NOT NULL,
+  description     TEXT,
+  layout          JSONB NOT NULL,
+  header_config   JSONB NOT NULL,
+  footer_config   JSONB NOT NULL,
+  signature_block BOOLEAN NOT NULL DEFAULT FALSE,
+  qr_code         BOOLEAN NOT NULL DEFAULT FALSE,
+  is_active       BOOLEAN NOT NULL DEFAULT TRUE,
+  created_by      BIGINT NOT NULL,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS ix_dx_print_template_entity ON dx_print_template (entity_type, is_active);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_print_template;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 046 — dx_print_job (Print Job Log)
+
+**Date:** 2026-02-10  
+**File:** `migrations/046_create_dx_print_job.sql`  
+**Tables Touched:** `dx_print_job` (NEW)  
+**Reason:** Log print jobs for audit.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_print_job (
+  id              BIGSERIAL PRIMARY KEY,
+  entity_type     VARCHAR(50) NOT NULL,
+  entity_id       BIGINT NOT NULL,
+  template_id     BIGINT NOT NULL REFERENCES dx_print_template(id),
+  printed_by      BIGINT NOT NULL,
+  printed_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  copies          INT NOT NULL DEFAULT 1,
+  format          VARCHAR(20) NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_dx_print_job_entity ON dx_print_job (entity_type, entity_id, printed_at DESC);
+CREATE INDEX IF NOT EXISTS ix_dx_print_job_user ON dx_print_job (printed_by, printed_at DESC);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_print_job;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 047 — dx_export_job (Export Job Log)
+
+**Date:** 2026-02-10  
+**File:** `migrations/047_create_dx_export_job.sql`  
+**Tables Touched:** `dx_export_job` (NEW)  
+**Reason:** Log export jobs for audit and tracking.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_export_job (
+  id              BIGSERIAL PRIMARY KEY,
+  report_id       BIGINT,
+  entity_type     VARCHAR(50),
+  filters         JSONB,
+  columns         JSONB,
+  format          VARCHAR(20) NOT NULL,
+  requested_by    BIGINT NOT NULL,
+  requested_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  completed_at    TIMESTAMPTZ,
+  row_count       INT,
+  file_size       BIGINT,
+  download_url    TEXT,
+  status          VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+  is_background   BOOLEAN NOT NULL DEFAULT FALSE
+);
+CREATE INDEX IF NOT EXISTS ix_dx_export_job_user ON dx_export_job (requested_by, requested_at DESC);
+CREATE INDEX IF NOT EXISTS ix_dx_export_job_status ON dx_export_job (status, requested_at DESC);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_export_job;
+```
+
+**Status:** ✅ Documented
+
+---
+
 ## Summary
 
 | Migration | Table | Type | Status |
@@ -1397,12 +1848,24 @@ DROP TABLE IF EXISTS dx_working_calendar;
 | 033 | `dx_notification_template` | NEW | ✅ Documented |
 | 034 | `dx_exception` | NEW | ✅ Documented |
 | 035 | `dx_out_of_office` | NEW | ✅ Documented |
+| 036 | `dx_evm_baseline` | NEW | ✅ Documented |
+| 037 | `dx_evm_snapshot` | NEW | ✅ Documented |
+| 038 | `dx_forecast` | NEW | ✅ Documented |
+| 039 | `dx_forecast_accuracy` | NEW | ✅ Documented |
+| 040 | `dx_insight` | NEW | ✅ Documented |
+| 041 | `dx_anomaly` | NEW | ✅ Documented |
+| 042 | `dx_copilot_session` | NEW | ✅ Documented |
+| 043 | `dx_report_definition` | NEW | ✅ Documented |
+| 044 | `dx_report_execution` | NEW | ✅ Documented |
+| 045 | `dx_print_template` | NEW | ✅ Documented |
+| 046 | `dx_print_job` | NEW | ✅ Documented |
+| 047 | `dx_export_job` | NEW | ✅ Documented |
 
-**Total new tables:** 35  
+**Total new tables:** 47  
 **Total tables modified:** 0  
 **Total rows affected:** 0
 
 ---
 
-**Document Status:** ✅ Complete (Part 7 Updated)  
-**Next Step:** Part 8 — Analytics & Reporting
+**Document Status:** ✅ Complete (Part 8 Updated)  
+**Next Step:** Part 9 — Backup & Restore

@@ -18,6 +18,7 @@ import UniversalHome from './components/UniversalHome';
 import Project360 from './components/Project360';
 import ProjectManagerDashboard from './components/ProjectManagerDashboard';
 import ObjectPage from './components/ObjectPage';
+import AnalyticsDashboard from './components/AnalyticsDashboard';
 
 function App() {
   const { theme, resolvedTheme, density, setTheme, setDensity } = useThemeEngine();
@@ -100,7 +101,7 @@ function App() {
       case 'mytasks':
         return <TaskCentre />;
       case 'analytics':
-        return <AnalyticsPage />;
+        return <AnalyticsDashboard />;
       case 'exceptions':
         return <ExceptionCentre />;
       case 'designsystem':

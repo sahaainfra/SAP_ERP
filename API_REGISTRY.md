@@ -243,6 +243,33 @@
 | GET | `/api/dx/v1/notifications/preferences` | ✅ | authenticated | Get notification preferences |
 | PUT | `/api/dx/v1/notifications/preferences` | ✅ | authenticated | Update notification preferences |
 
+### Analytics, EVM, Forecasting & AI Copilot (Part 8)
+
+| Method | Path | Auth | Permission | Description |
+|---|---|---|---|---|
+| GET | `/api/dx/v1/evm/{projectId}` | ✅ | project.view | EVM metrics with WBS breakdown |
+| GET | `/api/dx/v1/evm/{projectId}/timeseries` | ✅ | project.view | EVM time series for S-curve |
+| POST | `/api/dx/v1/evm/{projectId}/baseline` | ✅ | project.edit | Set EVM baseline |
+| GET | `/api/dx/v1/forecast/{type}/{scopeId}` | ✅ | authenticated | Forecast with method and confidence |
+| GET | `/api/dx/v1/forecast/accuracy` | ✅ | admin | Forecast backtesting results |
+| GET | `/api/dx/v1/insights` | ✅ | authenticated | Cross-module insight cards |
+| GET | `/api/dx/v1/anomalies` | ✅ | authenticated | Detected anomalies |
+| POST | `/api/dx/v1/anomalies/{id}/dismiss` | ✅ | authenticated | Dismiss anomaly with reason |
+| POST | `/api/dx/v1/copilot/query` | ✅ | authenticated | AI copilot question |
+| GET | `/api/dx/v1/copilot/history` | ✅ | authenticated | Copilot conversation history |
+| POST | `/api/dx/v1/ocr/extract` | ✅ | authenticated | Extract data from document |
+| GET | `/api/dx/v1/reports` | ✅ | authenticated | List available reports |
+| POST | `/api/dx/v1/reports` | ✅ | report.create | Create report definition |
+| PUT | `/api/dx/v1/reports/{id}` | ✅ | report.edit | Update report definition |
+| DELETE | `/api/dx/v1/reports/{id}` | ✅ | report.delete | Delete report |
+| POST | `/api/dx/v1/reports/{id}/run` | ✅ | report.run | Run report with parameters |
+| POST | `/api/dx/v1/reports/{id}/schedule` | ✅ | report.schedule | Schedule report delivery |
+| POST | `/api/dx/v1/print/{entity}/{id}` | ✅ | authenticated | Generate PDF from template |
+| GET | `/api/dx/v1/print/templates` | ✅ | authenticated | List print templates |
+| POST | `/api/dx/v1/print/templates` | ✅ | print.configure | Create print template |
+| POST | `/api/dx/v1/export` | ✅ | authenticated | Export data to file |
+| GET | `/api/dx/v1/export/jobs` | ✅ | authenticated | List export jobs |
+
 ---
 
 ## Planned Endpoints (Future Parts)
@@ -260,11 +287,6 @@
 - `WS /api/dx/v1/ws` — WebSocket gateway
 - `GET /api/dx/v1/kpis/{code}` — KPI values
 - `GET /api/dx/v1/alerts` — Active alerts
-
-### Part 8 — Analytics
-- `GET /api/dx/v1/analytics/evm` — EVM data
-- `GET /api/dx/v1/analytics/forecast` — Forecast data
-- `GET /api/dx/v1/reports/{id}/export` — Export report
 
 ### Part 9 — Backup & Restore
 - `POST /api/dx/v1/backup` — Create backup
@@ -299,5 +321,5 @@
 
 ---
 
-**Document Status:** ✅ Complete (Part 7 Updated)  
-**Next Step:** Part 8 — Analytics & Reporting
+**Document Status:** ✅ Complete (Part 8 Updated)  
+**Next Step:** Part 9 — Backup & Restore
