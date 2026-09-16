@@ -20,6 +20,8 @@ import ProjectManagerDashboard from './components/ProjectManagerDashboard';
 import ObjectPage from './components/ObjectPage';
 import AnalyticsDashboard from './components/AnalyticsDashboard';
 import BackupDashboard from './components/BackupDashboard';
+import SystemHealthDashboard from './components/SystemHealthDashboard';
+import FinalAcceptanceValidation from './components/FinalAcceptanceValidation';
 
 function App() {
   const { theme, resolvedTheme, density, setTheme, setDensity } = useThemeEngine();
@@ -125,6 +127,10 @@ function App() {
         return <SuperAdminConsole />;
       case 'backup':
         return <BackupDashboard />;
+      case 'systemhealth':
+        return <SystemHealthDashboard />;
+      case 'validation':
+        return <FinalAcceptanceValidation />;
       case 'settings':
         return <PlaceholderPage title="System Settings" description="System configuration, user preferences, notification settings, and integrations." />;
       case 'universalhome':

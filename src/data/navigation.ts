@@ -148,6 +148,8 @@ export const navigationData: NavGroup[] = [
     items: [
       { key: 'permissions', label: 'Permissions', route: '/admin/permissions', icon: 'shield', permission: 'admin.permissions' },
       { key: 'backup', label: 'Backup & Restore', route: '/admin/backup', icon: 'database', permission: 'admin.backup' },
+      { key: 'systemhealth', label: 'System Health', route: '/admin/system-health', icon: 'activity', permission: 'admin.system-health' },
+      { key: 'validation', label: 'Final Validation', route: '/admin/validation', icon: 'check-circle', permission: 'admin.validation' },
       { key: 'audit-log', label: 'Audit Log', route: '/admin/audit', icon: 'scroll-text', permission: 'admin.audit' },
       { key: 'settings', label: 'Settings', route: '/admin/settings', icon: 'settings', permission: 'admin.settings' },
       { key: 'design-system', label: 'Design System', route: '/dev/design-system', icon: 'palette', permission: 'dev.tools' },
