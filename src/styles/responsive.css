@@ -1,111 +1,180 @@
 /**
  * Part 11 — Responsive CSS Utilities
- * Extends the design system with responsive helpers
+ * SAP Fiori Adaptive Model Breakpoints
+ * 
+ * xs: 0-599px (Phone)
+ * s: 600-899px (Phone landscape / small tablet)
+ * m: 900-1279px (Tablet)
+ * l: 1280-1679px (Desktop)
+ * xl: 1680px+ (Large desktop)
  */
 
-/* Responsive display utilities */
-@media (max-width: 575.98px) {
+/* CSS Custom Properties for Breakpoints */
+:root {
+  --dx-bp-xs: 0px;
+  --dx-bp-s: 600px;
+  --dx-bp-m: 900px;
+  --dx-bp-l: 1280px;
+  --dx-bp-xl: 1680px;
+}
+
+/* Device Type Flags */
+@media (max-width: 899px) {
+  :root {
+    --dx-device-phone: 1;
+    --dx-device-tablet: 0;
+    --dx-device-desktop: 0;
+  }
+}
+
+@media (min-width: 900px) and (max-width: 1279px) {
+  :root {
+    --dx-device-phone: 0;
+    --dx-device-tablet: 1;
+    --dx-device-desktop: 0;
+  }
+}
+
+@media (min-width: 1280px) {
+  :root {
+    --dx-device-phone: 0;
+    --dx-device-tablet: 0;
+    --dx-device-desktop: 1;
+  }
+}
+
+/* Responsive display utilities - Phone (xs + s) */
+@media (max-width: 899px) {
+  .hidden-phone { display: none !important; }
+  .visible-phone { display: block !important; }
+  .visible-phone-inline { display: inline !important; }
+  .visible-phone-flex { display: flex !important; }
+  .visible-phone-grid { display: grid !important; }
+}
+
+/* Responsive display utilities - Tablet (m) */
+@media (min-width: 900px) and (max-width: 1279px) {
+  .hidden-tablet { display: none !important; }
+  .visible-tablet { display: block !important; }
+  .visible-tablet-inline { display: inline !important; }
+  .visible-tablet-flex { display: flex !important; }
+  .visible-tablet-grid { display: grid !important; }
+}
+
+/* Responsive display utilities - Desktop (l + xl) */
+@media (min-width: 1280px) {
+  .hidden-desktop { display: none !important; }
+  .visible-desktop { display: block !important; }
+  .visible-desktop-inline { display: inline !important; }
+  .visible-desktop-flex { display: flex !important; }
+  .visible-desktop-grid { display: grid !important; }
+}
+
+/* Legacy breakpoint utilities (for backward compatibility) */
+@media (max-width: 599px) {
   .hidden-xs { display: none !important; }
   .visible-xs { display: block !important; }
   .visible-xs-inline { display: inline !important; }
   .visible-xs-flex { display: flex !important; }
 }
 
-@media (min-width: 576px) and (max-width: 767.98px) {
-  .hidden-sm { display: none !important; }
-  .visible-sm { display: block !important; }
-  .visible-sm-inline { display: inline !important; }
-  .visible-sm-flex { display: flex !important; }
+@media (min-width: 600px) and (max-width: 899px) {
+  .hidden-s { display: none !important; }
+  .visible-s { display: block !important; }
+  .visible-s-inline { display: inline !important; }
+  .visible-s-flex { display: flex !important; }
 }
 
-@media (min-width: 768px) and (max-width: 991.98px) {
-  .hidden-md { display: none !important; }
-  .visible-md { display: block !important; }
-  .visible-md-inline { display: inline !important; }
-  .visible-md-flex { display: flex !important; }
+@media (min-width: 900px) and (max-width: 1279px) {
+  .hidden-m { display: none !important; }
+  .visible-m { display: block !important; }
+  .visible-m-inline { display: inline !important; }
+  .visible-m-flex { display: flex !important; }
 }
 
-@media (min-width: 992px) and (max-width: 1199.98px) {
-  .hidden-lg { display: none !important; }
-  .visible-lg { display: block !important; }
-  .visible-lg-inline { display: inline !important; }
-  .visible-lg-flex { display: flex !important; }
+@media (min-width: 1280px) and (max-width: 1679px) {
+  .hidden-l { display: none !important; }
+  .visible-l { display: block !important; }
+  .visible-l-inline { display: inline !important; }
+  .visible-l-flex { display: flex !important; }
 }
 
-@media (min-width: 1200px) {
+@media (min-width: 1680px) {
   .hidden-xl { display: none !important; }
   .visible-xl { display: block !important; }
   .visible-xl-inline { display: inline !important; }
   .visible-xl-flex { display: flex !important; }
 }
 
-/* Responsive grid system */
+/* Responsive grid system - SAP Fiori breakpoints */
 .responsive-grid {
   display: grid;
   gap: var(--erp-space-4);
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
-@media (max-width: 575.98px) {
+/* Phone (xs + s): 0-899px */
+@media (max-width: 899px) {
   .responsive-grid {
     grid-template-columns: 1fr;
     gap: var(--erp-space-3);
   }
 }
 
-@media (min-width: 576px) and (max-width: 767.98px) {
+/* Tablet (m): 900-1279px */
+@media (min-width: 900px) and (max-width: 1279px) {
   .responsive-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: var(--erp-space-3);
   }
 }
 
-@media (min-width: 768px) and (max-width: 991.98px) {
+/* Desktop (l): 1280-1679px */
+@media (min-width: 1280px) and (max-width: 1679px) {
   .responsive-grid {
     grid-template-columns: repeat(3, 1fr);
   }
 }
 
-@media (min-width: 992px) {
+/* Large desktop (xl): 1680px+ */
+@media (min-width: 1680px) {
   .responsive-grid {
     grid-template-columns: repeat(4, 1fr);
   }
 }
 
-/* Responsive container */
+/* Responsive container - SAP Fiori breakpoints */
 .responsive-container {
   width: 100%;
   margin: 0 auto;
   padding: var(--erp-space-4);
 }
 
-@media (min-width: 576px) {
+/* Phone (xs + s): 0-899px */
+@media (max-width: 899px) {
   .responsive-container {
-    max-width: 540px;
+    max-width: 100%;
+    padding: var(--erp-space-3);
   }
 }
 
-@media (min-width: 768px) {
+/* Tablet (m): 900-1279px */
+@media (min-width: 900px) and (max-width: 1279px) {
   .responsive-container {
-    max-width: 720px;
+    max-width: 900px;
   }
 }
 
-@media (min-width: 992px) {
+/* Desktop (l): 1280-1679px */
+@media (min-width: 1280px) and (max-width: 1679px) {
   .responsive-container {
-    max-width: 960px;
+    max-width: 1200px;
   }
 }
 
-@media (min-width: 1200px) {
+/* Large desktop (xl): 1680px+ */
+@media (min-width: 1680px) {
   .responsive-container {
-    max-width: 1140px;
-  }
-}
-
-@media (min-width: 1400px) {
-  .responsive-container {
-    max-width: 1320px;
+    max-width: 1600px;
   }
 }
 
@@ -128,8 +197,8 @@
   min-height: 56px;
 }
 
-/* Mobile-specific utilities */
-@media (max-width: 767.98px) {
+/* Mobile-specific utilities (Phone: 0-899px) */
+@media (max-width: 899px) {
   .mobile-stack {
     flex-direction: column !important;
   }
@@ -153,10 +222,18 @@
   .mobile-hide-label span:not(.icon) {
     display: none !important;
   }
+  
+  .mobile-hide-on-phone {
+    display: none !important;
+  }
+  
+  .mobile-show-on-phone {
+    display: block !important;
+  }
 }
 
-/* Tablet-specific utilities */
-@media (min-width: 768px) and (max-width: 991.98px) {
+/* Tablet-specific utilities (Tablet: 900-1279px) */
+@media (min-width: 900px) and (max-width: 1279px) {
   .tablet-grid-2 {
     grid-template-columns: repeat(2, 1fr) !important;
   }
@@ -164,10 +241,18 @@
   .tablet-grid-3 {
     grid-template-columns: repeat(3, 1fr) !important;
   }
+  
+  .tablet-hide-on-tablet {
+    display: none !important;
+  }
+  
+  .tablet-show-on-tablet {
+    display: block !important;
+  }
 }
 
-/* Desktop-specific utilities */
-@media (min-width: 992px) {
+/* Desktop-specific utilities (Desktop: 1280px+) */
+@media (min-width: 1280px) {
   .desktop-sidebar-layout {
     display: grid;
     grid-template-columns: 280px 1fr;
@@ -176,6 +261,14 @@
   
   .desktop-grid-4 {
     grid-template-columns: repeat(4, 1fr) !important;
+  }
+  
+  .desktop-hide-on-desktop {
+    display: none !important;
+  }
+  
+  .desktop-show-on-desktop {
+    display: block !important;
   }
 }
 
@@ -230,5 +323,270 @@
   
   .print-break-after {
     page-break-after: always;
+  }
+}
+
+/* High Visibility Mode (for outdoor use) */
+.high-visibility {
+  --sapTextColor: #000000;
+  --sapContent_LabelColor: #333333;
+  --sapBackgroundColor: #ffffff;
+  --sapFontSize: 16px;
+  font-weight: 500;
+}
+
+.high-visibility .sap-card {
+  border: 2px solid var(--sapGroup_BorderColor);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.high-visibility button {
+  font-weight: 600;
+}
+
+/* Density Adjustments */
+.density-cozy {
+  --sapElement_Height: 44px;
+  --sapElement_LineHeight: 48px;
+  --sapFontSize: 16px;
+}
+
+.density-compact {
+  --sapElement_Height: 32px;
+  --sapElement_LineHeight: 36px;
+  --sapFontSize: 14px;
+}
+
+.density-condensed {
+  --sapElement_Height: 28px;
+  --sapElement_LineHeight: 32px;
+  --sapFontSize: 13px;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Touch Device Optimizations */
+@media (hover: none) and (pointer: coarse) {
+  /* Increase touch targets */
+  button,
+  a,
+  [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Remove hover effects on touch devices */
+  .hover\:bg-gray-100:hover {
+    background-color: transparent;
+  }
+  
+  /* Add active states instead */
+  button:active,
+  a:active,
+  [role="button"]:active {
+    opacity: 0.7;
+  }
+}
+
+/* Landscape Mode Optimizations */
+@media (orientation: landscape) and (max-height: 500px) {
+  .landscape-compact {
+    padding: var(--erp-space-2) !important;
+  }
+  
+  .landscape-hide-header {
+    display: none !important;
+  }
+  
+  .landscape-reduce-spacing {
+    gap: var(--erp-space-2) !important;
+  }
+}
+
+/* Safe Area Insets for Notched Devices */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.safe-area-left {
+  padding-left: env(safe-area-inset-left, 0);
+}
+
+.safe-area-right {
+  padding-right: env(safe-area-inset-right, 0);
+}
+
+.safe-area-all {
+  padding: env(safe-area-inset-top, 0) 
+           env(safe-area-inset-right, 0) 
+           env(safe-area-inset-bottom, 0) 
+           env(safe-area-inset-left, 0);
+}
+
+/* Prevent horizontal scroll on mobile */
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+/* Ensure minimum viewport width */
+@media (max-width: 319px) {
+  body::before {
+    content: "Please use a device with a wider screen (minimum 320px)";
+    display: block;
+    padding: 20px;
+    text-align: center;
+    background: var(--sapErrorBackground);
+    color: var(--sapNegativeTextColor);
+  }
+}
+
+/* Text zoom support (up to 200%) */
+@media (min-resolution: 1dppx) {
+  html {
+    font-size: 100%;
+  }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .high-dpi-images {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .auto-dark-mode {
+    /* Will be overridden by theme engine */
+  }
+}
+
+/* Focus visible for keyboard navigation */
+:focus-visible {
+  outline: 2px solid var(--sapContent_FocusColor);
+  outline-offset: 2px;
+}
+
+/* Skip to main content link for accessibility */
+.skip-to-main {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--sapBrandColor);
+  color: white;
+  padding: 8px 16px;
+  text-decoration: none;
+  z-index: 10000;
+}
+
+.skip-to-main:focus {
+  top: 0;
+}
+
+/* Responsive typography */
+.responsive-text-xs {
+  font-size: 12px;
+}
+
+@media (min-width: 900px) {
+  .responsive-text-xs {
+    font-size: 13px;
+  }
+}
+
+.responsive-text-sm {
+  font-size: 14px;
+}
+
+@media (min-width: 900px) {
+  .responsive-text-sm {
+    font-size: 14px;
+  }
+}
+
+.responsive-text-base {
+  font-size: 16px;
+}
+
+@media (min-width: 900px) {
+  .responsive-text-base {
+    font-size: 14px;
+  }
+}
+
+.responsive-text-lg {
+  font-size: 18px;
+}
+
+@media (min-width: 900px) {
+  .responsive-text-lg {
+    font-size: 16px;
+  }
+}
+
+.responsive-text-xl {
+  font-size: 20px;
+}
+
+@media (min-width: 900px) {
+  .responsive-text-xl {
+    font-size: 18px;
+  }
+}
+
+/* Responsive spacing */
+.responsive-spacing-xs {
+  padding: var(--erp-space-2);
+}
+
+@media (min-width: 900px) {
+  .responsive-spacing-xs {
+    padding: var(--erp-space-3);
+  }
+}
+
+.responsive-spacing-sm {
+  padding: var(--erp-space-3);
+}
+
+@media (min-width: 900px) {
+  .responsive-spacing-sm {
+    padding: var(--erp-space-4);
+  }
+}
+
+.responsive-spacing-md {
+  padding: var(--erp-space-4);
+}
+
+@media (min-width: 900px) {
+  .responsive-spacing-md {
+    padding: var(--erp-space-5);
+  }
+}
+
+.responsive-spacing-lg {
+  padding: var(--erp-space-5);
+}
+
+@media (min-width: 900px) {
+  .responsive-spacing-lg {
+    padding: var(--erp-space-6);
   }
 }

@@ -372,11 +372,14 @@
 
 | Method | Path | Auth | Permission | Description |
 |---|---|---|---|---|
-| POST | `/api/dx/v1/sync` | ✅ | authenticated | Sync offline queue with server |
+| POST | `/api/dx/v1/sync` | ✅ | authenticated | Sync offline queue with server (idempotent via local_id) |
+| GET | `/api/dx/v1/sync/status` | ✅ | authenticated | Get sync status and pending items |
+| POST | `/api/dx/v1/sync/retry` | ✅ | authenticated | Retry failed sync items |
+| DELETE | `/api/dx/v1/sync/{localId}` | ✅ | authenticated | Discard sync item |
 
 ---
 
-**Total API Endpoints:** 131+ (130 from Parts 1-10 + 1 from Part 11)
+**Total API Endpoints:** 134+ (130 from Parts 1-10 + 4 from Part 11)
 
 ---
 

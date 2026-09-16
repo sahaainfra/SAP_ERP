@@ -2164,25 +2164,59 @@ DROP TABLE IF EXISTS dx_storage_target;
 
 ---
 
-## Part 11 — No New Tables
+### Migration 048 — dx_sync_log (Offline Sync Log)
 
-Part 11 focuses on responsive design, multi-device support, offline capabilities, and PWA features. No new database tables are required as this part works with client-side storage (localStorage) for offline queue.
+**Date:** 2026-02-10  
+**File:** `migrations/048_create_dx_sync_log.sql`  
+**Tables Touched:** `dx_sync_log` (NEW)  
+**Reason:** Track offline sync operations with idempotency keys to prevent duplicate records.
 
-**Focus Areas:**
-- Responsive breakpoint system (6 breakpoints)
-- Adaptive components for desktop/tablet/mobile
-- Mobile shell with bottom navigation
-- Offline capture system with queue and sync
-- PWA manifest and service worker
-- Touch-optimized interactions (WCAG 2.1 AA)
-- Safe area support for notched devices
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_sync_log (
+  id               BIGSERIAL PRIMARY KEY,
+  local_id         UUID NOT NULL,
+  device_id        VARCHAR(100) NOT NULL,
+  user_id          BIGINT NOT NULL,
+  project_id       BIGINT,
+  entity_type      VARCHAR(80) NOT NULL,
+  server_record_id BIGINT,
+  status           VARCHAR(20) NOT NULL,     -- ACCEPTED | REJECTED | DUPLICATE
+  captured_at      TIMESTAMPTZ NOT NULL,     -- device clock
+  received_at      TIMESTAMPTZ NOT NULL,     -- server clock
+  clock_skew_sec   INTEGER,
+  error_message    TEXT,
+  payload_hash     CHAR(64) NOT NULL,
+  CONSTRAINT uq_dx_sync_local UNIQUE (local_id)
+);
+CREATE INDEX IF NOT EXISTS ix_dx_sync_user ON dx_sync_log (user_id, received_at DESC);
+CREATE INDEX IF NOT EXISTS ix_dx_sync_status ON dx_sync_log (status, received_at DESC);
+```
 
-**Storage:**
-- Offline queue stored in browser localStorage
-- Service Worker caches managed by browser Cache API
-- No database changes required
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_sync_log;
+```
 
-**Total Database Tables:** 53 (unchanged from Part 10)
+**Status:** ✅ Documented
+
+---
+
+## Summary
+
+| Migration | Table | Type | Status |
+|---|---|---|---|
+| 001-047 | (Parts 1-10) | Various | ✅ Documented |
+| 048 | `dx_sync_log` | NEW | ✅ Documented |
+
+**Total new tables:** 54  
+**Total tables modified:** 0  
+**Total rows affected:** 0
+
+---
+
+**Document Status:** ✅ Complete (Part 11 Updated)  
+**Next Step:** Part 12 — Master Data & Enterprise Structure
 
 ---
 

@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { Home, Search, Bell, User, Menu, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Home, Search, Bell, User, Menu, ChevronLeft, ChevronRight, CheckSquare, Plus, MoreHorizontal } from 'lucide-react';
 import { useResponsive } from '../utils/responsive';
 
 interface MobileShellProps {
@@ -13,7 +13,7 @@ interface MobileShellProps {
   onSearchClick?: () => void;
   onNotificationsClick?: () => void;
   onProfileClick?: () => void;
-  activeTab?: 'home' | 'search' | 'notifications' | 'profile';
+  activeTab?: 'home' | 'work' | 'search' | 'more';
 }
 
 export default function MobileShell({
@@ -71,7 +71,7 @@ export default function MobileShell({
         {children}
       </main>
 
-      {/* Bottom Navigation */}
+      {/* Bottom Navigation - 5 tabs per Part 11 spec */}
       <nav
         className="sticky bottom-0 z-40 flex items-center justify-around py-2 safe-area-bottom"
         style={{
@@ -88,23 +88,31 @@ export default function MobileShell({
           onClick={onMenuClick}
         />
         <BottomNavItem
+          icon={<CheckSquare size={24} />}
+          label="Work"
+          isActive={activeTab === 'work'}
+          onClick={onMenuClick}
+          badge={7} // Total actionable items (approvals + tasks + exceptions)
+        />
+        <BottomNavItem
+          icon={<Plus size={24} />}
+          label="Create"
+          isActive={false}
+          onClick={onMenuClick}
+          isCreateButton
+        />
+        <BottomNavItem
           icon={<Search size={24} />}
           label="Search"
           isActive={activeTab === 'search'}
           onClick={onSearchClick}
         />
         <BottomNavItem
-          icon={<Bell size={24} />}
-          label="Alerts"
-          isActive={activeTab === 'notifications'}
-          onClick={onNotificationsClick}
-          badge={3}
-        />
-        <BottomNavItem
-          icon={<User size={24} />}
-          label="Profile"
-          isActive={activeTab === 'profile'}
+          icon={<MoreHorizontal size={24} />}
+          label="More"
+          isActive={activeTab === 'more'}
           onClick={onProfileClick}
+          badge={3} // Notification count
         />
       </nav>
     </div>
@@ -117,21 +125,30 @@ interface BottomNavItemProps {
   isActive: boolean;
   onClick?: () => void;
   badge?: number;
+  isCreateButton?: boolean;
 }
 
-function BottomNavItem({ icon, label, isActive, onClick, badge }: BottomNavItemProps) {
+function BottomNavItem({ icon, label, isActive, onClick, badge, isCreateButton }: BottomNavItemProps) {
   return (
     <button
       onClick={onClick}
-      className="flex flex-col items-center gap-1 px-4 py-2 touch-target-comfortable relative"
+      className={`flex flex-col items-center gap-1 px-4 py-2 touch-target-comfortable relative ${
+        isCreateButton ? 'rounded-full' : ''
+      }`}
+      style={isCreateButton ? {
+        background: 'var(--sapBrandColor)',
+        color: '#ffffff',
+        marginTop: '-12px',
+        boxShadow: 'var(--sapShadow2)',
+      } : undefined}
       aria-label={label}
       aria-current={isActive ? 'page' : undefined}
     >
       <div className="relative">
-        <div style={{ color: isActive ? 'var(--sapBrandColor)' : 'var(--sapContentIconColor)' }}>
+        <div style={{ color: isCreateButton ? '#ffffff' : isActive ? 'var(--sapBrandColor)' : 'var(--sapContentIconColor)' }}>
           {icon}
         </div>
-        {badge && badge > 0 && (
+        {badge && badge > 0 && !isCreateButton && (
           <span
             className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-xs font-bold flex items-center justify-center"
             style={{
@@ -145,7 +162,7 @@ function BottomNavItem({ icon, label, isActive, onClick, badge }: BottomNavItemP
       </div>
       <span
         className="text-xs font-medium"
-        style={{ color: isActive ? 'var(--sapBrandColor)' : 'var(--sapContentIconColor)' }}
+        style={{ color: isCreateButton ? '#ffffff' : isActive ? 'var(--sapBrandColor)' : 'var(--sapContentIconColor)' }}
       >
         {label}
       </span>
