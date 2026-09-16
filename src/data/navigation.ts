@@ -35,6 +35,7 @@ export const navigationData: NavGroup[] = [
     order: 10,
     items: [
       { key: 'home', label: 'Home', route: '/dashboard', icon: 'home', permission: 'dashboard.view' },
+      { key: 'universalhome', label: 'Universal Home', route: '/universal-home', icon: 'layout-dashboard', permission: 'dashboard.view' },
       { key: 'workspace', label: 'My Workspace', route: '/workspace', icon: 'layout-dashboard', permission: 'workspace.view' },
       { key: 'my-tasks', label: 'My Tasks', route: '/tasks', icon: 'check-square', badge: 3, permission: 'tasks.view' },
       { key: 'my-approvals', label: 'My Approvals', route: '/approvals', icon: 'file-check', badge: 4, permission: 'approvals.view' },
@@ -47,7 +48,9 @@ export const navigationData: NavGroup[] = [
     order: 20,
     items: [
       { key: 'project-list', label: 'Project List', route: '/projects', icon: 'list', permission: 'project.view' },
-      { key: 'project-360', label: 'Project 360', route: '/projects/360', icon: 'eye', permission: 'project.view' },
+      { key: 'project360', label: 'Project 360', route: '/projects/360', icon: 'eye', permission: 'project.view' },
+      { key: 'projectmanager', label: 'PM Dashboard', route: '/projects/pm-dashboard', icon: 'layout-dashboard', permission: 'project.view' },
+      { key: 'objectpage', label: 'Object Page', route: '/objects/po/123', icon: 'file-text', permission: 'project.view' },
       { key: 'sites', label: 'Sites', route: '/sites', icon: 'map-pin', permission: 'site.view' },
       { key: 'packages', label: 'Packages', route: '/packages', icon: 'package', permission: 'package.view' },
       { key: 'contracts', label: 'Contracts', route: '/contracts', icon: 'file-text', permission: 'contract.view' },

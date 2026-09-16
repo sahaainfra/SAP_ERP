@@ -198,6 +198,26 @@
 | DELETE | `/api/dx/v1/views/{id}` | ✅ | view.delete | Delete saved view |
 | POST | `/api/dx/v1/views/{id}/share` | ✅ | view.share | Share view with team |
 
+### Role Dashboards & Object Pages (Part 6)
+
+| Method | Path | Auth | Permission | Description |
+|---|---|---|---|---|
+| GET | `/api/dx/v1/dashboard/resolve` | ✅ | authenticated | Resolve dashboard layout for active context |
+| POST | `/api/dx/v1/dashboard/data` | ✅ | authenticated | Batch fetch data for all dashboard widgets |
+| GET | `/api/dx/v1/dashboard/role/{role}` | ✅ | role-specific | Get default dashboard for a role |
+| POST | `/api/dx/v1/dashboard/role/{role}/default` | ✅ | admin | Set default dashboard for a role |
+| GET | `/api/dx/v1/projects/{id}/360` | ✅ | project.view | Full Project 360 payload |
+| GET | `/api/dx/v1/projects/{id}/health` | ✅ | project.view | Health score with component breakdown |
+| GET | `/api/dx/v1/projects/{id}/health/history` | ✅ | project.view | Health score trend history |
+| POST | `/api/dx/v1/projects/{id}/health/recalculate` | ✅ | project.edit | Recalculate health score |
+| GET | `/api/dx/v1/objects/{type}/{id}` | ✅ | type-specific | Object page payload |
+| GET | `/api/dx/v1/objects/{type}/{id}/chain` | ✅ | type-specific | Document chain graph |
+| GET | `/api/dx/v1/objects/{type}/{id}/audit` | ✅ | type-specific | Audit trail |
+| POST | `/api/dx/v1/objects/{type}/{id}/action` | ✅ | type-specific | Execute state-changing action |
+| GET | `/api/dx/v1/drill/{kpiKey}` | ✅ | kpi-specific | Drill-down records for a KPI |
+| GET | `/api/dx/v1/health/config` | ✅ | admin | Health score configuration |
+| PUT | `/api/dx/v1/health/config` | ✅ | admin | Update health score weights |
+
 ---
 
 ## Planned Endpoints (Future Parts)
@@ -215,10 +235,6 @@
 - `WS /api/dx/v1/ws` — WebSocket gateway
 - `GET /api/dx/v1/kpis/{code}` — KPI values
 - `GET /api/dx/v1/alerts` — Active alerts
-
-### Part 6 — Role Dashboards
-- `GET /api/dx/v1/dashboards/{role}` — Role-specific dashboard
-- `GET /api/dx/v1/projects/{id}/360` — Project 360 view
 
 ### Part 7 — Approval Centre
 - `GET /api/dx/v1/approvals` — Pending approvals
@@ -263,5 +279,5 @@
 
 ---
 
-**Document Status:** ✅ Complete (Part 5 Updated)  
-**Next Step:** Part 6 — Role Dashboards & Object Pages
+**Document Status:** ✅ Complete (Part 6 Updated)  
+**Next Step:** Part 7 — Approval Centre & Workflow Engine

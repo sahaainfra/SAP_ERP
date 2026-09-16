@@ -343,6 +343,172 @@ DROP TABLE IF EXISTS dx_saved_view;
 
 ---
 
+### Migration 023 — dx_dashboard_role_default
+
+**Date:** 2026-02-10  
+**File:** `migrations/023_create_dx_dashboard_role_default.sql`  
+**Tables Touched:** `dx_dashboard_role_default` (NEW)  
+**Reason:** Store default dashboard configurations for each role, allowing admins to define what each role sees by default.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_dashboard_role_default (
+  id              BIGSERIAL PRIMARY KEY,
+  role_key        VARCHAR(100) NOT NULL,
+  dashboard_id    BIGINT NOT NULL REFERENCES dx_dashboard(id),
+  company_id      BIGINT,
+  project_id      BIGINT,
+  is_active       BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT uq_dx_role_default UNIQUE (role_key, company_id, project_id)
+);
+
+CREATE INDEX IF NOT EXISTS ix_dx_role_default_role ON dx_dashboard_role_default (role_key);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_dashboard_role_default;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 024 — dx_health_score_config
+
+**Date:** 2026-02-10  
+**File:** `migrations/024_create_dx_health_score_config.sql`  
+**Tables Touched:** `dx_health_score_config` (NEW)  
+**Reason:** Store health score component weights and thresholds, allowing admins to customize how project health is calculated.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_health_score_config (
+  id              BIGSERIAL PRIMARY KEY,
+  company_id      BIGINT,
+  project_id      BIGINT,
+  component_name  VARCHAR(100) NOT NULL,
+  weight          NUMERIC(5,2) NOT NULL DEFAULT 0,
+  threshold_good  NUMERIC(5,2) NOT NULL DEFAULT 80,
+  threshold_warn  NUMERIC(5,2) NOT NULL DEFAULT 60,
+  is_active       BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT uq_dx_health_config UNIQUE (company_id, project_id, component_name)
+);
+
+CREATE INDEX IF NOT EXISTS ix_dx_health_config_project ON dx_health_score_config (project_id);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_health_score_config;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 025 — dx_health_score_history
+
+**Date:** 2026-02-10  
+**File:** `migrations/025_create_dx_health_score_history.sql`  
+**Tables Touched:** `dx_health_score_history` (NEW)  
+**Reason:** Store historical health score data for trend analysis and reporting.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_health_score_history (
+  id              BIGSERIAL PRIMARY KEY,
+  project_id      BIGINT NOT NULL,
+  score_date      DATE NOT NULL,
+  overall_score   NUMERIC(5,2) NOT NULL,
+  band            VARCHAR(20) NOT NULL,
+  component_scores JSONB NOT NULL,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT uq_dx_health_history UNIQUE (project_id, score_date)
+);
+
+CREATE INDEX IF NOT EXISTS ix_dx_health_history_project ON dx_health_score_history (project_id, score_date DESC);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_health_score_history;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 026 — dx_object_page_config
+
+**Date:** 2026-02-10  
+**File:** `migrations/026_create_dx_object_page_config.sql`  
+**Tables Touched:** `dx_object_page_config` (NEW)  
+**Reason:** Store object page layout configurations, defining which sections are visible and their order for each object type.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_object_page_config (
+  id              BIGSERIAL PRIMARY KEY,
+  object_type     VARCHAR(100) NOT NULL,
+  section_key     VARCHAR(100) NOT NULL,
+  section_order   INT NOT NULL DEFAULT 0,
+  is_visible      BOOLEAN NOT NULL DEFAULT TRUE,
+  required_permission VARCHAR(150),
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT uq_dx_object_page_config UNIQUE (object_type, section_key)
+);
+
+CREATE INDEX IF NOT EXISTS ix_dx_object_page_type ON dx_object_page_config (object_type);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_object_page_config;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 027 — dx_document_chain
+
+**Date:** 2026-02-10  
+**File:** `migrations/027_create_dx_document_chain.sql`  
+**Tables Touched:** `dx_document_chain` (NEW)  
+**Reason:** Store document chain relationships, enabling drill-down navigation between related documents (e.g., MR → PR → PO → GRN).
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_document_chain (
+  id              BIGSERIAL PRIMARY KEY,
+  source_type     VARCHAR(100) NOT NULL,
+  source_id       BIGINT NOT NULL,
+  target_type     VARCHAR(100) NOT NULL,
+  target_id       BIGINT NOT NULL,
+  relationship    VARCHAR(50) NOT NULL,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT uq_dx_doc_chain UNIQUE (source_type, source_id, target_type, target_id, relationship)
+);
+
+CREATE INDEX IF NOT EXISTS ix_dx_doc_chain_source ON dx_document_chain (source_type, source_id);
+CREATE INDEX IF NOT EXISTS ix_dx_doc_chain_target ON dx_document_chain (target_type, target_id);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_document_chain;
+```
+
+**Status:** ✅ Documented
+
+---
+
 ## Summary
 
 | Migration | Table | Type | Status |
@@ -926,12 +1092,17 @@ DROP TABLE IF EXISTS dx_working_calendar;
 | 020 | `dx_dashboard` | NEW | ✅ Documented |
 | 021 | `dx_dashboard_widget` | NEW | ✅ Documented |
 | 022 | `dx_saved_view` | NEW | ✅ Documented |
+| 023 | `dx_dashboard_role_default` | NEW | ✅ Documented |
+| 024 | `dx_health_score_config` | NEW | ✅ Documented |
+| 025 | `dx_health_score_history` | NEW | ✅ Documented |
+| 026 | `dx_object_page_config` | NEW | ✅ Documented |
+| 027 | `dx_document_chain` | NEW | ✅ Documented |
 
-**Total new tables:** 22  
+**Total new tables:** 27  
 **Total tables modified:** 0  
 **Total rows affected:** 0
 
 ---
 
-**Document Status:** ✅ Complete (Part 5 Updated)  
-**Next Step:** Part 6 — Role Dashboards & Object Pages
+**Document Status:** ✅ Complete (Part 6 Updated)  
+**Next Step:** Part 7 — Approval Centre & Workflow Engine

@@ -14,6 +14,10 @@ import ExceptionCentre from './components/ExceptionCentre';
 import PlaceholderPage from './components/PlaceholderPage';
 import DesignSystemShowcase from './components/DesignSystemShowcase';
 import SuperAdminConsole from './components/SuperAdminConsole';
+import UniversalHome from './components/UniversalHome';
+import Project360 from './components/Project360';
+import ProjectManagerDashboard from './components/ProjectManagerDashboard';
+import ObjectPage from './components/ObjectPage';
 
 function App() {
   const { theme, resolvedTheme, density, setTheme, setDensity } = useThemeEngine();
@@ -121,6 +125,14 @@ function App() {
         return <PlaceholderPage title="Backup & Restore" description="Data backup scheduling, encryption, download, restore, and validation tools." />;
       case 'settings':
         return <PlaceholderPage title="System Settings" description="System configuration, user preferences, notification settings, and integrations." />;
+      case 'universalhome':
+        return <UniversalHome roleContent={<ProjectManagerDashboard />} />;
+      case 'project360':
+        return <Project360 />;
+      case 'projectmanager':
+        return <ProjectManagerDashboard />;
+      case 'objectpage':
+        return <ObjectPage />;
       default:
         return <Dashboard currentProject={context.project} />;
     }
