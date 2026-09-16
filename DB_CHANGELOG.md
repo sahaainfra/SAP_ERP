@@ -245,5 +245,263 @@ DROP TABLE IF EXISTS dx_menu_item;
 
 ---
 
-**Document Status:** ✅ Complete (Part 2 Updated)  
-**Next Step:** Part 3 — Project Permission Engine
+### Migration 007 — dx_permission (Permission Catalogue)
+
+**Date:** 2026-02-10  
+**File:** `migrations/007_create_dx_permission.sql`  
+**Tables Touched:** `dx_permission` (NEW)  
+**Reason:** Catalogue of all permission keys in the system. Each permission follows the format `module.entity.action`.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_permission (
+  id              BIGSERIAL PRIMARY KEY,
+  permission_key  VARCHAR(150) NOT NULL UNIQUE,
+  module          VARCHAR(50)  NOT NULL,
+  entity          VARCHAR(80)  NOT NULL,
+  action          VARCHAR(40)  NOT NULL,
+  label           VARCHAR(200) NOT NULL,
+  description     TEXT,
+  is_sensitive    BOOLEAN NOT NULL DEFAULT FALSE,
+  requires_limit  BOOLEAN NOT NULL DEFAULT FALSE,
+  sort_order      INT NOT NULL DEFAULT 0,
+  is_active       BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS ix_dx_perm_module ON dx_permission (module, entity);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_permission;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 008 — dx_responsibility_template (Templates)
+
+**Date:** 2026-02-10  
+**File:** `migrations/008_create_dx_responsibility_template.sql`  
+**Tables Touched:** `dx_responsibility_template`, `dx_responsibility_template_permission` (NEW)  
+**Reason:** Reusable responsibility templates that bundle permission keys. Templates can be system-provided or custom.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_responsibility_template (
+  id                BIGSERIAL PRIMARY KEY,
+  template_code     VARCHAR(50)  NOT NULL UNIQUE,
+  template_name     VARCHAR(150) NOT NULL,
+  description       TEXT,
+  category          VARCHAR(50),
+  is_system         BOOLEAN NOT NULL DEFAULT FALSE,
+  is_active         BOOLEAN NOT NULL DEFAULT TRUE,
+  company_id        BIGINT,
+  created_by        BIGINT NOT NULL,
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_by        BIGINT,
+  updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  version           INT NOT NULL DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS dx_responsibility_template_permission (
+  id              BIGSERIAL PRIMARY KEY,
+  template_id     BIGINT NOT NULL REFERENCES dx_responsibility_template(id),
+  permission_id   BIGINT NOT NULL REFERENCES dx_permission(id),
+  is_granted      BOOLEAN NOT NULL DEFAULT TRUE,
+  CONSTRAINT uq_dx_tmpl_perm UNIQUE (template_id, permission_id)
+);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_responsibility_template_permission;
+DROP TABLE IF EXISTS dx_responsibility_template;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 009 — dx_project_assignment (Core Assignment Table)
+
+**Date:** 2026-02-10  
+**File:** `migrations/009_create_dx_project_assignment.sql`  
+**Tables Touched:** `dx_project_assignment` (NEW)  
+**Reason:** THE CORE TABLE - maps users to projects with responsibility templates, data scope, and validity periods.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_project_assignment (
+  id                  BIGSERIAL PRIMARY KEY,
+  user_id             BIGINT NOT NULL,
+  project_id          BIGINT NOT NULL,
+  company_id          BIGINT NOT NULL,
+  template_id         BIGINT REFERENCES dx_responsibility_template(id),
+  designation_label   VARCHAR(150),
+  is_primary_project  BOOLEAN NOT NULL DEFAULT FALSE,
+  reports_to_user_id  BIGINT,
+  data_scope          VARCHAR(30) NOT NULL DEFAULT 'PROJECT',
+  valid_from          DATE NOT NULL,
+  valid_to            DATE,
+  status              VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+  suspension_reason   TEXT,
+  assigned_by         BIGINT NOT NULL,
+  assigned_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  revoked_by          BIGINT,
+  revoked_at          TIMESTAMPTZ,
+  revocation_reason   TEXT,
+  notes               TEXT,
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  version             INT NOT NULL DEFAULT 1,
+  CONSTRAINT uq_dx_proj_assign UNIQUE (user_id, project_id, valid_from)
+);
+CREATE INDEX IF NOT EXISTS ix_dx_pa_user    ON dx_project_assignment (user_id, status);
+CREATE INDEX IF NOT EXISTS ix_dx_pa_project ON dx_project_assignment (project_id, status);
+CREATE INDEX IF NOT EXISTS ix_dx_pa_lookup  ON dx_project_assignment (user_id, project_id, status, valid_from, valid_to);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_project_assignment;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 010 — dx_approval_authority (Approval Limits)
+
+**Date:** 2026-02-10  
+**File:** `migrations/010_create_dx_approval_authority.sql`  
+**Tables Touched:** `dx_approval_authority` (NEW)  
+**Reason:** Defines approval authority limits per assignment and document type.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_approval_authority (
+  id                  BIGSERIAL PRIMARY KEY,
+  assignment_id       BIGINT NOT NULL REFERENCES dx_project_assignment(id) ON DELETE CASCADE,
+  document_type       VARCHAR(50) NOT NULL,
+  approval_level      INT NOT NULL DEFAULT 1,
+  min_amount          NUMERIC(18,2) NOT NULL DEFAULT 0,
+  max_amount          NUMERIC(18,2),
+  currency            VARCHAR(10) NOT NULL DEFAULT 'INR',
+  can_approve         BOOLEAN NOT NULL DEFAULT TRUE,
+  can_reject          BOOLEAN NOT NULL DEFAULT TRUE,
+  can_return          BOOLEAN NOT NULL DEFAULT TRUE,
+  can_forward         BOOLEAN NOT NULL DEFAULT FALSE,
+  can_delegate        BOOLEAN NOT NULL DEFAULT FALSE,
+  can_approve_own     BOOLEAN NOT NULL DEFAULT FALSE,
+  requires_two_person BOOLEAN NOT NULL DEFAULT FALSE,
+  sla_hours           INT,
+  is_active           BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT uq_dx_auth UNIQUE (assignment_id, document_type, approval_level)
+);
+CREATE INDEX IF NOT EXISTS ix_dx_auth_doc ON dx_approval_authority (document_type, is_active);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_approval_authority;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 011 — dx_sod_rule (Segregation of Duties)
+
+**Date:** 2026-02-10  
+**File:** `migrations/011_create_dx_sod_rule.sql`  
+**Tables Touched:** `dx_sod_rule` (NEW)  
+**Reason:** Segregation of duties rules to prevent conflicting permissions.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_sod_rule (
+  id                  BIGSERIAL PRIMARY KEY,
+  rule_code           VARCHAR(50) NOT NULL UNIQUE,
+  rule_name           VARCHAR(200) NOT NULL,
+  permission_a_id     BIGINT NOT NULL REFERENCES dx_permission(id),
+  permission_b_id     BIGINT NOT NULL REFERENCES dx_permission(id),
+  severity            VARCHAR(20) NOT NULL DEFAULT 'WARNING',
+  rationale           TEXT NOT NULL,
+  is_active           BOOLEAN NOT NULL DEFAULT TRUE
+);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_sod_rule;
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 012 — dx_assignment_audit (Immutable Audit Log)
+
+**Date:** 2026-02-10  
+**File:** `migrations/012_create_dx_assignment_audit.sql`  
+**Tables Touched:** `dx_assignment_audit` (NEW)  
+**Reason:** Immutable audit log for all assignment changes. Append-only table.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_assignment_audit (
+  id                BIGSERIAL PRIMARY KEY,
+  assignment_id     BIGINT,
+  user_id           BIGINT NOT NULL,
+  project_id        BIGINT NOT NULL,
+  action            VARCHAR(40) NOT NULL,
+  before_value      JSONB,
+  after_value       JSONB,
+  changed_by        BIGINT NOT NULL,
+  changed_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  ip_address        VARCHAR(64),
+  user_agent        TEXT,
+  reason            TEXT
+);
+CREATE INDEX IF NOT EXISTS ix_dx_aa_user    ON dx_assignment_audit (user_id, changed_at DESC);
+CREATE INDEX IF NOT EXISTS ix_dx_aa_project ON dx_assignment_audit (project_id, changed_at DESC);
+```
+
+**Rollback:**
+```sql
+DROP TABLE IF EXISTS dx_assignment_audit;
+```
+
+**Status:** ✅ Documented
+
+---
+
+## Summary
+
+| Migration | Table | Type | Status |
+|---|---|---|---|
+| 001 | `dx_user_preference` | NEW | ✅ Documented |
+| 002 | `dx_kpi_definition` | NEW | ✅ Documented |
+| 003 | `dx_dashboard_layout` | NEW | ✅ Documented |
+| 004 | `dx_user_context` | NEW | ✅ Documented |
+| 005 | `dx_search_history` | NEW | ✅ Documented |
+| 006 | `dx_menu_item` | NEW | ✅ Documented |
+| 007 | `dx_permission` | NEW | ✅ Documented |
+| 008 | `dx_responsibility_template` | NEW | ✅ Documented |
+| 009 | `dx_project_assignment` | NEW | ✅ Documented |
+| 010 | `dx_approval_authority` | NEW | ✅ Documented |
+| 011 | `dx_sod_rule` | NEW | ✅ Documented |
+| 012 | `dx_assignment_audit` | NEW | ✅ Documented |
+
+**Total new tables:** 12  
+**Total tables modified:** 0  
+**Total rows affected:** 0
+
+---
+
+**Document Status:** ✅ Complete (Part 3 Updated)  
+**Next Step:** Part 4 — Real-time Data Engine

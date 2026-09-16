@@ -13,6 +13,7 @@ import AnalyticsPage from './components/AnalyticsPage';
 import ExceptionCentre from './components/ExceptionCentre';
 import PlaceholderPage from './components/PlaceholderPage';
 import DesignSystemShowcase from './components/DesignSystemShowcase';
+import SuperAdminConsole from './components/SuperAdminConsole';
 
 function App() {
   const { theme, resolvedTheme, density, setTheme, setDensity } = useThemeEngine();
@@ -115,7 +116,7 @@ function App() {
       case 'workflows':
         return <PlaceholderPage title="Workflow Engine" description="Business process automation, approval routing, and workflow configuration." />;
       case 'permissions':
-        return <PlaceholderPage title="Permissions & Authority" description="Project-wise responsibility, role-based access control, and delegation management." />;
+        return <SuperAdminConsole />;
       case 'backup':
         return <PlaceholderPage title="Backup & Restore" description="Data backup scheduling, encryption, download, restore, and validation tools." />;
       case 'settings':
