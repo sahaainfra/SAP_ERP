@@ -67,6 +67,15 @@ export const navigationData: NavGroup[] = [
     ],
   },
   {
+    key: 'planning',
+    label: 'Planning',
+    icon: 'calendar',
+    order: 26,
+    items: [
+      { key: 'planning', label: 'Planning & Scheduling', route: '/planning', icon: 'calendar', permission: 'plan.view' },
+    ],
+  },
+  {
     key: 'procurement',
     label: 'Procurement',
     icon: 'truck',

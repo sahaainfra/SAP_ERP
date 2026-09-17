@@ -2854,5 +2854,448 @@ Part 12 adds comprehensive master data management with 19 new tables covering en
 
 ---
 
-**Document Status:** ✅ Complete (Part 12 Updated)  
-**Next Step:** Part 13 — Planning, WBS, Scheduling & Progress
+### Migration 068 — dx_wbs (Work Breakdown Structure)
+
+**Date:** 2026-02-10  
+**File:** `migrations/068_create_dx_wbs.sql`  
+**Tables Touched:** `dx_wbs` (NEW)  
+**Reason:** Work breakdown structure with materialized paths for fast hierarchy queries.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_wbs (
+  id             BIGSERIAL PRIMARY KEY,
+  project_id     BIGINT NOT NULL,
+  package_id     BIGINT,
+  parent_id      BIGINT REFERENCES dx_wbs(id),
+  wbs_code       VARCHAR(60) NOT NULL,
+  path           VARCHAR(500) NOT NULL,
+  depth          SMALLINT NOT NULL,
+  name           VARCHAR(250) NOT NULL,
+  wbs_type       VARCHAR(20) NOT NULL,
+  site_id        BIGINT,
+  area_id        BIGINT,
+  cost_code_id   BIGINT,
+  responsible_user_id BIGINT,
+  weightage      NUMERIC(9,5),
+  weight_basis   VARCHAR(20) NOT NULL,
+  budget_cost    NUMERIC(18,2),
+  budget_revenue NUMERIC(18,2),
+  is_billable    BOOLEAN DEFAULT TRUE,
+  is_active      BOOLEAN DEFAULT TRUE,
+  sort_order     INTEGER DEFAULT 0,
+  CONSTRAINT uq_dx_wbs UNIQUE (project_id, wbs_code)
+);
+CREATE INDEX IF NOT EXISTS ix_dx_wbs_path ON dx_wbs (path varchar_pattern_ops);
+CREATE INDEX IF NOT EXISTS ix_dx_wbs_parent ON dx_wbs (parent_id);
+CREATE INDEX IF NOT EXISTS ix_dx_wbs_project ON dx_wbs (project_id, is_active);
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 069 — dx_wbs_boq_map (WBS-BOQ Mapping)
+
+**Date:** 2026-02-10  
+**File:** `migrations/069_create_dx_wbs_boq_map.sql`  
+**Tables Touched:** `dx_wbs_boq_map` (NEW)  
+**Reason:** Maps BOQ items to WBS nodes with quantity allocation.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_wbs_boq_map (
+  id          BIGSERIAL PRIMARY KEY,
+  wbs_id      BIGINT NOT NULL REFERENCES dx_wbs(id),
+  boq_item_id BIGINT NOT NULL,
+  mapped_qty  NUMERIC(18,4) NOT NULL,
+  CONSTRAINT uq_dx_wbsboq UNIQUE (wbs_id, boq_item_id)
+);
+CREATE INDEX IF NOT EXISTS ix_dx_wbsboq_wbs ON dx_wbs_boq_map (wbs_id);
+CREATE INDEX IF NOT EXISTS ix_dx_wbsboq_boq ON dx_wbs_boq_map (boq_item_id);
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 070 — dx_schedule_activity (Schedule Activities)
+
+**Date:** 2026-02-10  
+**File:** `migrations/070_create_dx_schedule_activity.sql`  
+**Tables Touched:** `dx_schedule_activity` (NEW)  
+**Reason:** Schedule activities with planned/actual/forecast dates and CPM calculation fields.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_schedule_activity (
+  id              BIGSERIAL PRIMARY KEY,
+  project_id      BIGINT NOT NULL,
+  wbs_id          BIGINT NOT NULL REFERENCES dx_wbs(id),
+  activity_code   VARCHAR(60) NOT NULL,
+  name            VARCHAR(250) NOT NULL,
+  activity_type   VARCHAR(20) NOT NULL,
+  planned_start   DATE,
+  planned_finish  DATE,
+  actual_start    DATE,
+  actual_finish   DATE,
+  forecast_start  DATE,
+  forecast_finish DATE,
+  duration_days   NUMERIC(9,2),
+  remaining_days  NUMERIC(9,2),
+  calendar_id     BIGINT,
+  total_float     NUMERIC(9,2),
+  free_float      NUMERIC(9,2),
+  is_critical     BOOLEAN DEFAULT FALSE,
+  progress_pct    NUMERIC(6,3) DEFAULT 0,
+  constraint_type VARCHAR(20),
+  constraint_date DATE,
+  status          VARCHAR(20) NOT NULL,
+  CONSTRAINT uq_dx_act UNIQUE (project_id, activity_code)
+);
+CREATE INDEX IF NOT EXISTS ix_dx_act_project ON dx_schedule_activity (project_id, status);
+CREATE INDEX IF NOT EXISTS ix_dx_act_wbs ON dx_schedule_activity (wbs_id);
+CREATE INDEX IF NOT EXISTS ix_dx_act_critical ON dx_schedule_activity (project_id, is_critical);
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 071 — dx_activity_relation (Activity Dependencies)
+
+**Date:** 2026-02-10  
+**File:** `migrations/071_create_dx_activity_relation.sql`  
+**Tables Touched:** `dx_activity_relation` (NEW)  
+**Reason:** Activity dependencies (predecessor/successor relationships).
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_activity_relation (
+  id             BIGSERIAL PRIMARY KEY,
+  predecessor_id BIGINT NOT NULL REFERENCES dx_schedule_activity(id),
+  successor_id   BIGINT NOT NULL REFERENCES dx_schedule_activity(id),
+  relation_type  VARCHAR(3) NOT NULL,
+  lag_days       NUMERIC(9,2) DEFAULT 0,
+  CONSTRAINT uq_dx_rel UNIQUE (predecessor_id, successor_id, relation_type)
+);
+CREATE INDEX IF NOT EXISTS ix_dx_rel_pred ON dx_activity_relation (predecessor_id);
+CREATE INDEX IF NOT EXISTS ix_dx_rel_succ ON dx_activity_relation (successor_id);
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 072 — dx_baseline (Schedule Baselines)
+
+**Date:** 2026-02-10  
+**File:** `migrations/072_create_dx_baseline.sql`  
+**Tables Touched:** `dx_baseline` (NEW)  
+**Reason:** Immutable schedule baselines for variance tracking.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_baseline (
+  id            BIGSERIAL PRIMARY KEY,
+  project_id    BIGINT NOT NULL,
+  baseline_no   INTEGER NOT NULL,
+  baseline_type VARCHAR(20) NOT NULL,
+  reason        TEXT NOT NULL,
+  reference_no  VARCHAR(80),
+  snapshot_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  approved_by   BIGINT,
+  approved_at   TIMESTAMPTZ,
+  status        VARCHAR(20) NOT NULL,
+  is_current    BOOLEAN DEFAULT FALSE,
+  CONSTRAINT uq_dx_baseline UNIQUE (project_id, baseline_no)
+);
+CREATE INDEX IF NOT EXISTS ix_dx_baseline_project ON dx_baseline (project_id, is_current);
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 073 — dx_baseline_activity (Baseline Activities)
+
+**Date:** 2026-02-10  
+**File:** `migrations/073_create_dx_baseline_activity.sql`  
+**Tables Touched:** `dx_baseline_activity` (NEW)  
+**Reason:** Snapshot of activities at baseline time for variance comparison.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_baseline_activity (
+  id            BIGSERIAL PRIMARY KEY,
+  baseline_id   BIGINT NOT NULL REFERENCES dx_baseline(id),
+  activity_id   BIGINT NOT NULL REFERENCES dx_schedule_activity(id),
+  wbs_id        BIGINT NOT NULL REFERENCES dx_wbs(id),
+  planned_start DATE NOT NULL,
+  planned_finish DATE NOT NULL,
+  duration_days NUMERIC(9,2),
+  budget_cost   NUMERIC(18,2),
+  budget_value  NUMERIC(18,2),
+  weightage     NUMERIC(9,5),
+  CONSTRAINT uq_dx_bl_act UNIQUE (baseline_id, activity_id)
+);
+CREATE INDEX IF NOT EXISTS ix_dx_bl_act_baseline ON dx_baseline_activity (baseline_id);
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 074 — dx_progress_entry (Progress Measurements)
+
+**Date:** 2026-02-10  
+**File:** `migrations/074_create_dx_progress_entry.sql`  
+**Tables Touched:** `dx_progress_entry` (NEW)  
+**Reason:** Physical progress entries with 6 measurement methods.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_progress_entry (
+  id             BIGSERIAL PRIMARY KEY,
+  project_id     BIGINT NOT NULL,
+  wbs_id         BIGINT NOT NULL REFERENCES dx_wbs(id),
+  activity_id    BIGINT REFERENCES dx_schedule_activity(id),
+  cutoff_date    DATE NOT NULL,
+  method         VARCHAR(20) NOT NULL,
+  previous_pct   NUMERIC(6,3) NOT NULL,
+  current_pct    NUMERIC(6,3) NOT NULL,
+  source_type    VARCHAR(30) NOT NULL,
+  source_ref_id  BIGINT,
+  executed_qty   NUMERIC(18,4),
+  remark         TEXT,
+  entered_by     BIGINT NOT NULL,
+  entered_at     TIMESTAMPTZ DEFAULT NOW(),
+  approved_by    BIGINT,
+  approved_at    TIMESTAMPTZ,
+  status         VARCHAR(20) NOT NULL,
+  is_decrease    BOOLEAN DEFAULT FALSE,
+  decrease_reason VARCHAR(60),
+  CONSTRAINT uq_dx_prog UNIQUE (wbs_id, activity_id, cutoff_date)
+);
+CREATE INDEX IF NOT EXISTS ix_dx_prog_project ON dx_progress_entry (project_id, cutoff_date DESC);
+CREATE INDEX IF NOT EXISTS ix_dx_prog_wbs ON dx_progress_entry (wbs_id, cutoff_date DESC);
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 075 — dx_progress_snapshot (Progress Snapshots)
+
+**Date:** 2026-02-10  
+**File:** `migrations/075_create_dx_progress_snapshot.sql`  
+**Tables Touched:** `dx_progress_snapshot` (NEW)  
+**Reason:** Daily progress snapshots for S-curve and EVM calculations.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_progress_snapshot (
+  id              BIGSERIAL PRIMARY KEY,
+  project_id      BIGINT NOT NULL,
+  wbs_id          BIGINT NOT NULL REFERENCES dx_wbs(id),
+  snapshot_date   DATE NOT NULL,
+  planned_pct     NUMERIC(6,3),
+  actual_pct      NUMERIC(6,3),
+  earned_value    NUMERIC(18,2),
+  actual_cost     NUMERIC(18,2),
+  variance_pct    NUMERIC(6,3),
+  variance_days   NUMERIC(9,2),
+  CONSTRAINT uq_dx_snap UNIQUE (project_id, wbs_id, snapshot_date)
+);
+CREATE INDEX IF NOT EXISTS ix_dx_snap_project ON dx_progress_snapshot (project_id, snapshot_date DESC);
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 076 — dx_lookahead (Look-ahead Plans)
+
+**Date:** 2026-02-10  
+**File:** `migrations/076_create_dx_lookahead.sql`  
+**Tables Touched:** `dx_lookahead` (NEW)  
+**Reason:** Weekly/fortnightly look-ahead planning with PPC tracking.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_lookahead (
+  id           BIGSERIAL PRIMARY KEY,
+  project_id   BIGINT NOT NULL,
+  period_type  VARCHAR(10) NOT NULL,
+  period_start DATE NOT NULL,
+  period_end   DATE NOT NULL,
+  prepared_by  BIGINT,
+  prepared_at  TIMESTAMPTZ,
+  status       VARCHAR(20) NOT NULL,
+  ppc_percent  NUMERIC(6,3)
+);
+CREATE INDEX IF NOT EXISTS ix_dx_lookahead_project ON dx_lookahead (project_id, period_start DESC);
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 077 — dx_lookahead_task (Look-ahead Tasks)
+
+**Date:** 2026-02-10  
+**File:** `migrations/077_create_dx_lookahead_task.sql`  
+**Tables Touched:** `dx_lookahead_task` (NEW)  
+**Reason:** Tasks within look-ahead periods with completion tracking.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_lookahead_task (
+  id              BIGSERIAL PRIMARY KEY,
+  lookahead_id    BIGINT NOT NULL REFERENCES dx_lookahead(id),
+  activity_id     BIGINT REFERENCES dx_schedule_activity(id),
+  wbs_id          BIGINT NOT NULL REFERENCES dx_wbs(id),
+  description     VARCHAR(300) NOT NULL,
+  planned_qty     NUMERIC(18,4),
+  uom             VARCHAR(20),
+  planned_start   DATE,
+  planned_finish  DATE,
+  achieved_qty    NUMERIC(18,4),
+  is_completed    BOOLEAN DEFAULT FALSE,
+  variance_reason VARCHAR(60),
+  responsible_id  BIGINT,
+  is_constrained  BOOLEAN DEFAULT FALSE
+);
+CREATE INDEX IF NOT EXISTS ix_dx_lat_lookahead ON dx_lookahead_task (lookahead_id);
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 078 — dx_constraint (Constraints & Obstructions)
+
+**Date:** 2026-02-10  
+**File:** `migrations/078_create_dx_constraint.sql`  
+**Tables Touched:** `dx_constraint` (NEW)  
+**Reason:** Track constraints and obstructions affecting project progress.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_constraint (
+  id             BIGSERIAL PRIMARY KEY,
+  project_id     BIGINT NOT NULL,
+  wbs_id         BIGINT REFERENCES dx_wbs(id),
+  activity_id    BIGINT REFERENCES dx_schedule_activity(id),
+  constraint_type VARCHAR(40) NOT NULL,
+  title          VARCHAR(250) NOT NULL,
+  description    TEXT,
+  raised_by      BIGINT NOT NULL,
+  raised_at      TIMESTAMPTZ DEFAULT NOW(),
+  owner_id       BIGINT NOT NULL,
+  required_by    DATE NOT NULL,
+  severity       VARCHAR(20) NOT NULL,
+  status         VARCHAR(20) NOT NULL,
+  resolved_at    TIMESTAMPTZ,
+  resolution     TEXT,
+  delay_days     INTEGER,
+  cost_impact    NUMERIC(18,2),
+  linked_document_type VARCHAR(40),
+  linked_document_id BIGINT
+);
+CREATE INDEX IF NOT EXISTS ix_dx_constraint_project ON dx_constraint (project_id, status);
+CREATE INDEX IF NOT EXISTS ix_dx_constraint_severity ON dx_constraint (severity, status);
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 079 — dx_resource_plan (Resource Planning)
+
+**Date:** 2026-02-10  
+**File:** `migrations/079_create_dx_resource_plan.sql`  
+**Tables Touched:** `dx_resource_plan` (NEW)  
+**Reason:** Resource planning for manpower, material, equipment, and subcontract.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_resource_plan (
+  id              BIGSERIAL PRIMARY KEY,
+  project_id      BIGINT NOT NULL,
+  wbs_id          BIGINT REFERENCES dx_wbs(id),
+  activity_id     BIGINT REFERENCES dx_schedule_activity(id),
+  resource_type   VARCHAR(20) NOT NULL,
+  resource_ref_id BIGINT NOT NULL,
+  uom             VARCHAR(20) NOT NULL,
+  planned_qty     NUMERIC(18,4) NOT NULL,
+  period_start    DATE NOT NULL,
+  period_end      DATE NOT NULL,
+  rate            NUMERIC(18,4),
+  planned_cost    NUMERIC(18,2),
+  source          VARCHAR(20) NOT NULL,
+  norm_id         BIGINT
+);
+CREATE INDEX IF NOT EXISTS ix_dx_resplan_project ON dx_resource_plan (project_id, period_start);
+CREATE INDEX IF NOT EXISTS ix_dx_resplan_type ON dx_resource_plan (resource_type, period_start);
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 080 — dx_resource_norm (Resource Norms)
+
+**Date:** 2026-02-10  
+**File:** `migrations/080_create_dx_resource_norm.sql`  
+**Tables Touched:** `dx_resource_norm` (NEW)  
+**Reason:** Consumption norms for generating resource requirements from BOQ.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_resource_norm (
+  id              BIGSERIAL PRIMARY KEY,
+  boq_item_id     BIGINT,
+  item_category_id BIGINT,
+  resource_type   VARCHAR(20) NOT NULL,
+  resource_ref_id BIGINT NOT NULL,
+  qty_per_unit    NUMERIC(18,6) NOT NULL,
+  uom             VARCHAR(20) NOT NULL,
+  wastage_pct     NUMERIC(6,3) DEFAULT 0,
+  is_active       BOOLEAN DEFAULT TRUE
+);
+CREATE INDEX IF NOT EXISTS ix_dx_resnorm_boq ON dx_resource_norm (boq_item_id);
+CREATE INDEX IF NOT EXISTS ix_dx_resnorm_category ON dx_resource_norm (item_category_id);
+```
+
+**Status:** ✅ Documented
+
+---
+
+## Summary (Part 13)
+
+| Migration | Table | Type | Status |
+|---|---|---|---|
+| 068 | `dx_wbs` | NEW | ✅ Documented |
+| 069 | `dx_wbs_boq_map` | NEW | ✅ Documented |
+| 070 | `dx_schedule_activity` | NEW | ✅ Documented |
+| 071 | `dx_activity_relation` | NEW | ✅ Documented |
+| 072 | `dx_baseline` | NEW | ✅ Documented |
+| 073 | `dx_baseline_activity` | NEW | ✅ Documented |
+| 074 | `dx_progress_entry` | NEW | ✅ Documented |
+| 075 | `dx_progress_snapshot` | NEW | ✅ Documented |
+| 076 | `dx_lookahead` | NEW | ✅ Documented |
+| 077 | `dx_lookahead_task` | NEW | ✅ Documented |
+| 078 | `dx_constraint` | NEW | ✅ Documented |
+| 079 | `dx_resource_plan` | NEW | ✅ Documented |
+| 080 | `dx_resource_norm` | NEW | ✅ Documented |
+
+**Total new tables in Part 13:** 13  
+**Total new tables across all parts:** 86 (73 + 13 from Part 13)  
+**Total tables modified:** 0  
+**Total rows affected:** 0
+
+---
+
+**Document Status:** ✅ Complete (Part 13 Updated)  
+**Next Step:** Part 14 — Procurement (Indent to Purchase Order)

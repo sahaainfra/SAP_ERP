@@ -363,8 +363,8 @@
 
 ---
 
-**Document Status:** ✅ Complete (Part 12 Updated)  
-**Next Step:** Part 13 — Planning, WBS, Scheduling & Progress
+**Document Status:** ✅ Complete (Part 13 Updated)  
+**Next Step:** Part 14 — Procurement (Indent to Purchase Order)
 
 ---
 
@@ -416,6 +416,57 @@
 ---
 
 **Total API Endpoints:** 159 (134 from Parts 1-11 + 25 from Part 12)
+
+---
+
+### Planning & Scheduling (Part 13)
+
+| Method | Path | Auth | Permission | Description |
+|---|---|---|---|---|
+| GET | `/api/dx/v1/wbs/tree/{projectId}` | ✅ | plan.wbs.view | Get WBS tree structure |
+| POST | `/api/dx/v1/wbs` | ✅ | plan.wbs.create | Create WBS node |
+| PUT | `/api/dx/v1/wbs/{id}` | ✅ | plan.wbs.update | Update WBS node |
+| DELETE | `/api/dx/v1/wbs/{id}` | ✅ | plan.wbs.delete | Delete WBS node |
+| POST | `/api/dx/v1/wbs/validate-weightage` | ✅ | plan.wbs.update | Validate weightage totals |
+| POST | `/api/dx/v1/wbs/boq-map` | ✅ | plan.wbs.update | Map BOQ items to WBS |
+| GET | `/api/dx/v1/schedule/activities/{projectId}` | ✅ | plan.schedule.view | List schedule activities |
+| POST | `/api/dx/v1/schedule/activities` | ✅ | plan.schedule.create | Create activity |
+| PUT | `/api/dx/v1/schedule/activities/{id}` | ✅ | plan.schedule.update | Update activity |
+| POST | `/api/dx/v1/schedule/relations` | ✅ | plan.schedule.update | Create activity relation |
+| POST | `/api/dx/v1/schedule/calculate-cpm` | ✅ | plan.schedule.update | Calculate CPM |
+| POST | `/api/dx/v1/schedule/import` | ✅ | plan.schedule.import | Import schedule (MS Project/Primavera/Excel) |
+| GET | `/api/dx/v1/baselines/{projectId}` | ✅ | plan.baseline.view | List baselines |
+| POST | `/api/dx/v1/baselines` | ✅ | plan.baseline.create | Create baseline |
+| POST | `/api/dx/v1/baselines/{id}/approve` | ✅ | plan.baseline.approve | Approve baseline |
+| POST | `/api/dx/v1/baselines/{id}/set-current` | ✅ | plan.baseline.set_current | Set as current baseline |
+| GET | `/api/dx/v1/progress/entries/{projectId}` | ✅ | plan.progress.view | List progress entries |
+| POST | `/api/dx/v1/progress/entries` | ✅ | plan.progress.enter | Enter progress |
+| POST | `/api/dx/v1/progress/entries/{id}/approve` | ✅ | plan.progress.approve | Approve progress entry |
+| POST | `/api/dx/v1/progress/rollup` | ✅ | plan.progress.view | Calculate progress rollup |
+| GET | `/api/dx/v1/progress/snapshots/{projectId}` | ✅ | plan.progress.view | Get progress snapshots |
+| GET | `/api/dx/v1/lookaheads/{projectId}` | ✅ | plan.lookahead.view | List look-ahead plans |
+| POST | `/api/dx/v1/lookaheads` | ✅ | plan.lookahead.create | Create look-ahead |
+| PUT | `/api/dx/v1/lookaheads/{id}` | ✅ | plan.lookahead.update | Update look-ahead |
+| POST | `/api/dx/v1/lookaheads/{id}/close` | ✅ | plan.lookahead.close | Close look-ahead period |
+| POST | `/api/dx/v1/lookaheads/{id}/calculate-ppc` | ✅ | plan.lookahead.close | Calculate PPC |
+| GET | `/api/dx/v1/constraints/{projectId}` | ✅ | plan.constraint.view | List constraints |
+| POST | `/api/dx/v1/constraints` | ✅ | plan.constraint.raise | Raise constraint |
+| PUT | `/api/dx/v1/constraints/{id}` | ✅ | plan.constraint.update | Update constraint |
+| POST | `/api/dx/v1/constraints/{id}/resolve` | ✅ | plan.constraint.resolve | Resolve constraint |
+| POST | `/api/dx/v1/constraints/{id}/escalate` | ✅ | plan.constraint.escalate | Escalate constraint |
+| GET | `/api/dx/v1/resources/plans/{projectId}` | ✅ | plan.resource.view | List resource plans |
+| POST | `/api/dx/v1/resources/plans` | ✅ | plan.resource.plan | Create resource plan |
+| GET | `/api/dx/v1/resources/norms` | ✅ | plan.norm.view | List resource norms |
+| POST | `/api/dx/v1/resources/norms` | ✅ | plan.norm.create | Create resource norm |
+| PUT | `/api/dx/v1/resources/norms/{id}` | ✅ | plan.norm.update | Update resource norm |
+| POST | `/api/dx/v1/resources/generate-requirements` | ✅ | plan.resource.plan | Generate material requirements from norms |
+| GET | `/api/dx/v1/dpr/{projectId}/{date}` | ✅ | plan.progress.view | Get daily progress report |
+| POST | `/api/dx/v1/dpr` | ✅ | plan.progress.enter | Create/update DPR |
+| POST | `/api/dx/v1/dpr/{id}/submit` | ✅ | plan.progress.enter | Submit DPR |
+
+---
+
+**Total API Endpoints:** 199 (159 from Parts 1-12 + 40 from Part 13)
 
 ---
 
