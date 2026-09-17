@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en" data-theme="morning-horizon" data-density="cozy">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+    <meta name="theme-color" content="#0070f2" />
+    <meta name="description" content="Construction & Infrastructure ERP — SAP Fiori Horizon Aligned Real-Time Dashboard" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Construction ERP" />
+    <title>Construction ERP — SAP Fiori Horizon Aligned Dashboard</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏗️</text></svg>" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+    <style>
+      /* Critical CSS - prevents FOUC */
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+      }
+      
+      /* Default theme (Morning Horizon) */
+      html[data-theme="morning-horizon"] body {
+        background-color: #f5f6f7;
+        color: #131e29;
+      }
+      
+      html[data-theme="evening-horizon"] body {
+        background-color: #12171c;
+        color: #edf0f3;
+      }
+      
+      html[data-theme="hc-black"] body {
+        background-color: #000000;
+        color: #ffffff;
+      }
+      
+      html[data-theme="hc-white"] body {
+        background-color: #ffffff;
+        color: #000000;
+      }
+    </style>
+    <script>
+      // Blocking script to prevent FOUC - runs before any rendering
+      (function () {
+        const STORAGE_KEY = 'erp_user_preferences';
+        
+        function applyThemeToDOM(theme, density) {
+          // Resolve 'system' theme
+          let resolvedTheme = theme;
+          if (theme === 'system') {
+            resolvedTheme = window.matchMedia('(prefers-color-scheme: dark)').matches 
+              ? 'evening-horizon' 
+              : 'morning-horizon';
+          }
+          
+          document.documentElement.setAttribute('data-theme', resolvedTheme);
+          document.documentElement.setAttribute('data-density', density || 'cozy');
+        }
+
+        // Load saved preferences
+        try {
+          const stored = localStorage.getItem(STORAGE_KEY);
+          if (stored) {
+            const prefs = JSON.parse(stored);
+            applyThemeToDOM(prefs.theme || 'morning-horizon', prefs.density || 'cozy');
+          } else {
+            applyThemeToDOM('morning-horizon', 'cozy');
+          }
+        } catch (e) {
+          applyThemeToDOM('morning-horizon', 'cozy');
+        }
+
+        // Listen for theme messages from parent (iframe mode)
+        if (window.self !== window.top) {
+          window.addEventListener("message", function (event) {
+            if (event.data && typeof event.data.theme === "string") {
+              const theme = event.data.theme;
+              const validThemes = ['morning-horizon', 'evening-horizon', 'hc-black', 'hc-white', 'system'];
+              if (validThemes.includes(theme)) {
+                applyThemeToDOM(theme);
+              }
+            }
+          });
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Register service worker for PWA support
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('[PWA] Service Worker registered:', registration.scope);
+              
+              // Check for updates periodically
+              setInterval(() => {
+                registration.update();
+              }, 60 * 60 * 1000); // Check every hour
+            })
+            .catch((error) => {
+              console.log('[PWA] Service Worker registration failed:', error);
+            });
+        });
+      }
+    </script>
+  </body>
+</html>

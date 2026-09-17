@@ -1,0 +1,257 @@
+@import "tailwindcss";
+@import "./styles/tokens.css";
+@import "./styles/tokens-erp.css";
+@import "./styles/responsive.css";
+
+/* ─── Base Styles ─────────────────────────────────────────────────────────── */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--sapFontFamily);
+  background-color: var(--sapBackgroundColor);
+  color: var(--sapTextColor);
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: var(--sapContent_LineHeight);
+  font-size: var(--sapFontSize);
+}
+
+/* ─── Scrollbar Styling ───────────────────────────────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--sapContent_NonInteractiveIconColor);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--sapContent_IconColor);
+}
+
+/* ─── Utility Classes ─────────────────────────────────────────────────────── */
+
+.sap-card {
+  background: var(--sapTile_Background);
+  border-radius: var(--sapGroup_BorderCornerRadius);
+  box-shadow: var(--sapContent_Shadow0);
+  transition: box-shadow var(--erp-motion-fast) var(--erp-easing-standard);
+}
+
+.sap-card:hover {
+  box-shadow: var(--sapContent_Shadow1);
+}
+
+.sap-tile {
+  background: var(--sapTile_Background);
+  border-radius: var(--sapTile_BorderCornerRadius);
+  box-shadow: var(--sapContent_Shadow0);
+  transition: all var(--erp-motion-fast) var(--erp-easing-standard);
+  cursor: pointer;
+}
+
+.sap-tile:hover {
+  background: var(--sapTile_Hover_Background);
+  box-shadow: var(--sapContent_Shadow1);
+  transform: translateY(-1px);
+}
+
+.sap-tile:active {
+  background: var(--sapTile_Active_Background);
+  transform: translateY(0);
+}
+
+.sap-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--erp-space-1) var(--erp-space-2);
+  border-radius: var(--erp-radius-pill);
+  font-size: var(--sapFontSmallSize);
+  font-weight: 500;
+}
+
+.sap-badge-positive {
+  background: var(--sapSuccessBackground);
+  color: var(--sapPositiveTextColor);
+}
+
+.sap-badge-critical {
+  background: var(--sapWarningBackground);
+  color: var(--sapCriticalTextColor);
+}
+
+.sap-badge-negative {
+  background: var(--sapErrorBackground);
+  color: var(--sapNegativeTextColor);
+}
+
+.sap-badge-information {
+  background: var(--sapInformationBackground);
+  color: var(--sapInformativeTextColor);
+}
+
+.sap-badge-neutral {
+  background: var(--sapNeutralBackground);
+  color: var(--sapNeutralTextColor);
+}
+
+/* ─── Status Indicators ───────────────────────────────────────────────────── */
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-active { background: var(--sapPositiveColor); }
+.status-warning { background: var(--sapCriticalColor); }
+.status-error { background: var(--sapNegativeColor); }
+.status-inactive { background: var(--sapNeutralColor); }
+
+/* ─── Animations ──────────────────────────────────────────────────────────── */
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes progress-fill {
+  from { width: 0; }
+}
+
+.animate-progress {
+  animation: progress-fill 1s ease-out;
+}
+
+@keyframes slide-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s var(--erp-easing-decelerate) forwards;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--sapBaseColor) 25%,
+    var(--sapHoverColor) 50%,
+    var(--sapBaseColor) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* ─── Density Modes ───────────────────────────────────────────────────────── */
+
+[data-density="cozy"] {
+  --sapElement_Height: 2.25rem;
+  --sapElement_LineHeight: 2.75rem;
+}
+
+[data-density="compact"] {
+  --sapElement_Height: 1.625rem;
+  --sapElement_LineHeight: 2rem;
+}
+
+[data-density="condensed"] {
+  --sapElement_Height: 1.375rem;
+  --sapElement_LineHeight: 1.5rem;
+}
+
+/* ─── Focus Styles ────────────────────────────────────────────────────────── */
+
+*:focus-visible {
+  outline: var(--sapContent_FocusWidth) var(--sapContent_FocusStyle) var(--sapContent_FocusColor);
+  outline-offset: 2px;
+}
+
+/* ─── Numeric Formatting ──────────────────────────────────────────────────── */
+
+.numeric {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* ─── Variance Colors ─────────────────────────────────────────────────────── */
+
+.erp-variance-favourable {
+  color: var(--erp-variance-favourable);
+}
+
+.erp-variance-unfavourable {
+  color: var(--erp-variance-unfavourable);
+}
+
+/* ─── Responsive Layout ───────────────────────────────────────────────────── */
+
+.grid-responsive {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--erp-space-4);
+}
+
+/* ─── Backward Compatibility Aliases ──────────────────────────────────────── */
+/* These map old token names to new SAP Horizon tokens for existing components */
+
+:root {
+  --sapFontColor: var(--sapTextColor);
+  --sapContentLabelColor: var(--sapContent_LabelColor);
+  --sapGroupContentBG: var(--sapGroup_ContentBackground);
+  --sapBrand: var(--sapBrandColor);
+  --sapBrandHover: var(--sapHighlightColor);
+  --sapPositive: var(--sapPositiveColor);
+  --sapCritical: var(--sapCriticalColor);
+  --sapNegative: var(--sapNegativeColor);
+  --sapInformation: var(--sapInformativeColor);
+  --sapPositiveBG: var(--sapSuccessBackground);
+  --sapCriticalBG: var(--sapWarningBackground);
+  --sapNegativeBG: var(--sapErrorBackground);
+  --sapInformationBG: var(--sapInformationBackground);
+  --sapShell: var(--sapShellColor);
+  --sapShellHover: var(--sapShell_Hover_Background);
+  --sapShellActive: var(--sapShell_Active_Background);
+  --sapElementBorderRadius: var(--sapElement_BorderCornerRadius);
+  --sapElementBorderRadiusSmall: var(--erp-radius-field);
+  --sapShadow1: var(--sapContent_Shadow0);
+  --sapShadow2: var(--sapContent_Shadow1);
+  --sapShadow3: var(--sapContent_Shadow2);
+  --sapTransition: var(--erp-motion-fast);
+  --sapContentIconColor: var(--sapContent_IconColor);
+}
+
+/* ─── Print Styles ────────────────────────────────────────────────────────── */
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  body {
+    background: white;
+    color: black;
+  }
+}

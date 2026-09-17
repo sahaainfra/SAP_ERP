@@ -1,0 +1,130 @@
+/* ERP Semantic Layer - Maps SAP tokens to business meaning
+ * Components use these names, never the raw SAP names
+ * This keeps business meaning readable in the code
+ */
+
+:root {
+  /* ── Transaction Status ─────────────────────────────────── */
+  --erp-status-draft-fg: var(--sapNeutralTextColor);
+  --erp-status-draft-bg: var(--sapNeutralBackground);
+  
+  --erp-status-submitted-fg: var(--sapInformativeTextColor);
+  --erp-status-submitted-bg: var(--sapInformationBackground);
+  
+  --erp-status-under-review-fg: var(--sapInformativeTextColor);
+  --erp-status-under-review-bg: var(--sapInformationBackground);
+  
+  --erp-status-query-raised-fg: var(--sapCriticalTextColor);
+  --erp-status-query-raised-bg: var(--sapWarningBackground);
+  
+  --erp-status-correction-req-fg: var(--sapCriticalTextColor);
+  --erp-status-correction-req-bg: var(--sapWarningBackground);
+  
+  --erp-status-resubmitted-fg: var(--sapInformativeTextColor);
+  --erp-status-resubmitted-bg: var(--sapInformationBackground);
+  
+  --erp-status-pending-approval-fg: var(--sapCriticalTextColor);
+  --erp-status-pending-approval-bg: var(--sapWarningBackground);
+  
+  --erp-status-approved-fg: var(--sapPositiveTextColor);
+  --erp-status-approved-bg: var(--sapSuccessBackground);
+  
+  --erp-status-rejected-fg: var(--sapNegativeTextColor);
+  --erp-status-rejected-bg: var(--sapErrorBackground);
+  
+  --erp-status-returned-fg: var(--sapCriticalTextColor);
+  --erp-status-returned-bg: var(--sapWarningBackground);
+  
+  --erp-status-forwarded-fg: var(--sapInformativeTextColor);
+  --erp-status-forwarded-bg: var(--sapInformationBackground);
+  
+  --erp-status-escalated-fg: var(--sapIndicationColor_1);
+  --erp-status-escalated-bg: var(--sapIndicationColor_1b);
+  
+  --erp-status-posted-fg: var(--sapPositiveTextColor);
+  --erp-status-posted-bg: var(--sapSuccessBackground);
+  
+  --erp-status-partial-fg: var(--sapCriticalTextColor);
+  --erp-status-partial-bg: var(--sapWarningBackground);
+  
+  --erp-status-completed-fg: var(--sapPositiveTextColor);
+  --erp-status-completed-bg: var(--sapSuccessBackground);
+  
+  --erp-status-cancelled-fg: var(--sapNeutralTextColor);
+  --erp-status-cancelled-bg: var(--sapNeutralBackground);
+  
+  --erp-status-on-hold-fg: var(--sapCriticalTextColor);
+  --erp-status-on-hold-bg: var(--sapWarningBackground);
+  
+  --erp-status-closed-fg: var(--sapNeutralTextColor);
+  --erp-status-closed-bg: var(--sapNeutralBackground);
+  
+  --erp-status-reopened-fg: var(--sapInformativeTextColor);
+  --erp-status-reopened-bg: var(--sapInformationBackground);
+
+  /* ── KPI Health ─────────────────────────────────────────── */
+  --erp-kpi-good: var(--sapPositiveColor);
+  --erp-kpi-warning: var(--sapCriticalColor);
+  --erp-kpi-critical: var(--sapNegativeColor);
+  --erp-kpi-neutral: var(--sapNeutralColor);
+
+  /* ── Variance Direction ─────────────────────────────────── */
+  --erp-variance-favourable: var(--sapPositiveTextColor);
+  --erp-variance-unfavourable: var(--sapNegativeTextColor);
+
+  /* ── Module Accents ─────────────────────────────────────── */
+  --erp-module-project: var(--sapAccentColor6);
+  --erp-module-procurement: var(--sapAccentColor5);
+  --erp-module-materials: var(--sapAccentColor7);
+  --erp-module-execution: var(--sapAccentColor1);
+  --erp-module-billing: var(--sapAccentColor8);
+  --erp-module-finance: var(--sapAccentColor9);
+  --erp-module-hr: var(--sapAccentColor3);
+  --erp-module-plant: var(--sapAccentColor10);
+  --erp-module-rmc: var(--sapAccentColor4);
+  --erp-module-quality: var(--sapAccentColor2);
+  --erp-module-hse: var(--sapAccentColor2);
+  --erp-module-admin: var(--sapAccentColor10);
+
+  /* ── Priority ───────────────────────────────────────────── */
+  --erp-priority-critical: var(--sapIndicationColor_1);
+  --erp-priority-high: var(--sapIndicationColor_2);
+  --erp-priority-medium: var(--sapIndicationColor_3);
+  --erp-priority-low: var(--sapIndicationColor_5);
+  --erp-priority-none: var(--sapIndicationColor_10);
+
+  /* ── Spacing Scale (4px-based) ──────────────────────────── */
+  --erp-space-0: 0;
+  --erp-space-1: 0.25rem;  /* 4px */
+  --erp-space-2: 0.5rem;   /* 8px */
+  --erp-space-3: 0.75rem;  /* 12px */
+  --erp-space-4: 1rem;     /* 16px */
+  --erp-space-5: 1.5rem;   /* 24px */
+  --erp-space-6: 2rem;     /* 32px */
+  --erp-space-7: 3rem;     /* 48px */
+  --erp-space-8: 4rem;     /* 64px */
+
+  /* ── Corner Radius ──────────────────────────────────────── */
+  --erp-radius-field: 0.25rem;
+  --erp-radius-button: 0.5rem;
+  --erp-radius-card: 0.75rem;
+  --erp-radius-tile: 1rem;
+  --erp-radius-pill: 624.9375rem;
+
+  /* ── Motion ─────────────────────────────────────────────── */
+  --erp-motion-instant: 100ms;
+  --erp-motion-fast: 150ms;
+  --erp-motion-normal: 250ms;
+  --erp-motion-slow: 350ms;
+  --erp-easing-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
+  --erp-easing-decelerate: cubic-bezier(0.0, 0.0, 0.2, 1);
+  --erp-easing-accelerate: cubic-bezier(0.4, 0.0, 1, 1);
+}
+
+/* ── Reduced Motion ───────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

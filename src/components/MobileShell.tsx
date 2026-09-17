@@ -1,0 +1,171 @@
+/**
+ * Part 11 — Mobile Shell Component
+ * Mobile-optimized application shell with bottom navigation
+ */
+
+import { useState } from 'react';
+import { Home, Search, Bell, User, Menu, ChevronLeft, ChevronRight, CheckSquare, Plus, MoreHorizontal } from 'lucide-react';
+import { useResponsive } from '../utils/responsive';
+
+interface MobileShellProps {
+  children: React.ReactNode;
+  onMenuClick?: () => void;
+  onSearchClick?: () => void;
+  onNotificationsClick?: () => void;
+  onProfileClick?: () => void;
+  activeTab?: 'home' | 'work' | 'search' | 'more';
+}
+
+export default function MobileShell({
+  children,
+  onMenuClick,
+  onSearchClick,
+  onNotificationsClick,
+  onProfileClick,
+  activeTab = 'home',
+}: MobileShellProps) {
+  const { isMobile } = useResponsive();
+  const [showBackButton, setShowBackButton] = useState(false);
+
+  if (!isMobile) {
+    return <>{children}</>;
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--sapBackgroundColor)' }}>
+      {/* Top Header */}
+      <header
+        className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 safe-area-top"
+        style={{
+          background: 'var(--sapShellColor)',
+          borderBottom: '1px solid var(--sapGroupContentBorderColor)',
+          boxShadow: 'var(--sapShadow1)',
+        }}
+      >
+        <div className="flex items-center gap-3">
+          {showBackButton ? (
+            <button
+              onClick={() => window.history.back()}
+              className="touch-target-comfortable rounded-full hover:bg-[var(--sapHoverColor)]"
+              aria-label="Go back"
+            >
+              <ChevronLeft size={24} style={{ color: 'var(--sapTextColor)' }} />
+            </button>
+          ) : (
+            <button
+              onClick={onMenuClick}
+              className="touch-target-comfortable rounded-full hover:bg-[var(--sapHoverColor)]"
+              aria-label="Open menu"
+            >
+              <Menu size={24} style={{ color: 'var(--sapTextColor)' }} />
+            </button>
+          )}
+          <h1 className="text-lg font-semibold" style={{ color: 'var(--sapTextColor)' }}>
+            Construction ERP
+          </h1>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 overflow-y-auto px-4 py-4">
+        {children}
+      </main>
+
+      {/* Bottom Navigation - 5 tabs per Part 11 spec */}
+      <nav
+        className="sticky bottom-0 z-40 flex items-center justify-around py-2 safe-area-bottom"
+        style={{
+          background: 'var(--sapShellColor)',
+          borderTop: '1px solid var(--sapGroupContentBorderColor)',
+          boxShadow: 'var(--sapShadow1)',
+        }}
+        aria-label="Main navigation"
+      >
+        <BottomNavItem
+          icon={<Home size={24} />}
+          label="Home"
+          isActive={activeTab === 'home'}
+          onClick={onMenuClick}
+        />
+        <BottomNavItem
+          icon={<CheckSquare size={24} />}
+          label="Work"
+          isActive={activeTab === 'work'}
+          onClick={onMenuClick}
+          badge={7} // Total actionable items (approvals + tasks + exceptions)
+        />
+        <BottomNavItem
+          icon={<Plus size={24} />}
+          label="Create"
+          isActive={false}
+          onClick={onMenuClick}
+          isCreateButton
+        />
+        <BottomNavItem
+          icon={<Search size={24} />}
+          label="Search"
+          isActive={activeTab === 'search'}
+          onClick={onSearchClick}
+        />
+        <BottomNavItem
+          icon={<MoreHorizontal size={24} />}
+          label="More"
+          isActive={activeTab === 'more'}
+          onClick={onProfileClick}
+          badge={3} // Notification count
+        />
+      </nav>
+    </div>
+  );
+}
+
+interface BottomNavItemProps {
+  icon: React.ReactNode;
+  label: string;
+  isActive: boolean;
+  onClick?: () => void;
+  badge?: number;
+  isCreateButton?: boolean;
+}
+
+function BottomNavItem({ icon, label, isActive, onClick, badge, isCreateButton }: BottomNavItemProps) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex flex-col items-center gap-1 px-4 py-2 touch-target-comfortable relative ${
+        isCreateButton ? 'rounded-full' : ''
+      }`}
+      style={isCreateButton ? {
+        background: 'var(--sapBrandColor)',
+        color: '#ffffff',
+        marginTop: '-12px',
+        boxShadow: 'var(--sapShadow2)',
+      } : undefined}
+      aria-label={label}
+      aria-current={isActive ? 'page' : undefined}
+    >
+      <div className="relative">
+        <div style={{ color: isCreateButton ? '#ffffff' : isActive ? 'var(--sapBrandColor)' : 'var(--sapContentIconColor)' }}>
+          {icon}
+        </div>
+        {badge && badge > 0 && !isCreateButton && (
+          <span
+            className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-xs font-bold flex items-center justify-center"
+            style={{
+              background: 'var(--sapNegativeColor)',
+              color: '#ffffff',
+            }}
+          >
+            {badge > 99 ? '99+' : badge}
+          </span>
+        )}
+      </div>
+      <span
+        className="text-xs font-medium"
+        style={{ color: isCreateButton ? '#ffffff' : isActive ? 'var(--sapBrandColor)' : 'var(--sapContentIconColor)' }}
+      >
+        {label}
+      </span>
+    </button>
+  );
+}
