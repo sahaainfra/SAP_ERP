@@ -2159,8 +2159,587 @@ DROP TABLE IF EXISTS dx_storage_target;
 
 ---
 
-**Document Status:** ✅ Complete (Part 11 Updated)  
-**Next Step:** Part 12 — Master Data & Enterprise Structure
+**Document Status:** ✅ Complete (Part 12 Updated)  
+**Next Step:** Part 13 — Planning, WBS, Scheduling & Progress
+
+---
+
+### Migration 049 — dx_org_node (Enterprise Hierarchy)
+
+**Date:** 2026-02-10  
+**File:** `migrations/049_create_dx_org_node.sql`  
+**Tables Touched:** `dx_org_node` (NEW)  
+**Reason:** Materialized enterprise hierarchy for fast subtree queries.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_org_node (
+  id            BIGSERIAL PRIMARY KEY,
+  level_type    VARCHAR(30) NOT NULL,
+  source_table  VARCHAR(80) NOT NULL,
+  source_id     BIGINT NOT NULL,
+  parent_id     BIGINT REFERENCES dx_org_node(id),
+  path          VARCHAR(500) NOT NULL,
+  depth         SMALLINT NOT NULL,
+  code          VARCHAR(60) NOT NULL,
+  name          VARCHAR(250) NOT NULL,
+  is_active     BOOLEAN NOT NULL DEFAULT TRUE,
+  sort_order    INTEGER NOT NULL DEFAULT 0,
+  synced_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT uq_dx_org_source UNIQUE (source_table, source_id)
+);
+CREATE INDEX IF NOT EXISTS ix_dx_org_path ON dx_org_node (path varchar_pattern_ops);
+CREATE INDEX IF NOT EXISTS ix_dx_org_parent ON dx_org_node (parent_id, sort_order);
+CREATE INDEX IF NOT EXISTS ix_dx_org_level ON dx_org_node (level_type, is_active);
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 050 — dx_project_profile (Project Contract Details)
+
+**Date:** 2026-02-10  
+**File:** `migrations/050_create_dx_project_profile.sql`  
+**Tables Touched:** `dx_project_profile` (NEW)  
+**Reason:** Extended project master with contract details, retention, LD, escalation.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_project_profile (
+  project_id            BIGINT PRIMARY KEY,
+  contract_type         VARCHAR(30),
+  client_id             BIGINT,
+  contract_value        NUMERIC(18,2),
+  revised_contract_value NUMERIC(18,2),
+  loa_number            VARCHAR(80),
+  loa_date              DATE,
+  agreement_date        DATE,
+  commencement_date     DATE,
+  original_completion   DATE,
+  revised_completion    DATE,
+  actual_completion     DATE,
+  defect_liability_months SMALLINT,
+  retention_percent     NUMERIC(6,3),
+  retention_ceiling_pct NUMERIC(6,3),
+  mobilisation_adv_pct  NUMERIC(6,3),
+  material_adv_pct      NUMERIC(6,3),
+  advance_recovery_rule VARCHAR(30),
+  price_escalation_flag BOOLEAN DEFAULT FALSE,
+  escalation_formula_id BIGINT,
+  ld_percent_per_week   NUMERIC(6,3),
+  ld_ceiling_percent    NUMERIC(6,3),
+  currency_code         CHAR(3) NOT NULL DEFAULT 'INR',
+  gst_state_code        CHAR(2),
+  project_gstin         VARCHAR(20),
+  billing_cycle         VARCHAR(20),
+  health_override       VARCHAR(20),
+  geofence_polygon      JSONB,
+  geofence_radius_m     INTEGER,
+  working_calendar_id   BIGINT,
+  is_closed             BOOLEAN NOT NULL DEFAULT FALSE,
+  closed_at             TIMESTAMPTZ,
+  created_by            BIGINT,
+  created_at            TIMESTAMPTZ DEFAULT NOW(),
+  updated_by            BIGINT,
+  updated_at            TIMESTAMPTZ
+);
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 051 — dx_project_config (Project Configuration)
+
+**Date:** 2026-02-10  
+**File:** `migrations/051_create_dx_project_config.sql`  
+**Tables Touched:** `dx_project_config` (NEW)  
+**Reason:** Key-value configuration for project behavior switches.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_project_config (
+  id           BIGSERIAL PRIMARY KEY,
+  project_id   BIGINT NOT NULL,
+  config_key   VARCHAR(100) NOT NULL,
+  config_value TEXT NOT NULL,
+  value_type   VARCHAR(20) NOT NULL,
+  updated_by   BIGINT,
+  updated_at   TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT uq_dx_pcfg UNIQUE (project_id, config_key)
+);
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 052 — dx_boq_version (BOQ Version Control)
+
+**Date:** 2026-02-10  
+**File:** `migrations/052_create_dx_boq_version.sql`  
+**Tables Touched:** `dx_boq_version` (NEW)  
+**Reason:** BOQ version control with effective dating.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_boq_version (
+  id             BIGSERIAL PRIMARY KEY,
+  project_id     BIGINT NOT NULL,
+  package_id     BIGINT,
+  version_no     INTEGER NOT NULL,
+  version_type   VARCHAR(20) NOT NULL,
+  reference_no   VARCHAR(80),
+  effective_from DATE NOT NULL,
+  status         VARCHAR(20) NOT NULL,
+  approved_by    BIGINT,
+  approved_at    TIMESTAMPTZ,
+  total_value    NUMERIC(18,2),
+  CONSTRAINT uq_dx_boqver UNIQUE (project_id, package_id, version_no)
+);
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 053 — dx_boq_item_extension (BOQ Item Extensions)
+
+**Date:** 2026-02-10  
+**File:** `migrations/053_create_dx_boq_item_extension.sql`  
+**Tables Touched:** `dx_boq_item_extension` (NEW)  
+**Reason:** Extended BOQ items with cost code, WBS, measurement method.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_boq_item_extension (
+  id                BIGSERIAL PRIMARY KEY,
+  boq_item_id       BIGINT NOT NULL,
+  boq_version_id    BIGINT NOT NULL,
+  parent_boq_item_id BIGINT,
+  cost_code_id      BIGINT,
+  wbs_id            BIGINT,
+  is_provisional    BOOLEAN DEFAULT FALSE,
+  is_daywork        BOOLEAN DEFAULT FALSE,
+  is_non_tendered   BOOLEAN DEFAULT FALSE,
+  qty_ceiling_pct   NUMERIC(6,3),
+  measurement_method VARCHAR(40),
+  deduction_rule_id BIGINT,
+  is_locked         BOOLEAN DEFAULT FALSE,
+  CONSTRAINT uq_dx_boqext UNIQUE (boq_item_id, boq_version_id)
+);
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 054 — dx_item_category (Item Category Hierarchy)
+
+**Date:** 2026-02-10  
+**File:** `migrations/054_create_dx_item_category.sql`  
+**Tables Touched:** `dx_item_category` (NEW)  
+**Reason:** Hierarchical item categories with materialized paths.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_item_category (
+  id          BIGSERIAL PRIMARY KEY,
+  parent_id   BIGINT REFERENCES dx_item_category(id),
+  code        VARCHAR(60) NOT NULL,
+  name        VARCHAR(200) NOT NULL,
+  description TEXT,
+  level       INTEGER NOT NULL,
+  path        VARCHAR(500) NOT NULL,
+  is_active   BOOLEAN DEFAULT TRUE,
+  CONSTRAINT uq_dx_cat_code UNIQUE (code)
+);
+CREATE INDEX IF NOT EXISTS ix_dx_cat_path ON dx_item_category (path varchar_pattern_ops);
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 055 — dx_item_extension (Item Master Extensions)
+
+**Date:** 2026-02-10  
+**File:** `migrations/055_create_dx_item_extension.sql`  
+**Tables Touched:** `dx_item_extension` (NEW)  
+**Reason:** Extended item master with HSN, brand, shelf life, reorder defaults.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_item_extension (
+  item_id              BIGINT PRIMARY KEY,
+  category_id          BIGINT REFERENCES dx_item_category(id),
+  hsn_code             VARCHAR(20),
+  sac_code             VARCHAR(20),
+  brand                VARCHAR(100),
+  make                 VARCHAR(100),
+  shelf_life_days      INTEGER,
+  is_hazardous         BOOLEAN DEFAULT FALSE,
+  storage_conditions   TEXT,
+  reorder_level        NUMERIC(18,4),
+  reorder_qty          NUMERIC(18,4),
+  lead_time_days       INTEGER,
+  standard_rate        NUMERIC(18,4),
+  standard_rate_effective_from DATE,
+  specifications       JSONB,
+  alternate_items      JSONB
+);
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 056 — dx_uom (Unit of Measure Master)
+
+**Date:** 2026-02-10  
+**File:** `migrations/056_create_dx_uom.sql`  
+**Tables Touched:** `dx_uom` (NEW)  
+**Reason:** Unit of measure master with categories.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_uom (
+  id               BIGSERIAL PRIMARY KEY,
+  code             VARCHAR(20) NOT NULL,
+  name             VARCHAR(100) NOT NULL,
+  category         VARCHAR(30) NOT NULL,
+  base_uom_id      BIGINT REFERENCES dx_uom(id),
+  conversion_factor NUMERIC(20,8),
+  is_active        BOOLEAN DEFAULT TRUE,
+  CONSTRAINT uq_dx_uom_code UNIQUE (code)
+);
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 057 — dx_uom_conversion (UoM Conversions)
+
+**Date:** 2026-02-10  
+**File:** `migrations/057_create_dx_uom_conversion.sql`  
+**Tables Touched:** `dx_uom_conversion` (NEW)  
+**Reason:** Explicit UoM conversion factors, item-specific or global.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_uom_conversion (
+  id          BIGSERIAL PRIMARY KEY,
+  from_uom    VARCHAR(20) NOT NULL,
+  to_uom      VARCHAR(20) NOT NULL,
+  factor      NUMERIC(20,8) NOT NULL,
+  item_id     BIGINT,
+  is_active   BOOLEAN DEFAULT TRUE,
+  CONSTRAINT uq_dx_uom UNIQUE (from_uom, to_uom, item_id)
+);
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 058 — dx_party_compliance (Vendor/Client Compliance)
+
+**Date:** 2026-02-10  
+**File:** `migrations/058_create_dx_party_compliance.sql`  
+**Tables Touched:** `dx_party_compliance` (NEW)  
+**Reason:** Track compliance documents for vendors and clients.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_party_compliance (
+  id              BIGSERIAL PRIMARY KEY,
+  party_type      VARCHAR(20) NOT NULL,
+  source_table    VARCHAR(80) NOT NULL,
+  party_id        BIGINT NOT NULL,
+  document_type   VARCHAR(60) NOT NULL,
+  document_number VARCHAR(80),
+  issue_date      DATE,
+  expiry_date     DATE,
+  file_id         BIGINT,
+  verified_by     BIGINT,
+  verified_at     TIMESTAMPTZ,
+  verification_source VARCHAR(30),
+  status          VARCHAR(20) NOT NULL,
+  CONSTRAINT uq_dx_party_doc UNIQUE (source_table, party_id, document_type, document_number)
+);
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 059 — dx_vendor_scorecard (Vendor Performance)
+
+**Date:** 2026-02-10  
+**File:** `migrations/059_create_dx_vendor_scorecard.sql`  
+**Tables Touched:** `dx_vendor_scorecard` (NEW)  
+**Reason:** Computed vendor performance metrics from transactions.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_vendor_scorecard (
+  vendor_id                   BIGINT PRIMARY KEY,
+  on_time_delivery_percent    NUMERIC(6,3),
+  quantity_accuracy_percent   NUMERIC(6,3),
+  qc_rejection_percent        NUMERIC(6,3),
+  rate_competitiveness_index  NUMERIC(6,3),
+  document_compliance_percent NUMERIC(6,3),
+  dispute_count               INTEGER,
+  avg_response_time_hours     NUMERIC(8,2),
+  overall_score               NUMERIC(6,3),
+  transaction_count           INTEGER,
+  last_updated                TIMESTAMPTZ
+);
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 060 — dx_rate_master (Effective-Dated Rates)
+
+**Date:** 2026-02-10  
+**File:** `migrations/060_create_dx_rate_master.sql`  
+**Tables Touched:** `dx_rate_master` (NEW)  
+**Reason:** Effective-dated rate management with scope hierarchy.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_rate_master (
+  id              BIGSERIAL PRIMARY KEY,
+  rate_type       VARCHAR(30) NOT NULL,
+  scope_type      VARCHAR(20) NOT NULL,
+  scope_id        BIGINT,
+  reference_type  VARCHAR(30) NOT NULL,
+  reference_id    BIGINT NOT NULL,
+  uom             VARCHAR(20) NOT NULL,
+  rate            NUMERIC(18,4) NOT NULL,
+  currency_code   CHAR(3) NOT NULL DEFAULT 'INR',
+  effective_from  DATE NOT NULL,
+  effective_to    DATE,
+  approval_status VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
+  approved_by     BIGINT,
+  approved_at     TIMESTAMPTZ,
+  source_document VARCHAR(80),
+  created_by      BIGINT,
+  created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS ix_dx_rate_lookup ON dx_rate_master
+  (rate_type, reference_type, reference_id, scope_type, scope_id, effective_from DESC);
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 061 — dx_number_series (Numbering Series)
+
+**Date:** 2026-02-10  
+**File:** `migrations/061_create_dx_number_series.sql`  
+**Tables Touched:** `dx_number_series` (NEW)  
+**Reason:** Governed numbering series with pattern-based generation.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_number_series (
+  id            BIGSERIAL PRIMARY KEY,
+  document_type VARCHAR(60) NOT NULL,
+  scope_type    VARCHAR(20) NOT NULL,
+  scope_id      BIGINT,
+  fiscal_year   VARCHAR(9),
+  prefix        VARCHAR(30),
+  suffix        VARCHAR(30),
+  pattern       VARCHAR(120) NOT NULL,
+  current_value BIGINT NOT NULL DEFAULT 0,
+  padding       SMALLINT NOT NULL DEFAULT 4,
+  reset_rule    VARCHAR(20) NOT NULL,
+  is_active     BOOLEAN DEFAULT TRUE,
+  CONSTRAINT uq_dx_series UNIQUE (document_type, scope_type, scope_id, fiscal_year)
+);
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 062 — dx_master_governance (Governance Configuration)
+
+**Date:** 2026-02-10  
+**File:** `migrations/062_create_dx_master_governance.sql`  
+**Tables Touched:** `dx_master_governance` (NEW)  
+**Reason:** Configurable governance rules per master type.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_master_governance (
+  id                 BIGSERIAL PRIMARY KEY,
+  master_type        VARCHAR(60) NOT NULL UNIQUE,
+  source_table       VARCHAR(80) NOT NULL,
+  approval_on_create BOOLEAN NOT NULL DEFAULT FALSE,
+  approval_on_update BOOLEAN NOT NULL DEFAULT FALSE,
+  approval_on_deactivate BOOLEAN NOT NULL DEFAULT FALSE,
+  controlled_fields  JSONB,
+  duplicate_rules    JSONB,
+  required_documents JSONB,
+  is_enabled         BOOLEAN NOT NULL DEFAULT FALSE
+);
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 063 — dx_master_change_request (Change Requests)
+
+**Date:** 2026-02-10  
+**File:** `migrations/063_create_dx_master_change_request.sql`  
+**Tables Touched:** `dx_master_change_request` (NEW)  
+**Reason:** Change request workflow for master data modifications.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_master_change_request (
+  id             BIGSERIAL PRIMARY KEY,
+  request_no     VARCHAR(40) NOT NULL UNIQUE,
+  master_type    VARCHAR(60) NOT NULL,
+  source_table   VARCHAR(80) NOT NULL,
+  source_id      BIGINT,
+  change_type    VARCHAR(20) NOT NULL,
+  proposed_data  JSONB NOT NULL,
+  current_data   JSONB,
+  reason         TEXT NOT NULL,
+  status         VARCHAR(20) NOT NULL,
+  requested_by   BIGINT NOT NULL,
+  requested_at   TIMESTAMPTZ DEFAULT NOW(),
+  decided_by     BIGINT,
+  decided_at     TIMESTAMPTZ,
+  decision_note  TEXT,
+  applied_at     TIMESTAMPTZ,
+  applied_record_id BIGINT
+);
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 064 — dx_master_audit (Master Audit Trail)
+
+**Date:** 2026-02-10  
+**File:** `migrations/064_create_dx_master_audit.sql`  
+**Tables Touched:** `dx_master_audit` (NEW)  
+**Reason:** Field-level audit trail for master data changes with hash chaining.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_master_audit (
+  id           BIGSERIAL PRIMARY KEY,
+  master_type  VARCHAR(60) NOT NULL,
+  source_table VARCHAR(80) NOT NULL,
+  source_id    BIGINT NOT NULL,
+  action       VARCHAR(20) NOT NULL,
+  field_name   VARCHAR(80),
+  old_value    TEXT,
+  new_value    TEXT,
+  change_request_id BIGINT,
+  changed_by   BIGINT NOT NULL,
+  changed_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  ip_address   VARCHAR(45),
+  row_hash     CHAR(64) NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_dx_maudit_rec ON dx_master_audit (source_table, source_id, changed_at DESC);
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 065 — dx_master_merge (Merge Tracking)
+
+**Date:** 2026-02-10  
+**File:** `migrations/065_create_dx_master_merge.sql`  
+**Tables Touched:** `dx_master_merge` (NEW)  
+**Reason:** Track merged master records without deleting historical data.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_master_merge (
+  id            BIGSERIAL PRIMARY KEY,
+  master_type   VARCHAR(60) NOT NULL,
+  source_table  VARCHAR(80) NOT NULL,
+  surviving_id  BIGINT NOT NULL,
+  merged_id     BIGINT NOT NULL,
+  merged_by     BIGINT NOT NULL,
+  merged_at     TIMESTAMPTZ DEFAULT NOW(),
+  reason        TEXT NOT NULL,
+  transaction_count INTEGER NOT NULL,
+  CONSTRAINT uq_dx_merge UNIQUE (source_table, merged_id)
+);
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 066 — dx_master_quality_metric (Quality Metrics)
+
+**Date:** 2026-02-10  
+**File:** `migrations/066_create_dx_master_quality_metric.sql`  
+**Tables Touched:** `dx_master_quality_metric` (NEW)  
+**Reason:** Computed quality metrics per master type.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_master_quality_metric (
+  master_type           VARCHAR(60) PRIMARY KEY,
+  total_records         INTEGER NOT NULL,
+  complete_records      INTEGER NOT NULL,
+  completeness_percent  NUMERIC(6,3) NOT NULL,
+  duplicate_candidates  INTEGER NOT NULL,
+  expired_documents     INTEGER NOT NULL,
+  orphan_references     INTEGER NOT NULL,
+  inactive_with_transactions INTEGER NOT NULL,
+  not_used_in_24_months INTEGER NOT NULL,
+  last_computed         TIMESTAMPTZ NOT NULL
+);
+```
+
+**Status:** ✅ Documented
+
+---
+
+### Migration 067 — dx_master_duplicate_candidate (Duplicate Detection)
+
+**Date:** 2026-02-10  
+**File:** `migrations/067_create_dx_master_duplicate_candidate.sql`  
+**Tables Touched:** `dx_master_duplicate_candidate` (NEW)  
+**Reason:** Track duplicate candidates for review and merge.
+
+**SQL:**
+```sql
+CREATE TABLE IF NOT EXISTS dx_master_duplicate_candidate (
+  id            BIGSERIAL PRIMARY KEY,
+  master_type   VARCHAR(60) NOT NULL,
+  source_table  VARCHAR(80) NOT NULL,
+  record_id_1   BIGINT NOT NULL,
+  record_id_2   BIGINT NOT NULL,
+  match_score   NUMERIC(6,3) NOT NULL,
+  match_fields  JSONB NOT NULL,
+  status        VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+  detected_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  reviewed_by   BIGINT,
+  reviewed_at   TIMESTAMPTZ
+);
+```
+
+**Status:** ✅ Documented
 
 ---
 
@@ -2232,3 +2811,48 @@ Part 10 focuses on security hardening, performance optimization, testing, and de
 - Final acceptance validation
 
 **Total Database Tables:** 53 (unchanged from Part 9)
+
+---
+
+## Part 11 — Responsive & Multi-Device Framework
+
+Part 11 focuses on responsive design, multi-device support, offline capabilities, and PWA features. Only 1 new table was added for offline sync tracking.
+
+**New Table:**
+- `dx_sync_log` — Offline sync operations with idempotency
+
+**Total Database Tables:** 54 (53 + 1 from Part 11)
+
+---
+
+## Part 12 — Master Data & Enterprise Structure
+
+Part 12 adds comprehensive master data management with 19 new tables covering enterprise hierarchy, project profiles, BOQ versioning, item categories, UoM conversions, vendor compliance, rate management, numbering series, master governance, change requests, audit trails, duplicate detection, and data quality metrics.
+
+**New Tables (19):**
+- `dx_org_node` — Enterprise hierarchy materialization
+- `dx_project_profile` — Project contract details
+- `dx_project_config` — Project configuration
+- `dx_boq_version` — BOQ version control
+- `dx_boq_item_extension` — BOQ item extensions
+- `dx_item_category` — Item category hierarchy
+- `dx_item_extension` — Item master extensions
+- `dx_uom` — Unit of measure master
+- `dx_uom_conversion` — UoM conversions
+- `dx_party_compliance` — Vendor/client compliance
+- `dx_vendor_scorecard` — Vendor performance
+- `dx_rate_master` — Effective-dated rates
+- `dx_number_series` — Numbering series
+- `dx_master_governance` — Governance configuration
+- `dx_master_change_request` — Change requests
+- `dx_master_audit` — Master audit trail
+- `dx_master_merge` — Merge tracking
+- `dx_master_quality_metric` — Quality metrics
+- `dx_master_duplicate_candidate` — Duplicate detection
+
+**Total Database Tables:** 73 (54 + 19 from Part 12)
+
+---
+
+**Document Status:** ✅ Complete (Part 12 Updated)  
+**Next Step:** Part 13 — Planning, WBS, Scheduling & Progress

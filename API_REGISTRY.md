@@ -363,8 +363,8 @@
 
 ---
 
-**Document Status:** ✅ Complete (Part 11 Updated)  
-**Next Step:** Part 12 — Master Data & Enterprise Structure
+**Document Status:** ✅ Complete (Part 12 Updated)  
+**Next Step:** Part 13 — Planning, WBS, Scheduling & Progress
 
 ---
 
@@ -380,6 +380,42 @@
 ---
 
 **Total API Endpoints:** 134+ (130 from Parts 1-10 + 4 from Part 11)
+
+---
+
+### Master Data & Enterprise Structure (Part 12)
+
+| Method | Path | Auth | Permission | Description |
+|---|---|---|---|---|
+| GET | `/api/dx/v1/org/tree` | ✅ | master.org.view | Get organization hierarchy |
+| GET | `/api/dx/v1/org/node/{id}` | ✅ | master.org.view | Get node details |
+| GET | `/api/dx/v1/org/subtree/{id}` | ✅ | master.org.view | Get subtree |
+| GET | `/api/dx/v1/projects/{id}/profile` | ✅ | master.project.view | Get project profile |
+| PUT | `/api/dx/v1/projects/{id}/profile` | ✅ | master.project.update | Update project profile |
+| GET | `/api/dx/v1/projects/{id}/config` | ✅ | master.project.view | Get project config |
+| PUT | `/api/dx/v1/projects/{id}/config` | ✅ | master.project.config | Update project config |
+| GET | `/api/dx/v1/projects/{id}/boq/versions` | ✅ | master.boq.view | List BOQ versions |
+| POST | `/api/dx/v1/projects/{id}/boq/versions` | ✅ | master.boq.create | Create BOQ version |
+| POST | `/api/dx/v1/boq/import` | ✅ | master.boq.import | Import BOQ from Excel/CSV |
+| GET | `/api/dx/v1/boq/versions/{id}/items` | ✅ | master.boq.view | Get BOQ items |
+| GET | `/api/dx/v1/rates` | ✅ | master.rate.view | List rates |
+| POST | `/api/dx/v1/rates` | ✅ | master.rate.create | Create rate |
+| POST | `/api/dx/v1/rates/resolve` | ✅ | authenticated | Resolve rate for transaction |
+| GET | `/api/dx/v1/rates/history/{referenceId}` | ✅ | master.rate.view | Rate history |
+| GET | `/api/dx/v1/master/governance` | ✅ | master.governance.view | List governance configs |
+| PUT | `/api/dx/v1/master/governance/{masterType}` | ✅ | master.governance.configure | Update governance |
+| GET | `/api/dx/v1/master/change-requests` | ✅ | master.changerequest.view | List change requests |
+| POST | `/api/dx/v1/master/change-requests` | ✅ | master.changerequest.create | Create change request |
+| POST | `/api/dx/v1/master/change-requests/{id}/approve` | ✅ | master.changerequest.approve | Approve request |
+| POST | `/api/dx/v1/master/change-requests/{id}/reject` | ✅ | master.changerequest.approve | Reject request |
+| GET | `/api/dx/v1/master/quality` | ✅ | master.quality.view | Get quality metrics |
+| GET | `/api/dx/v1/master/duplicates` | ✅ | master.quality.view | List duplicate candidates |
+| POST | `/api/dx/v1/master/duplicates/{id}/merge` | ✅ | master.merge.execute | Merge duplicates |
+| POST | `/api/dx/v1/master/duplicates/{id}/dismiss` | ✅ | master.quality.view | Dismiss duplicate |
+
+---
+
+**Total API Endpoints:** 159 (134 from Parts 1-11 + 25 from Part 12)
 
 ---
 

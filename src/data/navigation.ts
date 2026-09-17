@@ -58,6 +58,15 @@ export const navigationData: NavGroup[] = [
     ],
   },
   {
+    key: 'masterdata',
+    label: 'Master Data',
+    icon: 'database',
+    order: 25,
+    items: [
+      { key: 'masterdata', label: 'Master Data Management', route: '/master-data', icon: 'database', permission: 'master.view' },
+    ],
+  },
+  {
     key: 'procurement',
     label: 'Procurement',
     icon: 'truck',

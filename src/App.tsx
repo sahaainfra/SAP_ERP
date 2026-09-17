@@ -22,6 +22,7 @@ import AnalyticsDashboard from './components/AnalyticsDashboard';
 import BackupDashboard from './components/BackupDashboard';
 import SystemHealthDashboard from './components/SystemHealthDashboard';
 import FinalAcceptanceValidation from './components/FinalAcceptanceValidation';
+import { MasterDataManagement } from './components/MasterDataManagement';
 
 function App() {
   const { theme, resolvedTheme, density, setTheme, setDensity } = useThemeEngine();
@@ -141,6 +142,8 @@ function App() {
         return <ProjectManagerDashboard />;
       case 'objectpage':
         return <ObjectPage />;
+      case 'masterdata':
+        return <MasterDataManagement />;
       default:
         return <Dashboard currentProject={context.project} />;
     }
