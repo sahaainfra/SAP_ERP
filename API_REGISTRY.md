@@ -585,6 +585,54 @@
 
 ---
 
+### Subcontractor & Work Order Management (Part 16)
+
+| Method | Path | Auth | Permission | Description |
+|---|---|---|---|---|
+| GET | `/api/dx/v1/work-orders` | ✅ | sc.wo.view | List work orders |
+| POST | `/api/dx/v1/work-orders` | ✅ | sc.wo.create | Create work order |
+| GET | `/api/dx/v1/work-orders/{id}` | ✅ | sc.wo.view | Get WO details |
+| PUT | `/api/dx/v1/work-orders/{id}` | ✅ | sc.wo.update | Update work order |
+| POST | `/api/dx/v1/work-orders/{id}/validate-release` | ✅ | sc.wo.release | Validate release gates |
+| POST | `/api/dx/v1/work-orders/{id}/release` | ✅ | sc.wo.release | Release WO to SC |
+| POST | `/api/dx/v1/work-orders/{id}/amend` | ✅ | sc.wo.amend | Create WO amendment |
+| POST | `/api/dx/v1/work-orders/{id}/close` | ✅ | sc.wo.close | Close work order |
+| POST | `/api/dx/v1/work-orders/{id}/terminate` | ✅ | sc.wo.terminate | Terminate work order |
+| GET | `/api/dx/v1/free-issue/accounts` | ✅ | sc.freeissue.view | List free-issue accounts |
+| GET | `/api/dx/v1/free-issue/accounts/{woId}/{itemId}` | ✅ | sc.freeissue.view | Get account details |
+| POST | `/api/dx/v1/free-issue/reconcile` | ✅ | sc.freeissue.reconcile | Reconcile free-issue |
+| POST | `/api/dx/v1/free-issue/set-recovery-rate` | ✅ | sc.freeissue.set_recovery_rate | Set recovery rate |
+| GET | `/api/dx/v1/sc-bills` | ✅ | sc.bill.view | List SC bills |
+| POST | `/api/dx/v1/sc-bills` | ✅ | sc.bill.create | Create SC bill |
+| GET | `/api/dx/v1/sc-bills/{id}` | ✅ | sc.bill.view | Get bill details |
+| PUT | `/api/dx/v1/sc-bills/{id}` | ✅ | sc.bill.create | Update SC bill |
+| POST | `/api/dx/v1/sc-bills/{id}/check` | ✅ | sc.bill.check | Check bill |
+| POST | `/api/dx/v1/sc-bills/{id}/certify` | ✅ | sc.bill.certify | Certify bill |
+| POST | `/api/dx/v1/sc-bills/{id}/approve-payment` | ✅ | sc.bill.approve_payment | Approve for payment |
+| POST | `/api/dx/v1/sc-bills/{id}/reopen` | ✅ | sc.bill.reopen | Reopen bill |
+| GET | `/api/dx/v1/sc-deductions/{billId}` | ✅ | sc.deduction.view | List deductions |
+| POST | `/api/dx/v1/sc-deductions/override` | ✅ | sc.deduction.override | Override deduction |
+| GET | `/api/dx/v1/backcharges` | ✅ | sc.backcharge.view | List backcharges |
+| POST | `/api/dx/v1/backcharges` | ✅ | sc.backcharge.create | Create backcharge |
+| POST | `/api/dx/v1/backcharges/{id}/approve` | ✅ | sc.backcharge.approve | Approve backcharge |
+| GET | `/api/dx/v1/compliance/periods` | ✅ | sc.compliance.view | List compliance periods |
+| POST | `/api/dx/v1/compliance/periods` | ✅ | sc.compliance.view | Create compliance period |
+| POST | `/api/dx/v1/compliance/periods/{id}/verify` | ✅ | sc.compliance.verify | Verify compliance |
+| POST | `/api/dx/v1/compliance/periods/{id}/release-withholding` | ✅ | sc.compliance.release_withholding | Release withholding |
+| GET | `/api/dx/v1/retention/ledger/{woId}` | ✅ | sc.retention.view | Get retention ledger |
+| POST | `/api/dx/v1/retention/release` | ✅ | sc.retention.release | Release retention |
+| GET | `/api/dx/v1/advance/ledger/{woId}` | ✅ | sc.retention.view | Get advance ledger |
+| GET | `/api/dx/v1/sc-performance` | ✅ | sc.performance.view | Get SC performance scores |
+| GET | `/api/dx/v1/sc-performance/{subcontractorId}` | ✅ | sc.performance.view | Get SC performance details |
+| GET | `/api/dx/v1/dlp/tracker` | ✅ | sc.wo.view | List DLP trackers |
+| POST | `/api/dx/v1/dlp/release` | ✅ | sc.wo.close | Release DLP retention |
+
+---
+
+**Total API Endpoints:** 333 (296 from Parts 1-15 + 37 from Part 16)
+
+---
+
 ## Part 10 — No New Endpoints
 
 Part 10 focuses on security hardening, performance optimization, testing, and deployment. No new API endpoints are required as this part works with the existing 130+ endpoints from Parts 1-9.

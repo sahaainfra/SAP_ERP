@@ -94,6 +94,15 @@ export const navigationData: NavGroup[] = [
     ],
   },
   {
+    key: 'subcontractor',
+    label: 'Subcontractor',
+    icon: 'users',
+    order: 29,
+    items: [
+      { key: 'subcontractor', label: 'Subcontractor Management', route: '/subcontractor', icon: 'users', permission: 'sc.view' },
+    ],
+  },
+  {
     key: 'procurement',
     label: 'Procurement',
     icon: 'truck',

@@ -3354,5 +3354,33 @@ Part 15 adds comprehensive inventory and material management with 14 new tables 
 
 ---
 
-**Document Status:** ✅ Complete (Part 15 Updated)  
-**Next Step:** Part 16 — Subcontractor & Work Order Management
+**Document Status:** ✅ Complete (Part 16 Updated)  
+**Next Step:** Part 17 — Measurement Book / e-MB & Quantity Survey
+
+---
+
+## Part 16 — Subcontractor & Work Order Management
+
+Part 16 adds comprehensive subcontractor management with 10 new tables covering work order management with margin checking, free-issue material recovery, SC billing with automated deduction engine, labour compliance tracking, backcharges, retention/advance ledgers, SC performance scoring, and DLP tracking.
+
+**New Tables (10):**
+- `dx_work_order` — Work order master with margin and compliance tracking
+- `dx_work_order_item` — WO line items with BOQ linkage and margin calculation
+- `dx_wo_amendment` — WO amendments with before/after snapshots
+- `dx_free_issue_account` — Free-issue material tracking with recovery
+- `dx_sc_bill` — SC bill master with certification chain
+- `dx_sc_bill_item` — SC bill line items
+- `dx_sc_bill_deduction` — Automated and manual deductions
+- `dx_sc_compliance_period` — Labour compliance (PF/ESIC/wage) tracking
+- `dx_backcharge` — Backcharge tracking with recovery
+- `dx_sc_performance` — SC performance scoring
+
+**Total new tables in Part 16:** 10  
+**Total new tables across all parts:** 122 (112 + 10 from Part 16)  
+**Total tables modified:** 0  
+**Total rows affected:** 0
+
+---
+
+**Document Status:** ✅ Complete (Part 16 Updated)  
+**Next Step:** Part 17 — Measurement Book / e-MB & Quantity Survey

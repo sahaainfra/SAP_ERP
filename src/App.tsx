@@ -26,6 +26,7 @@ import { MasterDataManagement } from './components/MasterDataManagement';
 import { PlanningDashboard } from './components/PlanningDashboard';
 import { ProcurementDashboard } from './components/ProcurementDashboard';
 import { InventoryDashboard } from './components/InventoryDashboard';
+import { SubcontractorDashboard } from './components/SubcontractorDashboard';
 
 function App() {
   const { theme, resolvedTheme, density, setTheme, setDensity } = useThemeEngine();
@@ -151,6 +152,8 @@ function App() {
         return <ProcurementDashboard />;
       case 'inventory':
         return <InventoryDashboard />;
+      case 'subcontractor':
+        return <SubcontractorDashboard />;
       default:
         return <Dashboard currentProject={context.project} />;
     }
