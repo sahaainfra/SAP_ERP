@@ -27,6 +27,7 @@ import { PlanningDashboard } from './components/PlanningDashboard';
 import { ProcurementDashboard } from './components/ProcurementDashboard';
 import { InventoryDashboard } from './components/InventoryDashboard';
 import { SubcontractorDashboard } from './components/SubcontractorDashboard';
+import { MeasurementDashboard } from './components/MeasurementDashboard';
 
 function App() {
   const { theme, resolvedTheme, density, setTheme, setDensity } = useThemeEngine();
@@ -154,6 +155,8 @@ function App() {
         return <InventoryDashboard />;
       case 'subcontractor':
         return <SubcontractorDashboard />;
+      case 'measurement':
+        return <MeasurementDashboard />;
       default:
         return <Dashboard currentProject={context.project} />;
     }

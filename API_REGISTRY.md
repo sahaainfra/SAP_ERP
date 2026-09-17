@@ -633,6 +633,47 @@
 
 ---
 
+### Measurement Book (Part 17)
+
+| Method | Path | Auth | Permission | Description |
+|---|---|---|---|---|
+| GET | `/api/dx/v1/mb` | ✅ | mb.view | List measurement books |
+| POST | `/api/dx/v1/mb` | ✅ | mb.create | Create measurement book |
+| GET | `/api/dx/v1/mb/{id}` | ✅ | mb.view | Get MB details |
+| PUT | `/api/dx/v1/mb/{id}` | ✅ | mb.update | Update MB (draft only) |
+| POST | `/api/dx/v1/mb/{id}/check` | ✅ | mb.check | Check MB (QS) |
+| POST | `/api/dx/v1/mb/{id}/certify` | ✅ | mb.certify | Certify MB (PM/Client) |
+| POST | `/api/dx/v1/mb/{id}/revise` | ✅ | mb.revise | Create revised MB |
+| POST | `/api/dx/v1/mb/{id}/supersede` | ✅ | mb.supersede | Supersede MB |
+| DELETE | `/api/dx/v1/mb/{id}` | ✅ | mb.delete | Delete draft MB |
+| POST | `/api/dx/v1/mb/{id}/reopen` | ✅ | mb.reopen | Reopen certified MB (Super Admin) |
+| POST | `/api/dx/v1/mb/compute-quantity` | ✅ | mb.create | Compute quantity from dimensions |
+| POST | `/api/dx/v1/mb/verify-calc-hash` | ✅ | mb.view | Verify calculation hash |
+| GET | `/api/dx/v1/mb/formula-catalogue` | ✅ | mb.view | Get formula catalogue |
+| POST | `/api/dx/v1/mb/apply-deductions` | ✅ | mb.create | Apply deduction rules |
+| GET | `/api/dx/v1/mb/rounding-rules` | ✅ | mb.view | Get rounding rules |
+| GET | `/api/dx/v1/mb/previous-quantity` | ✅ | mb.view | Get previous quantity for BOQ item |
+| GET | `/api/dx/v1/mb/cumulative-quantity` | ✅ | mb.view | Get cumulative quantity |
+| POST | `/api/dx/v1/mb/verify-chain` | ✅ | mb.view | Verify MB chain integrity |
+| POST | `/api/dx/v1/mb/dispute` | ✅ | mb.dispute.raise | Raise dispute |
+| PUT | `/api/dx/v1/mb/dispute/{id}` | ✅ | mb.dispute.resolve | Update dispute |
+| POST | `/api/dx/v1/mb/dispute/{id}/resolve` | ✅ | mb.dispute.resolve | Resolve dispute |
+| GET | `/api/dx/v1/mb/disputes` | ✅ | mb.view | List disputes |
+| POST | `/api/dx/v1/mb/evidence` | ✅ | mb.create | Upload evidence |
+| GET | `/api/dx/v1/mb/evidence/{lineId}` | ✅ | mb.view | Get evidence for line |
+| POST | `/api/dx/v1/mb/joint-measurement` | ✅ | mb.joint.record | Record joint measurement |
+| POST | `/api/dx/v1/mb/joint-measurement/sign` | ✅ | mb.joint.sign | Capture signature |
+| GET | `/api/dx/v1/mb/reports/abstract` | ✅ | mb.report.view | Abstract of quantities |
+| GET | `/api/dx/v1/mb/reports/register` | ✅ | mb.report.view | Measurement register |
+| GET | `/api/dx/v1/mb/reports/reconciliation` | ✅ | mb.report.view | Quantity reconciliation |
+| GET | `/api/dx/v1/mb/reports/balance` | ✅ | mb.report.view | Balance quantity statement |
+
+---
+
+**Total API Endpoints:** 363 (333 from Parts 1-16 + 30 from Part 17)
+
+---
+
 ## Part 10 — No New Endpoints
 
 Part 10 focuses on security hardening, performance optimization, testing, and deployment. No new API endpoints are required as this part works with the existing 130+ endpoints from Parts 1-9.

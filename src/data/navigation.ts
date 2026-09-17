@@ -103,6 +103,15 @@ export const navigationData: NavGroup[] = [
     ],
   },
   {
+    key: 'measurement',
+    label: 'Measurement',
+    icon: 'calculator',
+    order: 30,
+    items: [
+      { key: 'measurement', label: 'Measurement Book', route: '/measurement', icon: 'calculator', permission: 'mb.view' },
+    ],
+  },
+  {
     key: 'procurement',
     label: 'Procurement',
     icon: 'truck',

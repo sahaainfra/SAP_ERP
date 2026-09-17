@@ -19,7 +19,7 @@ import {
   Layers, Calendar, BookOpen, TrendingUp, Receipt, CreditCard, Landmark,
   PiggyBank, Target, ClipboardCheck, Search, AlertTriangle, HeartPulse,
   AlertCircle, BarChart3, LineChart, Shield, ScrollText, Settings,
-  ChevronDown, ChevronRight, Palette, X, Activity, CheckCircle
+  ChevronDown, ChevronRight, Palette, X, Activity, CheckCircle, Calculator
 } from 'lucide-react';
 import { navigationData } from '../data/navigation';
 import type { NavGroup, NavItem } from '../data/navigation';
@@ -67,6 +67,7 @@ const iconMap: Record<string, any> = {
   'palette': Palette,
   'activity': Activity,
   'check-circle': CheckCircle,
+  'calculator': Calculator,
 };
 
 interface SideNavProps {

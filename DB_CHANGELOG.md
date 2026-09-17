@@ -3354,8 +3354,34 @@ Part 15 adds comprehensive inventory and material management with 14 new tables 
 
 ---
 
-**Document Status:** ✅ Complete (Part 16 Updated)  
-**Next Step:** Part 17 — Measurement Book / e-MB & Quantity Survey
+**Document Status:** ✅ Complete (Part 17 Updated)  
+**Next Step:** Part 18 — Client RA Billing, Contract & Revenue
+
+---
+
+## Part 17 — Measurement Book (e-MB) & Quantity Surveying Engine
+
+Part 17 adds comprehensive measurement book management with 8 new tables covering MB master with context/type/status, MB lines with dimensions and quantities, MB dimensions with 16 formula types, deduction rules, disputes, evidence, locks with hash chains, and abnormal measurement alerts.
+
+**New Tables (8):**
+- `dx_mb` — Measurement book master with context, type, status, certification chain
+- `dx_mb_line` — MB line items with BOQ linkage, dimensions, quantities, rates
+- `dx_mb_dimension` — MB dimensions with formula-based calculation
+- `dx_deduction_rule` — Configurable deduction rules per BOQ item type
+- `dx_mb_dispute` — Disputed quantities with status tracking
+- `dx_mb_evidence` — Evidence tracking (photos, sketches, WIR, test reports)
+- `dx_mb_lock` — Lock and hash tracking for tamper evidence
+- `dx_abnormal_measurement_alert` — Abnormal detection alerts
+
+**Total new tables in Part 17:** 8  
+**Total new tables across all parts:** 130 (122 + 8 from Part 17)  
+**Total tables modified:** 0  
+**Total rows affected:** 0
+
+---
+
+**Document Status:** ✅ Complete (Part 17 Updated)  
+**Next Step:** Part 18 — Client RA Billing, Contract & Revenue
 
 ---
 
