@@ -363,8 +363,8 @@
 
 ---
 
-**Document Status:** ✅ Complete (Part 13 Updated)  
-**Next Step:** Part 14 — Procurement (Indent to Purchase Order)
+**Document Status:** ✅ Complete (Part 14 Updated)  
+**Next Step:** Part 15 — Inventory, Stores & Material Management
 
 ---
 
@@ -466,7 +466,59 @@
 
 ---
 
-**Total API Endpoints:** 199 (159 from Parts 1-12 + 40 from Part 13)
+### Procurement (Part 14)
+
+| Method | Path | Auth | Permission | Description |
+|---|---|---|---|---|
+| GET | `/api/dx/v1/indents` | ✅ | procure.indent.view | List indents with filters |
+| POST | `/api/dx/v1/indents` | ✅ | procure.indent.create | Create indent |
+| PUT | `/api/dx/v1/indents/{id}` | ✅ | procure.indent.update | Update indent |
+| POST | `/api/dx/v1/indents/{id}/validate` | ✅ | procure.indent.create | Validate indent (5 checks) |
+| POST | `/api/dx/v1/indents/{id}/submit` | ✅ | procure.indent.submit | Submit for approval |
+| POST | `/api/dx/v1/indents/{id}/approve` | ✅ | procure.indent.approve | Approve indent |
+| POST | `/api/dx/v1/indents/{id}/reject` | ✅ | procure.indent.approve | Reject indent |
+| POST | `/api/dx/v1/indents/consolidate` | ✅ | procure.indent.create | Consolidate multiple indents |
+| GET | `/api/dx/v1/rfqs` | ✅ | procure.rfq.view | List RFQs |
+| POST | `/api/dx/v1/rfqs` | ✅ | procure.rfq.create | Create RFQ |
+| PUT | `/api/dx/v1/rfqs/{id}` | ✅ | procure.rfq.create | Update RFQ |
+| POST | `/api/dx/v1/rfqs/{id}/issue` | ✅ | procure.rfq.issue | Issue RFQ to vendors |
+| POST | `/api/dx/v1/rfqs/{id}/invite-vendors` | ✅ | procure.vendor.invite | Invite vendors |
+| POST | `/api/dx/v1/rfqs/{id}/close` | ✅ | procure.rfq.create | Close RFQ |
+| POST | `/api/dx/v1/rfqs/{id}/open-sealed` | ✅ | procure.rfq.open_sealed | Open sealed RFQ (2 users) |
+| GET | `/api/dx/v1/rfqs/{id}/quotations` | ✅ | procure.quotation.view | Get quotations for RFQ |
+| POST | `/api/dx/v1/rfqs/vendor-portal/{token}` | ✅ | token-based | Vendor portal access |
+| POST | `/api/dx/v1/rfqs/{id}/remind-vendors` | ✅ | procure.rfq.create | Send reminders |
+| POST | `/api/dx/v1/quotations` | ✅ | procure.quotation.enter | Submit quotation |
+| PUT | `/api/dx/v1/quotations/{id}` | ✅ | procure.quotation.update | Update quotation |
+| POST | `/api/dx/v1/quotations/{id}/compute-landed-rate` | ✅ | procure.quotation.enter | Compute landed rate |
+| POST | `/api/dx/v1/quotations/{id}/technical-evaluation` | ✅ | procure.quotation.enter | Technical evaluation |
+| POST | `/api/dx/v1/quotations/ocr-extract` | ✅ | procure.quotation.enter | OCR extraction |
+| POST | `/api/dx/v1/comparatives/generate` | ✅ | procure.comparative.prepare | Generate comparative |
+| GET | `/api/dx/v1/comparatives/{id}` | ✅ | procure.comparative.view | Get comparative details |
+| PUT | `/api/dx/v1/comparatives/{id}` | ✅ | procure.comparative.prepare | Update comparative |
+| POST | `/api/dx/v1/comparatives/{id}/recommend` | ✅ | procure.comparative.prepare | Set recommendations |
+| POST | `/api/dx/v1/comparatives/{id}/negotiate` | ✅ | procure.comparative.negotiate | Record negotiation round |
+| POST | `/api/dx/v1/comparatives/{id}/approve` | ✅ | procure.comparative.approve | Approve comparative |
+| GET | `/api/dx/v1/comparatives/{id}/print` | ✅ | procure.report.export | Print comparative |
+| POST | `/api/dx/v1/po/create-from-comparative` | ✅ | procure.po.create | Create PO from CS |
+| POST | `/api/dx/v1/po/create-from-rate-contract` | ✅ | procure.po.create | Create PO from RC |
+| PUT | `/api/dx/v1/po/{id}` | ✅ | procure.po.update | Update PO |
+| POST | `/api/dx/v1/po/{id}/validate-release` | ✅ | procure.po.release | Validate release gates (7) |
+| POST | `/api/dx/v1/po/{id}/release` | ✅ | procure.po.release | Release PO to vendor |
+| POST | `/api/dx/v1/po/{id}/amend` | ✅ | procure.po.amend | Create amendment |
+| POST | `/api/dx/v1/po/{id}/short-close` | ✅ | procure.po.short_close | Short close PO |
+| POST | `/api/dx/v1/po/{id}/cancel` | ✅ | procure.po.cancel | Cancel PO |
+| GET | `/api/dx/v1/po/{id}/delivery-schedule` | ✅ | procure.po.view | Get delivery schedule |
+| PUT | `/api/dx/v1/po/delivery-schedule/{id}` | ✅ | procure.po.update | Update delivery schedule |
+| GET | `/api/dx/v1/rate-contracts` | ✅ | procure.ratecontract.view | List rate contracts |
+| POST | `/api/dx/v1/rate-contracts` | ✅ | procure.ratecontract.create | Create rate contract |
+| PUT | `/api/dx/v1/rate-contracts/{id}` | ✅ | procure.ratecontract.create | Update rate contract |
+| POST | `/api/dx/v1/rate-contracts/{id}/release` | ✅ | procure.ratecontract.release | Create release against RC |
+| GET | `/api/dx/v1/rate-contracts/{id}/consumption` | ✅ | procure.ratecontract.view | Get consumption details |
+
+---
+
+**Total API Endpoints:** 244 (199 from Parts 1-13 + 45 from Part 14)
 
 ---
 

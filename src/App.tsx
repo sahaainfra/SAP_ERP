@@ -24,6 +24,7 @@ import SystemHealthDashboard from './components/SystemHealthDashboard';
 import FinalAcceptanceValidation from './components/FinalAcceptanceValidation';
 import { MasterDataManagement } from './components/MasterDataManagement';
 import { PlanningDashboard } from './components/PlanningDashboard';
+import { ProcurementDashboard } from './components/ProcurementDashboard';
 
 function App() {
   const { theme, resolvedTheme, density, setTheme, setDensity } = useThemeEngine();
@@ -115,8 +116,6 @@ function App() {
         return <Dashboard currentProject={context.project} />;
       case 'resources':
         return <PlaceholderPage title="Resource Management" description="Workforce planning, allocation, and utilization tracking across all projects." />;
-      case 'procurement':
-        return <PlaceholderPage title="Procurement" description="Purchase orders, vendor management, material tracking, and supply chain coordination." />;
       case 'finance':
         return <PlaceholderPage title="Finance & Cost Control" description="Cost tracking, invoicing, payment processing, and financial reporting." />;
       case 'safety':
@@ -147,6 +146,8 @@ function App() {
         return <MasterDataManagement />;
       case 'planning':
         return <PlanningDashboard />;
+      case 'procurement':
+        return <ProcurementDashboard />;
       default:
         return <Dashboard currentProject={context.project} />;
     }

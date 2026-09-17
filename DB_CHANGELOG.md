@@ -3297,5 +3297,30 @@ CREATE INDEX IF NOT EXISTS ix_dx_resnorm_category ON dx_resource_norm (item_cate
 
 ---
 
-**Document Status:** ✅ Complete (Part 13 Updated)  
-**Next Step:** Part 14 — Procurement (Indent to Purchase Order)
+**Document Status:** ✅ Complete (Part 14 Updated)  
+**Next Step:** Part 15 — Inventory, Stores & Material Management
+
+---
+
+## Part 14 — Procurement: Indent → RFQ → Comparative → Purchase Order
+
+Part 14 adds comprehensive procurement management with 12 new tables covering indent extensions, RFQ management, quotation tracking, comparative statements, PO extensions, delivery schedules, amendments, and rate contracts.
+
+**New Tables (12):**
+- `dx_indent_extension` — Indent master data extensions with budget/stock checks
+- `dx_indent_item_extension` — Indent item extensions with theoretical requirements
+- `dx_rfq` — RFQ master with sealed support
+- `dx_rfq_indent_map` — RFQ to indent mapping for consolidation
+- `dx_rfq_vendor` — RFQ vendor invitations with portal tokens
+- `dx_quotation` — Quotation master with landed rate computation
+- `dx_quotation_item` — Quotation line items with technical evaluation
+- `dx_comparative` — Comparative statement with evaluation basis
+- `dx_comparative_recommendation` — CS recommendations with deviation reasons
+- `dx_po_extension` — PO extensions with 7 release gates
+- `dx_po_delivery_schedule` — PO delivery schedules with revision tracking
+- `dx_po_amendment` — PO amendments with before/after snapshots
+
+**Total new tables in Part 14:** 12  
+**Total new tables across all parts:** 98 (86 + 12 from Part 14)  
+**Total tables modified:** 0  
+**Total rows affected:** 0

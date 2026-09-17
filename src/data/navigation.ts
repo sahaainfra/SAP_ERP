@@ -78,6 +78,15 @@ export const navigationData: NavGroup[] = [
   {
     key: 'procurement',
     label: 'Procurement',
+    icon: 'shopping-cart',
+    order: 27,
+    items: [
+      { key: 'procurement', label: 'Procurement Management', route: '/procurement', icon: 'shopping-cart', permission: 'procure.view' },
+    ],
+  },
+  {
+    key: 'procurement',
+    label: 'Procurement',
     icon: 'truck',
     order: 30,
     items: [
