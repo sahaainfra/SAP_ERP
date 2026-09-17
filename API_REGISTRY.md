@@ -674,6 +674,71 @@
 
 ---
 
+### Client Billing & Revenue (Part 18)
+
+| Method | Path | Auth | Permission | Description |
+|---|---|---|---|---|
+| GET | `/api/dx/v1/bills` | ✅ | bill.client.view | List client bills |
+| POST | `/api/dx/v1/bills` | ✅ | bill.client.create | Create client bill |
+| GET | `/api/dx/v1/bills/{id}` | ✅ | bill.client.view | Get bill details |
+| PUT | `/api/dx/v1/bills/{id}` | ✅ | bill.client.update | Update bill (draft only) |
+| POST | `/api/dx/v1/bills/generate` | ✅ | bill.client.create | Generate bill from certified MBs |
+| POST | `/api/dx/v1/bills/{id}/validate` | ✅ | bill.client.create | Validate bill before submission |
+| POST | `/api/dx/v1/bills/{id}/check` | ✅ | bill.client.check | Check bill (QS) |
+| POST | `/api/dx/v1/bills/{id}/approve` | ✅ | bill.client.approve | Approve bill |
+| POST | `/api/dx/v1/bills/{id}/submit` | ✅ | bill.client.submit | Submit bill to client |
+| POST | `/api/dx/v1/bills/{id}/record-certification` | ✅ | bill.certification.record | Record client certification |
+| POST | `/api/dx/v1/bills/{id}/cancel` | ✅ | bill.client.cancel | Cancel bill |
+| POST | `/api/dx/v1/bills/{id}/reopen` | ✅ | bill.client.reopen | Reopen bill (Super Admin) |
+| GET | `/api/dx/v1/bills/{id}/backup-pack` | ✅ | bill.report.export | Generate bill backup pack |
+| GET | `/api/dx/v1/bills/{id}/print` | ✅ | bill.report.export | Print bill |
+| GET | `/api/dx/v1/variations` | ✅ | bill.variation.view | List variations |
+| POST | `/api/dx/v1/variations` | ✅ | bill.variation.create | Create variation |
+| GET | `/api/dx/v1/variations/{id}` | ✅ | bill.variation.view | Get variation details |
+| PUT | `/api/dx/v1/variations/{id}` | ✅ | bill.variation.update | Update variation |
+| POST | `/api/dx/v1/variations/{id}/submit` | ✅ | bill.variation.submit | Submit for client approval |
+| POST | `/api/dx/v1/variations/{id}/approve` | ✅ | bill.variation.approve | Record client approval |
+| POST | `/api/dx/v1/variations/{id}/incorporate` | ✅ | bill.variation.approve | Incorporate into BOQ |
+| GET | `/api/dx/v1/escalation/formulas` | ✅ | bill.escalation.view | List escalation formulas |
+| POST | `/api/dx/v1/escalation/formulas` | ✅ | bill.escalation.compute | Create escalation formula |
+| POST | `/api/dx/v1/escalation/compute` | ✅ | bill.escalation.compute | Compute escalation for bill |
+| GET | `/api/dx/v1/escalation/indices` | ✅ | bill.index.enter | List price indices |
+| POST | `/api/dx/v1/escalation/indices` | ✅ | bill.index.enter | Enter price index |
+| POST | `/api/dx/v1/escalation/indices/{id}/verify` | ✅ | bill.index.verify | Verify price index |
+| GET | `/api/dx/v1/claims` | ✅ | bill.claim.view | List claims |
+| POST | `/api/dx/v1/claims` | ✅ | bill.claim.create | Create claim |
+| GET | `/api/dx/v1/claims/{id}` | ✅ | bill.claim.view | Get claim details |
+| PUT | `/api/dx/v1/claims/{id}` | ✅ | bill.claim.update | Update claim |
+| POST | `/api/dx/v1/claims/{id}/issue-notice` | ✅ | bill.claim.submit | Issue claim notice |
+| POST | `/api/dx/v1/claims/{id}/submit` | ✅ | bill.claim.submit | Submit claim |
+| POST | `/api/dx/v1/claims/{id}/settle` | ✅ | bill.claim.settle | Record settlement |
+| GET | `/api/dx/v1/retention/ledger/{projectId}` | ✅ | bill.retention.view | Get retention ledger |
+| POST | `/api/dx/v1/retention/release` | ✅ | bill.retention.release | Release retention |
+| GET | `/api/dx/v1/dlp/tracker/{projectId}` | ✅ | bill.retention.view | Get DLP tracker |
+| POST | `/api/dx/v1/dlp/release-bill` | ✅ | bill.retention.release | Create DLP release bill |
+| GET | `/api/dx/v1/mos/tracking` | ✅ | bill.client.view | List MOS tracking |
+| POST | `/api/dx/v1/mos/claim` | ✅ | bill.client.create | Claim material on site |
+| POST | `/api/dx/v1/mos/reverse` | ✅ | bill.client.create | Reverse MOS (auto on consumption) |
+| GET | `/api/dx/v1/certification/tracking` | ✅ | bill.certification.record | Get certification tracking |
+| POST | `/api/dx/v1/certification/shortfall` | ✅ | bill.certification.record | Record certification shortfall |
+| GET | `/api/dx/v1/client-deductions/reconciliation/{billId}` | ✅ | bill.deduction.view | Get deduction reconciliation |
+| POST | `/api/dx/v1/client-deductions/reconcile` | ✅ | bill.deduction.override | Reconcile client deductions |
+| GET | `/api/dx/v1/billing/kpis` | ✅ | bill.report.view | Get billing KPIs |
+| GET | `/api/dx/v1/billing/reports/register` | ✅ | bill.report.view | Bill register report |
+| GET | `/api/dx/v1/billing/reports/certification-status` | ✅ | bill.report.view | Certification status report |
+| GET | `/api/dx/v1/billing/reports/under-certification` | ✅ | bill.report.view | Under-certification analysis |
+| GET | `/api/dx/v1/billing/reports/wip-statement` | ✅ | bill.report.view | WIP statement |
+| GET | `/api/dx/v1/billing/reports/retention-statement` | ✅ | bill.report.view | Retention statement |
+| GET | `/api/dx/v1/billing/reports/variation-register` | ✅ | bill.report.view | Variation register report |
+| GET | `/api/dx/v1/billing/reports/claims-register` | ✅ | bill.report.view | Claims register report |
+| GET | `/api/dx/v1/billing/reports/contract-position` | ✅ | bill.report.view | Contract position summary |
+
+---
+
+**Total API Endpoints:** 415 (363 from Parts 1-17 + 52 from Part 18)
+
+---
+
 ## Part 10 — No New Endpoints
 
 Part 10 focuses on security hardening, performance optimization, testing, and deployment. No new API endpoints are required as this part works with the existing 130+ endpoints from Parts 1-9.

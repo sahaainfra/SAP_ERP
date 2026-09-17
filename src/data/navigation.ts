@@ -112,6 +112,15 @@ export const navigationData: NavGroup[] = [
     ],
   },
   {
+    key: 'billing',
+    label: 'Billing',
+    icon: 'file-text',
+    order: 31,
+    items: [
+      { key: 'billing', label: 'Client Billing & Revenue', route: '/billing', icon: 'file-text', permission: 'bill.view' },
+    ],
+  },
+  {
     key: 'procurement',
     label: 'Procurement',
     icon: 'truck',

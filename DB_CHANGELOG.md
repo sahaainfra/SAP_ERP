@@ -3380,8 +3380,38 @@ Part 17 adds comprehensive measurement book management with 8 new tables coverin
 
 ---
 
-**Document Status:** ✅ Complete (Part 17 Updated)  
-**Next Step:** Part 18 — Client RA Billing, Contract & Revenue
+**Document Status:** ✅ Complete (Part 18 Updated)  
+**Next Step:** Part 19 — Finance, Accounts, Costing & Budget Control
+
+---
+
+## Part 18 — Client RA Billing, Contract & Revenue
+
+Part 18 adds comprehensive client billing and revenue management with 10 new tables covering client bills with certification workflow, bill items with categories (BOQ, extra, variation, daywork, provisional, MOS, escalation, claim), bill deductions with sequence and computation, variations with approval workflow, escalation formulas with price indices, claims with notice deadline tracking, retention ledger with DLP tracking, MOS tracking with automatic reversal, certification tracking with shortfall analysis, and client deduction reconciliation.
+
+**New Tables (10):**
+- `dx_client_bill` — Client bill master with type, status, certification chain, tax computation
+- `dx_client_bill_item` — Bill line items with categories (BOQ, extra, variation, daywork, etc.)
+- `dx_client_bill_deduction` — Bill deductions with sequence, basis, and computation
+- `dx_variation` — Variation/change order management with approval workflow
+- `dx_escalation_formula` — Escalation formula configuration with weighted components
+- `dx_price_index` — Price index entry and verification for escalation computation
+- `dx_claim` — Claims register with notice deadline tracking and settlement workflow
+- `dx_retention_ledger` — Retention accrual, ceiling tracking, and release management
+- `dx_dlp_tracker` — Defect liability period tracking with release tasks
+- `dx_mos_tracking` — Material on site tracking with automatic reversal
+- `dx_certification_tracking` — Certification workflow with contractual deadline tracking
+- `dx_client_deduction_reconciliation` — Client deduction categorization and reconciliation
+
+**Total new tables in Part 18:** 12  
+**Total new tables across all parts:** 142 (130 + 12 from Part 18)  
+**Total tables modified:** 0  
+**Total rows affected:** 0
+
+---
+
+**Document Status:** ✅ Complete (Part 18 Updated)  
+**Next Step:** Part 19 — Finance, Accounts, Costing & Budget Control
 
 ---
 

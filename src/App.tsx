@@ -27,6 +27,7 @@ import { PlanningDashboard } from './components/PlanningDashboard';
 import { ProcurementDashboard } from './components/ProcurementDashboard';
 import { InventoryDashboard } from './components/InventoryDashboard';
 import { SubcontractorDashboard } from './components/SubcontractorDashboard';
+import { BillingDashboard } from './components/BillingDashboard';
 import { MeasurementDashboard } from './components/MeasurementDashboard';
 
 function App() {
@@ -157,6 +158,8 @@ function App() {
         return <SubcontractorDashboard />;
       case 'measurement':
         return <MeasurementDashboard />;
+      case 'billing':
+        return <BillingDashboard />;
       default:
         return <Dashboard currentProject={context.project} />;
     }
