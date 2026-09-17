@@ -3324,3 +3324,35 @@ Part 14 adds comprehensive procurement management with 12 new tables covering in
 **Total new tables across all parts:** 98 (86 + 12 from Part 14)  
 **Total tables modified:** 0  
 **Total rows affected:** 0
+
+---
+
+## Part 15 — Inventory, Stores & Material Management
+
+Part 15 adds comprehensive inventory and material management with 14 new tables covering append-only stock ledger, GRN extensions with three-way match, issue extensions with cost destination, consumption reconciliation, transfers, returns, adjustments, scrap/damage, stock take with blind count, and valuation configuration.
+
+**New Tables (14):**
+- `dx_stock_ledger` — Append-only stock ledger with hash chaining
+- `dx_grn_extension` — GRN master data extensions with three-way match
+- `dx_grn_item_extension` — GRN line item extensions with batch tracking
+- `dx_issue_extension` — Issue master data extensions with cost destination
+- `dx_material_consumption` — Consumption reconciliation (theoretical vs actual)
+- `dx_material_transfer` — Transfer master with in-transit tracking
+- `dx_material_transfer_item` — Transfer line items
+- `dx_material_return` — Return to store with grading
+- `dx_return_to_vendor` — Return to vendor with debit note
+- `dx_stock_adjustment` — Stock adjustments with approval workflow
+- `dx_scrap_damage` — Scrap and damage tracking
+- `dx_stock_take` — Stock take master with blind count
+- `dx_stock_take_line` — Stock take line items with variance
+- `dx_valuation_config` — Valuation method configuration
+
+**Total new tables in Part 15:** 14  
+**Total new tables across all parts:** 112 (98 + 14 from Part 15)  
+**Total tables modified:** 0  
+**Total rows affected:** 0
+
+---
+
+**Document Status:** ✅ Complete (Part 15 Updated)  
+**Next Step:** Part 16 — Subcontractor & Work Order Management

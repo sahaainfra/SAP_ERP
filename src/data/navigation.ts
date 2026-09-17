@@ -85,6 +85,15 @@ export const navigationData: NavGroup[] = [
     ],
   },
   {
+    key: 'inventory',
+    label: 'Inventory',
+    icon: 'package',
+    order: 28,
+    items: [
+      { key: 'inventory', label: 'Inventory & Material', route: '/inventory', icon: 'package', permission: 'store.view' },
+    ],
+  },
+  {
     key: 'procurement',
     label: 'Procurement',
     icon: 'truck',

@@ -522,6 +522,69 @@
 
 ---
 
+### Inventory & Material Management (Part 15)
+
+| Method | Path | Auth | Permission | Description |
+|---|---|---|---|---|
+| GET | `/api/dx/v1/stock/ledger` | ✅ | store.stock.view | List ledger entries with filters |
+| GET | `/api/dx/v1/stock/position` | ✅ | store.stock.view | Get current stock position |
+| POST | `/api/dx/v1/stock/movement` | ✅ | store.stock.adjust | Post stock movement (only way to move stock) |
+| GET | `/api/dx/v1/stock/ledger/{itemId}` | ✅ | store.stock.view | Item-wise ledger (audit view) |
+| GET | `/api/dx/v1/stock/reconciliation` | ✅ | store.stock.view | Reconcile ledger vs balance field |
+| POST | `/api/dx/v1/stock/baseline` | ✅ | store.stock.adjust | Capture stock baseline |
+| GET | `/api/dx/v1/grn` | ✅ | store.grn.view | List GRNs |
+| POST | `/api/dx/v1/grn` | ✅ | store.grn.create | Create GRN |
+| PUT | `/api/dx/v1/grn/{id}` | ✅ | store.grn.update | Update GRN |
+| POST | `/api/dx/v1/grn/{id}/three-way-match` | ✅ | store.grn.create | Perform three-way match |
+| POST | `/api/dx/v1/grn/{id}/approve` | ✅ | store.grn.approve | Approve GRN |
+| POST | `/api/dx/v1/grn/{id}/reverse` | ✅ | store.grn.reverse | Reverse GRN |
+| POST | `/api/dx/v1/grn/{id}/qc-pass` | ✅ | store.grn.approve | QC pass (release from hold) |
+| POST | `/api/dx/v1/grn/{id}/qc-fail` | ✅ | store.grn.approve | QC fail (move to rejection store) |
+| GET | `/api/dx/v1/issue` | ✅ | store.issue.view | List issues |
+| POST | `/api/dx/v1/issue` | ✅ | store.issue.create | Create issue |
+| PUT | `/api/dx/v1/issue/{id}` | ✅ | store.issue.update | Update issue |
+| POST | `/api/dx/v1/issue/{id}/approve` | ✅ | store.issue.approve | Approve issue |
+| POST | `/api/dx/v1/issue/{id}/reverse` | ✅ | store.issue.reverse | Reverse issue |
+| POST | `/api/dx/v1/issue/compute-theoretical` | ✅ | store.issue.create | Compute theoretical quantity |
+| GET | `/api/dx/v1/consumption` | ✅ | store.consumption.view | List consumption entries |
+| POST | `/api/dx/v1/consumption/compute` | ✅ | store.consumption.view | Compute consumption variance |
+| POST | `/api/dx/v1/consumption/{id}/explain` | ✅ | store.consumption.explain | Submit explanation |
+| POST | `/api/dx/v1/consumption/{id}/review` | ✅ | store.consumption.review | Review consumption |
+| GET | `/api/dx/v1/transfer` | ✅ | store.transfer.view | List transfers |
+| POST | `/api/dx/v1/transfer` | ✅ | store.transfer.create | Create transfer (dispatch) |
+| POST | `/api/dx/v1/transfer/{id}/receive` | ✅ | store.transfer.receive | Receive transfer |
+| GET | `/api/dx/v1/transfer/in-transit` | ✅ | store.transfer.view | List in-transit transfers |
+| GET | `/api/dx/v1/transfer/{id}/ageing` | ✅ | store.transfer.view | Get in-transit ageing |
+| GET | `/api/dx/v1/return` | ✅ | store.return.view | List returns |
+| POST | `/api/dx/v1/return` | ✅ | store.return.create | Create return to store |
+| POST | `/api/dx/v1/return-to-vendor` | ✅ | store.return.create | Create return to vendor |
+| POST | `/api/dx/v1/return/{id}/approve` | ✅ | store.return.approve | Approve return |
+| GET | `/api/dx/v1/adjustment` | ✅ | store.stock.view | List adjustments |
+| POST | `/api/dx/v1/adjustment` | ✅ | store.stock.adjust | Create adjustment |
+| POST | `/api/dx/v1/adjustment/{id}/approve` | ✅ | store.stock.approve_adjustment | Approve adjustment |
+| POST | `/api/dx/v1/scrap` | ✅ | store.scrap.create | Create scrap/damage |
+| POST | `/api/dx/v1/scrap/{id}/approve` | ✅ | store.scrap.approve | Approve scrap/damage |
+| GET | `/api/dx/v1/stocktake` | ✅ | store.stocktake.view | List stock takes |
+| POST | `/api/dx/v1/stocktake` | ✅ | store.stocktake.create | Create stock take |
+| PUT | `/api/dx/v1/stocktake/{id}` | ✅ | store.stocktake.create | Update stock take |
+| POST | `/api/dx/v1/stocktake/{id}/count` | ✅ | store.stocktake.count | Submit count |
+| POST | `/api/dx/v1/stocktake/{id}/recount` | ✅ | store.stocktake.recount | Submit recount |
+| POST | `/api/dx/v1/stocktake/{id}/approve` | ✅ | store.stocktake.approve | Approve stock take |
+| GET | `/api/dx/v1/valuation/config` | ✅ | store.stock.view | Get valuation configs |
+| PUT | `/api/dx/v1/valuation/config/{id}` | ✅ | store.stock.adjust | Update valuation config |
+| GET | `/api/dx/v1/reorder/suggestions` | ✅ | store.reorder.view | Get reorder suggestions |
+| PUT | `/api/dx/v1/reorder/config/{id}` | ✅ | store.reorder.configure | Update reorder config |
+| GET | `/api/dx/v1/stock/ageing` | ✅ | store.stock.view | Get stock ageing analysis |
+| GET | `/api/dx/v1/stock/expiry` | ✅ | store.stock.view | Get expiry alerts |
+| GET | `/api/dx/v1/reports/stock-ledger` | ✅ | store.report.export | Stock ledger report |
+| GET | `/api/dx/v1/reports/consumption-statement` | ✅ | store.report.export | Consumption statement |
+
+---
+
+**Total API Endpoints:** 296 (244 from Parts 1-14 + 52 from Part 15)
+
+---
+
 ## Part 10 — No New Endpoints
 
 Part 10 focuses on security hardening, performance optimization, testing, and deployment. No new API endpoints are required as this part works with the existing 130+ endpoints from Parts 1-9.

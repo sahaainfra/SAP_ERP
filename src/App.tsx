@@ -25,6 +25,7 @@ import FinalAcceptanceValidation from './components/FinalAcceptanceValidation';
 import { MasterDataManagement } from './components/MasterDataManagement';
 import { PlanningDashboard } from './components/PlanningDashboard';
 import { ProcurementDashboard } from './components/ProcurementDashboard';
+import { InventoryDashboard } from './components/InventoryDashboard';
 
 function App() {
   const { theme, resolvedTheme, density, setTheme, setDensity } = useThemeEngine();
@@ -148,6 +149,8 @@ function App() {
         return <PlanningDashboard />;
       case 'procurement':
         return <ProcurementDashboard />;
+      case 'inventory':
+        return <InventoryDashboard />;
       default:
         return <Dashboard currentProject={context.project} />;
     }
