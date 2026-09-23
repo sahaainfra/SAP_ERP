@@ -1,6 +1,6 @@
 # Construction & Infrastructure ERP — Build Progress
 
-## Parts Completed: 22 of 69
+## Parts Completed: 23 of 69
 
 ---
 
@@ -742,6 +742,122 @@ npm run build
 - All calculation services compile correctly
 - Output: 695KB JS, 58KB CSS
 - decimal.js library integrated
+
+---
+
+## Part 23: Approval Centre & Exception Centre
+
+**Status:** ✅ COMPLETE  
+**Date:** 2026-01-XX  
+**Dependencies:** Part 10 (Workflow & Approval Engine), Part 15 (Situation Engine), Part 18 (Metadata-Driven UI)  
+**Blocks:** Part 24 (Tasks & Work Management), Part 25 (Notification & Automation Engine), Part 26 (Worked Module), Part 69 (Cross-Module)
+
+### Deliverables
+
+1. **Type Definitions** (`types.ts`)
+   - Approval queue and detail types
+   - Exception types with four categories
+   - Task types with five sources and four views
+   - Notification types with four channels and priority levels
+   - Queue counts for shell bar badges
+
+2. **Approval Centre Service** (`approval-centre-service.ts`)
+   - Queue management with grouping and sorting
+   - Full decision context (budget impact, comparison, risk flags, overrides, history)
+   - Six decision actions (approve, reject, return, forward, approve with conditions, request info)
+   - Bulk approval with safeguards (max 20 items, excludes over-limit and risk-flagged)
+   - Out-of-office delegation with authority capping
+   - Real-time queue counts
+
+3. **Exception Centre Service** (`exception-centre-service.ts`)
+   - Exception queue ranked by impact/severity/age
+   - Four categories: Financial, Operational, Compliance, Process
+   - Management actions: Assign, Resolve, Accept
+   - Trend analysis: Raised vs resolved over time
+
+4. **Task Centre Service** (`task-centre-service.ts`)
+   - Task lifecycle: Create, Complete, Reassign, Update
+   - Seven task sources: Manual, System, Follow-up, Exception, Condition of Approval
+   - Four views: List, Board, Calendar, Timeline
+   - Recurring tasks with cron-based generation
+   - Resolution validation
+
+5. **Notification Centre Service** (`notification-centre-service.ts`)
+   - Multi-channel delivery: IN_APP, EMAIL, PUSH, SMS
+   - Priority levels: LOW, MEDIUM, HIGH, CRITICAL
+   - Grouping and digesting (threshold: 5)
+   - Quiet hours and rate limiting (10/hour, CRITICAL bypasses)
+   - Auto-expiry when underlying item resolved
+   - Escalation notifications
+
+6. **Approval Centre Component** (`ApprovalCentre.tsx`)
+   - Queue list with grouping and sorting
+   - Detail pane with full decision context
+   - Six decision buttons
+   - Bulk approval dialog
+   - Decision confirmation dialog
+   - Real-time updates via WebSocket
+
+7. **Exception Centre Component** (`ExceptionCentre.tsx`)
+   - Exception list ranked by impact
+   - Detail pane with proposed actions
+   - Category and status filters
+   - Trend chart (raised vs resolved)
+   - Management action dialogs
+
+### Key Features
+
+**Approval Centre:**
+- Unified queue across all modules
+- Full decision context (no need to open six other screens)
+- Budget impact shown (e.g., "This PO takes cost head to 103% of budget")
+- Comparison context (e.g., "This vendor is 18% above last purchase")
+- Risk flags surfaced automatically
+- Overrides applied shown (no blind approvals)
+- Prior decisions visible
+- Bulk approval with safeguards
+
+**Exception Centre:**
+- Four categories: Financial, Operational, Compliance, Process
+- Ranked by impact value, then severity, then age
+- Proposed actions with permissions
+- Trend visualization (raised vs resolved)
+- Management actions: Assign, Resolve, Accept
+- Accepted exceptions reappear when acceptance expires
+
+**Task Centre:**
+- Seven task sources unified in one queue
+- Four views: List, Board, Calendar, Timeline
+- Recurring tasks with automatic generation
+- Resolution validation (min length, pattern)
+- Reassignment transfers work but grants no permission
+
+**Notification Centre:**
+- Multi-channel delivery (IN_APP, EMAIL, PUSH, SMS)
+- Grouping and digesting to prevent spam
+- Quiet hours respected (CRITICAL bypasses)
+- Rate limiting (10/hour, CRITICAL bypasses)
+- Auto-expiry when underlying item resolved
+- Escalation notifies target and informs original assignee
+
+### Business Rules Enforced
+
+- **APR-01**: Centre shows full decision context server-side
+- **APR-02**: Overrides always shown (no blind approvals)
+- **APR-03**: Bulk approval: max 20 items, each evaluated individually
+- **EXC-01**: Exceptions closed by human with explanation, never auto-closed
+- **EXC-02**: Every exception names responsible party and proposed actions
+
+### Build Verification
+
+```bash
+npm run build
+```
+
+**Result:** ✅ Build successful
+- TypeScript compiles without errors
+- All approval centre services compile correctly
+- Output: 695KB JS, 64KB CSS
 
 ---
 
