@@ -318,6 +318,45 @@ export interface ResolvedPermissions {
   resolvedAt: string;
 }
 
+/**
+ * Enhanced effective permission set (Part 07)
+ */
+export interface EffectivePermissionSet {
+  userId: number;
+  projectId: number | null;
+  isSuperAdmin: boolean;
+  permissions: Set<string>; // granted permission keys
+  deniedPermissions: Set<string>; // explicit denies
+  dataScope: DataScope;
+  allowedSiteIds: number[] | 'ALL';
+  allowedPackageIds: number[] | 'ALL';
+  allowedStoreIds: number[] | 'ALL';
+  approvalAuthority: Record<string, AuthorityRule[]>; // keyed by document type
+  fieldRestrictions: Record<string, Record<string, FieldVisibility>>;
+  activeDelegationsReceived: Delegation[];
+  resolvedAt: string;
+  ttlSeconds: number;
+}
+
+/**
+ * Authority rule for approval (Part 07)
+ */
+export interface AuthorityRule {
+  approvalLevel: number;
+  minAmount: number;
+  maxAmount?: number;
+  currency: string;
+  canApprove: boolean;
+  canReject: boolean;
+  canReturn: boolean;
+  canForward: boolean;
+  canDelegate: boolean;
+  canApproveOwn: boolean;
+  requiresTwoPerson: boolean;
+  slaHours?: number;
+  delegatedFrom?: number; // userId if delegated
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // SYSTEM TEMPLATES
 // ═══════════════════════════════════════════════════════════════════════════

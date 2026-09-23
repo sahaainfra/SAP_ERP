@@ -1,6 +1,6 @@
 # Construction & Infrastructure ERP — Build Progress
 
-## Parts Completed: 6 of 69
+## Parts Completed: 7 of 69
 
 ---
 
@@ -221,6 +221,88 @@ npm run build
 - All permission services compile correctly
 - Database migration validated
 - Output: 663KB JS, 57KB CSS
+
+---
+
+## Part 07: Permission Resolution, Super Admin Console & Segregation of Duties
+
+**Status:** ✅ COMPLETE  
+**Date:** 2026-01-XX  
+**Dependencies:** Part 06 (Permission Model)  
+**Blocks:** Part 08 (Permission Engine - Server-Side)
+
+### Deliverables
+
+1. **Enhanced Permission Resolver** (`enhanced-resolver.ts`)
+   - 9-step resolution algorithm
+   - Super Admin bypass with 60s cache
+   - In-memory cache with 300s TTL
+   - Cache invalidation by user/project
+   - Delegation authority capping
+
+2. **Actor Interface** (`actor.ts`)
+   - Permission checking (can, assertCan)
+   - Project filtering (projectsWith)
+   - Approval authority (authorityFor, canApprove)
+   - Data scope (scope)
+   - Field restrictions (restrictedFields, isFieldVisible/Masked/Hidden)
+   - Delegation tracking (activeDelegations, isActingOnBehalfOf)
+
+3. **SoD Evaluator** (`sod-evaluator.ts`)
+   - Checks audit log for actual violations
+   - Pre-action violation checking
+   - Nightly evaluation for all users
+   - 10 seeded SoD rules
+
+4. **Impact Preview Service** (`impact-preview.ts`)
+   - Preview assignment revocation
+   - Preview assignment creation
+   - Preview assignment modification
+   - Orphaned approval detection
+   - Permission change calculation
+
+5. **Super Admin Console** (`SuperAdminConsole.tsx`)
+   - View A: By Project (see all assignments)
+   - View B: By User (see all projects)
+   - View C: Matrix (users × projects grid)
+   - Assignment editor with 5 tabs
+   - Impact preview in footer
+   - Safety rails (reason required, warnings)
+
+### Business Rules Enforced
+
+- **RES-01**: Inactive user short-circuits to empty set
+- **RES-02**: DENY applied after GRANT, explicit deny always wins
+- **RES-03**: Delegation resolved from delegator's project keys only
+- **RES-04**: Assignment change that orphans approvals refused
+- **SOD-01**: SoD evaluated against audit log (actual actions)
+- **SOD-02**: Exemption without expiry = no rule
+
+### Caching Strategy
+
+- **Cache Key:** `perm:{userId}:{projectId}`
+- **TTL:** 300 seconds (5 minutes)
+- **Super Admin TTL:** 60 seconds (1 minute)
+- **Invalidation:** Explicit deletion + real-time event
+
+### Four Enforcement Points
+
+1. **Route Guard** - Check permission before controller
+2. **Query Filter** - Rewrite query with scope predicate
+3. **Field Masking** - Strip/mask before serialization
+4. **Action Validation** - Re-check before state change
+
+### Build Verification
+
+```bash
+npm run build
+```
+
+**Result:** ✅ Build successful
+- TypeScript compiles without errors
+- All permission services compile correctly
+- Super Admin Console UI compiles
+- Output: 695KB JS, 58KB CSS
 
 ---
 

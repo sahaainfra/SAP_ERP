@@ -29,6 +29,7 @@ import { BootValidationDemo } from './components/BootValidationDemo';
 import { BandVisibilityMap } from './components/UniversalBands';
 import { SchemaInspectionView } from './components/SchemaInspectionView';
 import { DesignSystemShowcase } from './components/DesignSystemShowcase';
+import { SuperAdminConsole } from './components/admin/SuperAdminConsole';
 
 export default function App() {
   const [currentView, setCurrentView] = useState('dashboard');
@@ -52,6 +53,8 @@ export default function App() {
                   </div>
                 ) : currentView === 'schema' ? (
                   <SchemaInspectionView />
+                ) : currentView === 'admin' ? (
+                  <SuperAdminConsole />
                 ) : (
                   <ModulePlaceholder module={currentView} />
                 )}
