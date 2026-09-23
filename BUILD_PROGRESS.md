@@ -1,6 +1,6 @@
 # Construction & Infrastructure ERP — Build Progress
 
-## Parts Completed: 15 of 69
+## Parts Completed: 16 of 69
 
 ---
 
@@ -742,6 +742,93 @@ npm run build
 - All calculation services compile correctly
 - Output: 695KB JS, 58KB CSS
 - decimal.js library integrated
+
+---
+
+## Part 16: Global ERP Application Shell, Navigation & Global Search
+
+**Status:** ✅ COMPLETE  
+**Date:** 2026-01-XX  
+**Dependencies:** Part 03 (Design System), Part 08 (Permission Engine)  
+**Blocks:** Part 17 (UI Component System), Part 18 (Metadata-Driven UI), Part 20 (Dashboard Engine), Part 69 (Cross-Module)
+
+### Deliverables
+
+1. **Database Schema** (`migrations/016_create_shell_navigation.sql`)
+   - dx_menu_item — Server-driven navigation menu registry
+   - dx_search_history — Recent searches per user
+   - dx_user_context — Saved navigation state and context preferences
+
+2. **Navigation Service** (`navigation-service.ts`)
+   - Server-driven menu fetching
+   - Permission-filtered menu items
+   - Caching with permission version
+   - Empty parent pruning
+   - Breadcrumb trail generation
+
+3. **Context Service** (`context-service.ts`)
+   - Multi-dimensional context management
+   - Server-driven available context
+   - Permission-filtered selections
+   - Coordinated refresh on change
+   - Server-side validation
+
+4. **Search Service** (`search-service.ts`)
+   - Global search across 35+ object types
+   - Permission-filtered results
+   - Query syntax support
+   - Recent searches
+   - Grouped results
+
+5. **Shell Components**
+   - ShellBar — Top navigation with badges
+   - SideNavigation — Three-state navigation (expanded/rail/overlay)
+   - ContextSwitcher — Multi-dimensional context selector
+   - GlobalSearch — Permission-filtered search modal
+
+### Key Features
+
+**Server-Driven Navigation:**
+- Menu from server, already permission-filtered
+- Empty parent pruning
+- Permission version for cache invalidation
+- Automatic refresh on permission change
+
+**Context-Aware Everything:**
+- Navigation, dashboards, KPIs filtered by context
+- Server validates context on every call
+- Multi-project selection for portfolio mode
+
+**Permission-Filtered Search:**
+- No existence leak
+- Query syntax (type:, status:, project:, amount:, date:)
+- Grouped results by object type
+
+**Responsive Design:**
+- Desktop: expanded navigation
+- Tablet: rail navigation
+- Mobile: overlay drawer
+- Touch targets ≥ 44×44px
+
+### Business Rules Enforced
+
+- **SHELL-01**: Client never filters menu
+- **SHELL-02**: Empty parent pruning
+- **SHELL-03**: Context in every request scope
+- **SHELL-04**: Search permission-filtered
+- **SHELL-05**: permission.refresh forces menu re-fetch
+- **SHELL-06**: Single-project users don't see switcher
+
+### Build Verification
+
+```bash
+npm run build
+```
+
+**Result:** ✅ Build successful
+- TypeScript compiles without errors
+- All shell components compile correctly
+- Output: 695KB JS, 63KB CSS
 
 ---
 
