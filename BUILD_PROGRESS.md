@@ -1,6 +1,6 @@
 # Construction & Infrastructure ERP — Build Progress
 
-## Parts Completed: 9 of 69
+## Parts Completed: 10 of 69
 
 ---
 
@@ -520,6 +520,81 @@ npm run build
 **Result:** ✅ Build successful
 - TypeScript compiles without errors
 - All document framework components compile correctly
+- Output: 695KB JS, 58KB CSS
+
+---
+
+## Part 10: Workflow & Approval Engine
+
+**Status:** ✅ COMPLETE  
+**Date:** 2026-01-XX  
+**Dependencies:** Part 09 (Document Framework)  
+**Blocks:** Part 23 (Approval Centre), Part 24 (Task Centre), Part 26 (Worked Module), Part 69 (Cross-Module)
+
+### Deliverables
+
+1. **Database Schema** (`migrations/010_create_workflow_engine.sql`)
+   - dx_workflow_definition — Workflow definitions with versioning
+   - dx_workflow_step — Steps with approver rules, SLA, escalation
+   - dx_workflow_instance — Running workflow instances (immutable)
+   - dx_workflow_task — Tasks assigned to approvers
+   - dx_workflow_log — Immutable audit log
+   - dx_substitution — Out-of-office substitution rules
+   - dx_working_calendar — Working days/hours for SLA
+
+2. **Approver Resolver** (`approver-resolver.ts`)
+   - 9 approver rule types (AME-style)
+   - Sanitization rules (self-approval, SoD, substitutions)
+   - Gap reporting
+
+3. **Workflow Engine** (`workflow-engine.ts`)
+   - start() — Initialize workflow on document submission
+   - activateNextStep() — Evaluate preconditions, resolve approvers
+   - decide() — Process approval/rejection/return decisions
+   - 6 decision actions (approve, reject, return, request info, delegate, approve with conditions)
+
+4. **SLA Service** (`sla-service.ts`)
+   - Working calendar support
+   - Due date calculation
+   - Overdue duration tracking
+
+5. **Workflow Seeds** (`workflow-seeds.ts`)
+   - PO_APPROVAL_WORKFLOW
+   - CLIENT_BILL_WORKFLOW
+   - SC_BILL_WORKFLOW
+   - MB_WORKFLOW
+   - PAYMENT_WORKFLOW
+
+### Key Features
+
+**Value-Driven Authority Chain** — Walks up approval authority based on document value  
+**Escalation Rules** — Configurable stages (remind, notify supervisor, reassign, auto-approve)  
+**Substitution** — Out-of-office with two-deep chain limit  
+**Content Hash Tamper Detection** — Prevents post-submission edits  
+**Working Calendar Support** — Project-specific working days and holidays  
+**Approval Card Contract** — Server-computed decision context with risk flags  
+
+### Business Rules Enforced
+
+- **WF-01**: Submitter can never approve own document
+- **WF-02**: SoD conflicts removed from approver list
+- **WF-03**: Document exceeding all authority fails submission
+- **WF-04**: DOCUMENT_CHANGED_SINCE_SUBMISSION if content hash changed
+- **WF-05**: Rejection requires reason
+- **WF-06**: Editing active workflow not permitted (new version required)
+- **WF-07**: AUTO_APPROVE only for explicitly declared types
+- **WF-08**: Approver on leave with no substitute reported as gap
+- **WF-09**: Bulk approval capped at 20 items
+
+### Build Verification
+
+```bash
+npm run build
+```
+
+**Result:** ✅ Build successful
+- TypeScript compiles without errors
+- All workflow components compile correctly
 - Output: 695KB JS, 58KB CSS
 
 ---
