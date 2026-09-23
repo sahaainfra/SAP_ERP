@@ -185,7 +185,12 @@ export type EventType =
   | 'alert.raised'
   | 'alert.cleared'
   | 'sla.at_risk'
-  | 'sla.breached';
+  | 'sla.breached'
+  
+  // Situations
+  | 'situation.raised'
+  | 'situation.resolved'
+  | 'situation.escalated';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CHANNEL TYPES

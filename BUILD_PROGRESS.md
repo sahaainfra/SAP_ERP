@@ -1,6 +1,6 @@
 # Construction & Infrastructure ERP — Build Progress
 
-## Parts Completed: 14 of 69
+## Parts Completed: 15 of 69
 
 ---
 
@@ -742,6 +742,104 @@ npm run build
 - All calculation services compile correctly
 - Output: 695KB JS, 58KB CSS
 - decimal.js library integrated
+
+---
+
+## Part 15: Analytical View Layer, KPI Service & Batch Framework
+
+**Status:** ✅ COMPLETE  
+**Date:** 2026-01-XX  
+**Dependencies:** Part 11 (Posting Engines), Part 12 (Calculation Engines), Part 14 (KPI/Alert/SLA Engines)  
+**Blocks:** Part 17 (UI Component System), Part 20 (Dashboard Engine), Part 58 (MIS & Reporting), Part 67 (Performance), Part 69 (Cross-Module)
+
+### Deliverables
+
+1. **Database Schema** (`migrations/015_create_analytical_batch.sql`)
+   - dx_job_run — Batch job execution history
+   - dx_realtime_delivery — Gap recovery tracking
+
+2. **Batch Job Framework** (`batch-job-framework.ts`)
+   - Job registration and scheduling
+   - Execution with timeout and abort
+   - Failure alerting (P1, WARNING, NONE)
+   - Job run history and monitoring
+
+3. **Real-Time Fan-Out Service** (`realtime-fanout.ts`)
+   - Per-subscriber payload construction
+   - Permission-filtered distribution
+   - Throttling and coalescing (device-specific)
+   - Gap recovery support
+
+4. **KPI Service** (`kpi-service.ts`)
+   - Batched KPI endpoint
+   - Permission filtering
+   - Health evaluation
+   - Trend data and drill-down
+
+5. **Situation Engine** (`situation-engine.ts`)
+   - Event-driven detection
+   - Responsible party assignment
+   - Auto-resolve conditions
+   - Escalation and suppression
+
+6. **Offline Sync Service** (`sync-service.ts`)
+   - Idempotency checking
+   - Allow-list enforcement
+   - Per-entity conflict resolvers
+   - Clock skew recording
+
+### Key Features
+
+**Three-Tier View Stack:**
+- Basic (vw_dx_b_*) — 1:1 to tables
+- Composite (vw_dx_c_*) — joins and semantics
+- Consumption (vw_dx_q_*) — aggregation for dashboards
+
+**Per-Subscriber Fan-Out:**
+- Never broadcast to rooms
+- Permission-filtered payload construction
+- Two users on same project receive different numbers (correct behavior)
+
+**Throttling & Coalescing:**
+- DESKTOP: 400ms, TABLET: 800ms, PHONE: 1500ms
+- Max batch: 50 events
+- Urgent events bypass buffering
+
+**Batch Job Groups:**
+- REALTIME (5s), HOURLY, NIGHTLY, MONTH_END, ON_DEMAND
+
+**Offline Sync Conflict Resolution:**
+- Attendance: duplicate detection, out-punch merge
+- Measurement Book: certification check, content hash comparison
+- DPR: date-based duplicate detection
+
+### Business Rules Enforced
+
+- **AN-01**: Three-tier view stack is strict
+- **AN-02**: No analytical view bypasses permission filter
+- **AN-03**: Long-running work runs as batch job
+- **AN-04**: Every batch job records start, end, outcome
+- **AN-05**: Situation names responsible party and proposed actions
+- **AN-06**: Situations closed by human, never auto-closed by time
+
+### Performance Budgets
+
+- WebSocket connect + auth: ≤ 300ms
+- Event → client render: ≤ 3s
+- `/kpi/batch` with 20 KPIs: ≤ 800ms
+- Consumption view query: ≤ 300ms
+- Fan-out to 200 recipients: ≤ 2s
+
+### Build Verification
+
+```bash
+npm run build
+```
+
+**Result:** ✅ Build successful
+- TypeScript compiles without errors
+- All analytical services compile correctly
+- Output: 695KB JS, 59KB CSS
 
 ---
 
