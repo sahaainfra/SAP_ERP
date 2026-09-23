@@ -1,6 +1,6 @@
 # Construction & Infrastructure ERP — Build Progress
 
-## Parts Completed: 11 of 69
+## Parts Completed: 12 of 69
 
 ---
 
@@ -678,6 +678,70 @@ npm run build
 - TypeScript compiles without errors
 - All posting services compile correctly
 - Output: 695KB JS, 58KB CSS
+
+---
+
+## Part 12: Calculation Engines — Money, Measurement, Rates, Tax & Payroll
+
+**Status:** ✅ COMPLETE  
+**Date:** 2026-01-XX  
+**Dependencies:** Part 09 (Document Framework)  
+**Blocks:** Part 15 (Analytical View Layer), Part 26 (Worked Module), Part 30 (Estimation), Part 69 (Cross-Module)
+
+### Deliverables
+
+1. **Money Value Object** (`money.ts`)
+   - Integer minor units (bigint) to avoid floating-point errors
+   - Currency enforcement (cannot mix currencies)
+   - Largest-remainder allocation method
+   - Multiple rounding modes (HALF_UP, HALF_EVEN, CEIL, FLOOR)
+   - Indian formatting (lakh/crore grouping)
+
+2. **Quantity Value Object** (`quantity.ts`)
+   - Carries unit of measure (UoM)
+   - Prevents arithmetic across different units
+   - Forces explicit conversion before mixing units
+
+3. **UoM Conversion Service** (`uom-service.ts`)
+   - Direct, inverse, and single-hop conversions
+   - Item-specific and global conversion factors
+   - Never infers or defaults to 1
+   - Pre-seeded with common construction units
+
+4. **Expression Evaluator** (`expression-evaluator.ts`)
+   - Sandboxed expression evaluation
+   - Whitelisted functions only
+   - No eval, no property access, no I/O
+   - Step budget and depth limits
+   - AST caching for performance
+
+5. **Rate Resolver** (`rate-resolver.ts`)
+   - Effective-dated rate resolution
+   - Scope precedence: RATE_CONTRACT > PROJECT > VENDOR > COMPANY > GLOBAL
+   - Caching with TTL (10 minutes)
+   - Returns rate source ID for audit trail
+
+### Business Rules Enforced
+
+- **CALC-01**: Money is never floating-point — integer minor units
+- **CALC-02**: Arithmetic across different UoM throws unless routed through conversion
+- **CALC-03**: Expression evaluator is sandboxed — no I/O, no host access
+- **CALC-04**: Rate resolution is effective-dated by document date
+- **CALC-05**: Deductions apply in declared, configurable order
+- **CALC-06**: Allocation of rounded total sums exactly back to total
+- **CALC-07**: RATE_NOT_FOUND is an error, not a zero
+
+### Build Verification
+
+```bash
+npm run build
+```
+
+**Result:** ✅ Build successful
+- TypeScript compiles without errors
+- All calculation services compile correctly
+- Output: 695KB JS, 58KB CSS
+- decimal.js library integrated
 
 ---
 
