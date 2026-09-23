@@ -1,6 +1,6 @@
 # Construction & Infrastructure ERP — Build Progress
 
-## Parts Completed: 8 of 69
+## Parts Completed: 9 of 69
 
 ---
 
@@ -401,6 +401,125 @@ npm run build
 **Result:** ✅ Build successful
 - TypeScript compiles without errors
 - All permission engine components compile correctly
+- Output: 695KB JS, 58KB CSS
+
+---
+
+## Part 09: Document Framework — Draft, State, Numbering, Audit & Outbox
+
+**Status:** ✅ COMPLETE  
+**Date:** 2026-01-XX  
+**Dependencies:** Part 05 (API Contract), Part 08 (Permission Engine)  
+**Blocks:** Part 10 (Workflow), Part 11 (Posting Engines), Part 12 (Calculation), Part 13 (Real-Time), Part 26 (Worked Module), Part 27 (Organization), Part 64 (Backup), Part 69 (Cross-Module)
+
+### Deliverables
+
+1. **Database Schema** (`migrations/009_create_document_framework.sql`)
+   - dx_document_draft — RAP-style draft/active split
+   - dx_audit_log — Hash-chained audit trail
+   - dx_event_outbox — Transactional outbox
+   - dx_number_series — Document number series
+   - dx_number_allocation — Number allocation audit
+   - dx_number_gap — Gap tracking for rollbacks
+
+2. **19-State Vocabulary** (`types.ts`)
+   - Standardized state machine across all documents
+   - Terminal states: CERTIFIED, POSTED, PAID, CLOSED, CANCELLED, SUPERSEDED
+   - Immutable terminal states (no unlock)
+
+3. **State Machine** (`state-machine.ts`)
+   - Validates state transitions
+   - Enforces terminal state immutability
+   - Common transitions pre-defined
+
+4. **Draft Service** (`draft-service.ts`)
+   - Autosave every 10s / on blur
+   - Activation in one transaction
+   - Concurrency check via base version
+   - Configurable expiry per document type
+
+5. **Number Series Service** (`number-series-service.ts`)
+   - Row-level locking prevents duplicates
+   - Scope-based: GLOBAL, COMPANY, PROJECT
+   - Pattern rendering with placeholders
+   - Gap tracking for audit compliance
+   - Warn threshold for exhaustion
+
+6. **Audit Writer** (`audit-writer.ts`)
+   - SHA-256 hash chain for tamper detection
+   - Append-only enforcement at database level
+   - Nightly chain verification
+   - Comprehensive coverage of all actions
+
+7. **Outbox Service** (`outbox-service.ts`)
+   - Transactional outbox pattern
+   - Events written inside transaction
+   - Asynchronous relay with retry
+   - Exponential backoff, max 10 attempts
+   - Dead letter queue for failed events
+
+8. **Document Service** (`document-service.ts`)
+   - 12-step execute path for all documents
+   - Determinations (derived values)
+   - Validations (business rules)
+   - Permission checks
+   - State transitions
+   - Audit + events
+
+### 12-Step Execute Path
+
+1. Permission check
+2. Initialize context
+3. Run determinations (derive totals, rates)
+4. Run validations (business rules)
+5. Allocate number (if allocateOn = CREATE)
+6. Set initial state (DRAFT + content hash)
+7. Persist to database
+8. Audit CREATE action
+9. Emit outbox events
+10. Execute action (for state transitions)
+11. Update state + content hash
+12. Audit + emit events
+
+### Business Rules Enforced
+
+- **DOC-01**: Unmapped legacy status throws loudly
+- **DOC-02**: Draft never allocates number, affects stock, or posts
+- **DOC-03**: Client-supplied determined field is ignored and recomputed
+- **DOC-04**: Terminal document rejects every mutating action
+- **DOC-05**: Number lost to rollback is never reused
+- **DOC-06**: Statutorily continuous series doesn't use buffered path
+- **DOC-07**: Outbox event emitted inside transaction
+
+### Key Features
+
+**Determinations** — Derived values recomputed on every change:
+- Line amounts (quantity × rate - discount + tax)
+- Document totals
+- Tax calculations (CGST, SGST, IGST)
+- Client values ignored and recomputed
+
+**Immutability Guard** — Terminal documents reject mutations:
+- No unlock action
+- Correction paths: revised MB, reversal voucher, supplementary run
+
+**Two-Person Actions** — For high-risk operations:
+- Sealed RFQ opening, backup download, restore execution
+- Payroll approval, bank file release
+
+**Content Hash** — Prevents post-approval tampering:
+- Hash covers business-material fields only
+- Mismatch raises P1 alert
+
+### Build Verification
+
+```bash
+npm run build
+```
+
+**Result:** ✅ Build successful
+- TypeScript compiles without errors
+- All document framework components compile correctly
 - Output: 695KB JS, 58KB CSS
 
 ---

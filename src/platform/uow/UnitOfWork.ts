@@ -13,6 +13,8 @@
  * - Long-running work runs as batch job, not request transaction
  */
 
+import { Actor } from '../permission/actor';
+
 // Browser-compatible UUID generator
 function randomUUID(): string {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -30,14 +32,8 @@ function randomUUID(): string {
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════
 
-export interface Actor {
-  userId: string;
-  roles: string[];
-  permissions: string[];
-  ipAddress: string;
-  userAgent: string;
-  impersonatedBy?: string;
-}
+// Re-export Actor from permission module
+export { Actor };
 
 export interface AuditEntry {
   entity: string;
