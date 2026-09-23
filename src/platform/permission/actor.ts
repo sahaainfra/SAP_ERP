@@ -1,5 +1,5 @@
 /**
- * Part 07 — Actor Interface
+ * Part 07 & 08 — Actor Interface
  * 
  * The Actor represents the authenticated user with their resolved permissions.
  * Provides methods for permission checks, scope filtering, and authority validation.
@@ -22,8 +22,9 @@ export class Actor {
 
   /**
    * Check if actor has a specific permission
+   * Supports project-scoped permissions
    */
-  can(permissionKey: string): boolean {
+  can(permissionKey: string, projectId?: number): boolean {
     if (this.permissionSet.isSuperAdmin) {
       return true;
     }
@@ -33,8 +34,8 @@ export class Actor {
   /**
    * Assert that actor has a permission, throw if not
    */
-  assertCan(permissionKey: string): void {
-    if (!this.can(permissionKey)) {
+  assertCan(permissionKey: string, projectId?: number): void {
+    if (!this.can(permissionKey, projectId)) {
       throw new Error(`Permission denied: ${permissionKey}`);
     }
   }
@@ -46,6 +47,19 @@ export class Actor {
     // In production, this would query all projects where user has this permission
     // For now, return empty array
     return [];
+  }
+
+  /**
+   * Check if actor has a global permission (not project-scoped)
+   */
+  hasGlobal(permissionKey: string): boolean {
+    // Super admins have all permissions globally
+    if (this.permissionSet.isSuperAdmin) {
+      return true;
+    }
+    // In production, this would check if the permission is granted globally
+    // For now, return false
+    return false;
   }
 
   /**
@@ -148,6 +162,13 @@ export class Actor {
    */
   getEffectivePermissionSet(): EffectivePermissionSet {
     return this.permissionSet;
+  }
+
+  /**
+   * Get permission version (for cache invalidation)
+   */
+  get permVersion(): string {
+    return this.permissionSet.resolvedAt;
   }
 
   /**

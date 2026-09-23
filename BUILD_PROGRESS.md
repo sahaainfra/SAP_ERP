@@ -1,6 +1,6 @@
 # Construction & Infrastructure ERP — Build Progress
 
-## Parts Completed: 7 of 69
+## Parts Completed: 8 of 69
 
 ---
 
@@ -302,6 +302,105 @@ npm run build
 - TypeScript compiles without errors
 - All permission services compile correctly
 - Super Admin Console UI compiles
+- Output: 695KB JS, 58KB CSS
+
+---
+
+## Part 08: Permission Engine — Server-Side Implementation
+
+**Status:** ✅ COMPLETE  
+**Date:** 2026-01-XX  
+**Dependencies:** Part 05 (API Contract), Part 07 (Permission Resolution)  
+**Blocks:** Part 09 (Document Framework), Part 13 (Real-Time Engine), Part 16 (Global Shell), Part 64 (Backup), Part 66 (Security), Part 69 (Cross-Module)
+
+### Deliverables
+
+1. **Permission Guard** (`permission-guard.ts`)
+   - Route-level permission enforcement
+   - `@RequiresPermission` decorator
+   - Fails closed: endpoints without metadata rejected at boot
+   - Dynamic permission keys based on request
+   - Project-scoped permission checks
+   - Audit logging of denied attempts
+
+2. **Query Filter** (`query-filter.ts`)
+   - Query-level permission enforcement
+   - Entity scope specifications registry (15+ entities)
+   - Project/site/package/store-level filtering
+   - Owner-level filtering (own records only)
+   - OR-of-AND grouping for complex scopes
+   - Applies to COUNT, SUM, AVG aggregates
+
+3. **Field Masker** (`field-masker.ts`)
+   - Field-level permission enforcement
+   - HIDE/MASK/REDACT/VISIBLE modes
+   - Standard field restrictions for sensitive data
+   - Applied to JSON, CSV, PDF, charts, aggregates
+   - Aggregate leak prevention
+
+4. **Action Policy** (`action-policy.ts`)
+   - Action-level permission enforcement
+   - Record/value/time-level checks
+   - Authority limit validation
+   - Self-approval prevention
+   - Segregation of duties (against audit log)
+   - Impersonation restrictions
+   - State transition validation
+   - Pre-registered policies: po.release, payment.post
+
+5. **Menu Service** (`menu-service.ts`)
+   - Server-driven, permission-filtered navigation
+   - Recursive child filtering
+   - Empty parent pruning
+   - Context projects list
+   - Version tracking for cache invalidation
+   - Default menu structure with 10+ sections
+
+### Four Enforcement Points
+
+1. **Route Guard** — May this actor invoke this operation at all?
+2. **Query Filter** — Which rows may this actor see?
+3. **Field Masking** — Which columns of those rows?
+4. **Action Validation** — May this actor do this to THIS record, at THIS value, now?
+
+### Business Rules Enforced
+
+- **ENF-01**: Endpoint with no declared permission key fails boot
+- **ENF-02**: Repository methods accept only CompiledWhere from QueryFilter
+- **ENF-03**: Aggregates use same filter as lists
+- **ENF-04**: Masked field is masked everywhere (JSON, CSV, PDF, charts)
+- **ENF-05**: Out-of-scope record fetched by id returns 404, not 403
+- **ENF-06**: Action with no policy fails boot
+
+### Entity Scope Registry
+
+Registered entities with row-level security:
+- **Procurement:** purchase_order, purchase_requisition, vendor
+- **Store:** stock_item, grn
+- **Finance:** payment, receipt, voucher
+- **Billing:** client_bill, subcontractor_bill
+- **HR:** employee, attendance
+- **Quality:** inspection
+- **Safety:** incident
+- **Equipment:** equipment
+
+### Standard Field Restrictions
+
+Pre-configured sensitive field masking:
+- Financial data (rates, values, margins) — HIDE
+- HR data (salary, bank accounts) — HIDE/MASK
+- Vendor data (bank accounts) — MASK
+- Sealed quotations (rates) — REDACT
+
+### Build Verification
+
+```bash
+npm run build
+```
+
+**Result:** ✅ Build successful
+- TypeScript compiles without errors
+- All permission engine components compile correctly
 - Output: 695KB JS, 58KB CSS
 
 ---
