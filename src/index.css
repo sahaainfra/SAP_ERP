@@ -1,0 +1,126 @@
+@import "tailwindcss";
+
+/* Import design system tokens */
+@import "./styles/tokens.css";
+@import "./styles/tokens-erp.css";
+
+/*
+ * Part 03 — Design System
+ * 
+ * SAP Horizon-aligned enterprise design system.
+ * All color, spacing, and typography decisions come from tokens.
+ * No hard-coded hex values in components.
+ */
+
+:root {
+  /* Primary palette — SAP Fiori-inspired */
+  --dx-brand-50: #eff6ff;
+  --dx-brand-100: #dbeafe;
+  --dx-brand-200: #bfdbfe;
+  --dx-brand-500: #3b82f6;
+  --dx-brand-600: #2563eb;
+  --dx-brand-700: #1d4ed8;
+  --dx-brand-800: #1e40af;
+  --dx-brand-900: #1e3a8a;
+
+  /* Semantic colours */
+  --dx-success: #10b981;
+  --dx-warning: #f59e0b;
+  --dx-critical: #ef4444;
+  --dx-info: #3b82f6;
+
+  /* Neutral scale */
+  --dx-bg-primary: #f8fafc;
+  --dx-bg-surface: #ffffff;
+  --dx-border: #e2e8f0;
+  --dx-text-primary: #1e293b;
+  --dx-text-secondary: #64748b;
+  --dx-text-muted: #94a3b8;
+
+  /* Spacing scale (4px base) */
+  --dx-space-1: 4px;
+  --dx-space-2: 8px;
+  --dx-space-3: 12px;
+  --dx-space-4: 16px;
+  --dx-space-6: 24px;
+  --dx-space-8: 32px;
+
+  /* Border radius */
+  --dx-radius-sm: 6px;
+  --dx-radius-md: 8px;
+  --dx-radius-lg: 12px;
+  --dx-radius-xl: 16px;
+
+  /* Shadows */
+  --dx-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --dx-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --dx-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+}
+
+/* Base styles */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  font-family: '72', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Focus styles for accessibility */
+*:focus-visible {
+  outline: 2px solid var(--dx-brand-500);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Animation utilities */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Skeleton shimmer animation */
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Print styles */
+@media print {
+  header, aside, nav {
+    display: none !important;
+  }
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}

@@ -1,0 +1,248 @@
+/**
+ * Part 03 — ERP Semantic Token Layer
+ * 
+ * Maps SAP tokens to ERP-specific business meanings.
+ * Components use these names, never the raw SAP names.
+ * This keeps business meaning readable in the code.
+ */
+
+:root {
+  /* ═══════════════════════════════════════════════════════════════════════════
+     TRANSACTION STATUS COLORS
+     Maps to the 19-state document vocabulary from Part 01
+     ═══════════════════════════════════════════════════════════════════════════ */
+
+  /* Draft states */
+  --erp-status-draft-fg: var(--sapNeutralTextColor);
+  --erp-status-draft-bg: var(--sapNeutralBackground);
+  --erp-status-draft-border: var(--sapNeutralBorderColor);
+
+  /* Submitted / In review */
+  --erp-status-submitted-fg: var(--sapInformativeTextColor);
+  --erp-status-submitted-bg: var(--sapInformationBackground);
+  --erp-status-submitted-border: var(--sapInformationBorderColor);
+
+  --erp-status-under-review-fg: var(--sapInformativeTextColor);
+  --erp-status-under-review-bg: var(--sapInformationBackground);
+  --erp-status-under-review-border: var(--sapInformationBorderColor);
+
+  /* Query / Correction required */
+  --erp-status-query-raised-fg: var(--sapCriticalTextColor);
+  --erp-status-query-raised-bg: var(--sapWarningBackground);
+  --erp-status-query-raised-border: var(--sapWarningBorderColor);
+
+  --erp-status-correction-req-fg: var(--sapCriticalTextColor);
+  --erp-status-correction-req-bg: var(--sapWarningBackground);
+  --erp-status-correction-req-border: var(--sapWarningBorderColor);
+
+  /* Resubmitted */
+  --erp-status-resubmitted-fg: var(--sapInformativeTextColor);
+  --erp-status-resubmitted-bg: var(--sapInformationBackground);
+  --erp-status-resubmitted-border: var(--sapInformationBorderColor);
+
+  /* Approval states */
+  --erp-status-pending-approval-fg: var(--sapCriticalTextColor);
+  --erp-status-pending-approval-bg: var(--sapWarningBackground);
+  --erp-status-pending-approval-border: var(--sapWarningBorderColor);
+
+  --erp-status-approved-fg: var(--sapPositiveTextColor);
+  --erp-status-approved-bg: var(--sapSuccessBackground);
+  --erp-status-approved-border: var(--sapSuccessBorderColor);
+
+  --erp-status-rejected-fg: var(--sapNegativeTextColor);
+  --erp-status-rejected-bg: var(--sapErrorBackground);
+  --erp-status-rejected-border: var(--sapErrorBorderColor);
+
+  --erp-status-returned-fg: var(--sapCriticalTextColor);
+  --erp-status-returned-bg: var(--sapWarningBackground);
+  --erp-status-returned-border: var(--sapWarningBorderColor);
+
+  /* Forwarded / Escalated */
+  --erp-status-forwarded-fg: var(--sapInformativeTextColor);
+  --erp-status-forwarded-bg: var(--sapInformationBackground);
+  --erp-status-forwarded-border: var(--sapInformationBorderColor);
+
+  --erp-status-escalated-fg: var(--sapIndicationColor_1);
+  --erp-status-escalated-bg: var(--sapIndicationColor_1b);
+  --erp-status-escalated-border: var(--sapIndicationColor_1);
+
+  /* Execution states */
+  --erp-status-released-fg: var(--sapPositiveTextColor);
+  --erp-status-released-bg: var(--sapSuccessBackground);
+  --erp-status-released-border: var(--sapSuccessBorderColor);
+
+  --erp-status-in-progress-fg: var(--sapInformativeTextColor);
+  --erp-status-in-progress-bg: var(--sapInformationBackground);
+  --erp-status-in-progress-border: var(--sapInformationBorderColor);
+
+  --erp-status-partial-fg: var(--sapCriticalTextColor);
+  --erp-status-partial-bg: var(--sapWarningBackground);
+  --erp-status-partial-border: var(--sapWarningBorderColor);
+
+  /* Completion states */
+  --erp-status-completed-fg: var(--sapPositiveTextColor);
+  --erp-status-completed-bg: var(--sapSuccessBackground);
+  --erp-status-completed-border: var(--sapSuccessBorderColor);
+
+  --erp-status-posted-fg: var(--sapPositiveTextColor);
+  --erp-status-posted-bg: var(--sapSuccessBackground);
+  --erp-status-posted-border: var(--sapSuccessBorderColor);
+
+  --erp-status-certified-fg: var(--sapPositiveTextColor);
+  --erp-status-certified-bg: var(--sapSuccessBackground);
+  --erp-status-certified-border: var(--sapSuccessBorderColor);
+
+  /* Payment states */
+  --erp-status-partially-paid-fg: var(--sapCriticalTextColor);
+  --erp-status-partially-paid-bg: var(--sapWarningBackground);
+  --erp-status-partially-paid-border: var(--sapWarningBorderColor);
+
+  --erp-status-paid-fg: var(--sapPositiveTextColor);
+  --erp-status-paid-bg: var(--sapSuccessBackground);
+  --erp-status-paid-border: var(--sapSuccessBorderColor);
+
+  /* Terminal states */
+  --erp-status-closed-fg: var(--sapNeutralTextColor);
+  --erp-status-closed-bg: var(--sapNeutralBackground);
+  --erp-status-closed-border: var(--sapNeutralBorderColor);
+
+  --erp-status-cancelled-fg: var(--sapNeutralTextColor);
+  --erp-status-cancelled-bg: var(--sapNeutralBackground);
+  --erp-status-cancelled-border: var(--sapNeutralBorderColor);
+
+  --erp-status-superseded-fg: var(--sapNeutralTextColor);
+  --erp-status-superseded-bg: var(--sapNeutralBackground);
+  --erp-status-superseded-border: var(--sapNeutralBorderColor);
+
+  /* Hold states */
+  --erp-status-on-hold-fg: var(--sapCriticalTextColor);
+  --erp-status-on-hold-bg: var(--sapWarningBackground);
+  --erp-status-on-hold-border: var(--sapWarningBorderColor);
+
+  --erp-status-reopened-fg: var(--sapInformativeTextColor);
+  --erp-status-reopened-bg: var(--sapInformationBackground);
+  --erp-status-reopened-border: var(--sapInformationBorderColor);
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     KPI HEALTH INDICATORS
+     ═══════════════════════════════════════════════════════════════════════════ */
+
+  --erp-kpi-excellent: var(--sapPositiveColor);
+  --erp-kpi-excellent-bg: var(--sapSuccessBackground);
+  --erp-kpi-good: var(--sapPositiveColor);
+  --erp-kpi-good-bg: var(--sapSuccessBackground);
+  --erp-kpi-warning: var(--sapCriticalColor);
+  --erp-kpi-warning-bg: var(--sapWarningBackground);
+  --erp-kpi-critical: var(--sapNegativeColor);
+  --erp-kpi-critical-bg: var(--sapErrorBackground);
+  --erp-kpi-neutral: var(--sapNeutralColor);
+  --erp-kpi-neutral-bg: var(--sapNeutralBackground);
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     VARIANCE DIRECTION
+     Set per KPI because "up" is not always good
+     ═══════════════════════════════════════════════════════════════════════════ */
+
+  --erp-variance-favourable: var(--sapPositiveTextColor);
+  --erp-variance-favourable-bg: var(--sapSuccessBackground);
+  --erp-variance-unfavourable: var(--sapNegativeTextColor);
+  --erp-variance-unfavourable-bg: var(--sapErrorBackground);
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     MODULE ACCENT COLORS
+     Used for module tiles, avatars, category chips
+     ═══════════════════════════════════════════════════════════════════════════ */
+
+  --erp-module-project: var(--sapAccentColor6);
+  --erp-module-project-bg: var(--sapAccentBackgroundColor6);
+  --erp-module-procurement: var(--sapAccentColor5);
+  --erp-module-procurement-bg: var(--sapAccentBackgroundColor5);
+  --erp-module-materials: var(--sapAccentColor7);
+  --erp-module-materials-bg: var(--sapAccentBackgroundColor7);
+  --erp-module-execution: var(--sapAccentColor1);
+  --erp-module-execution-bg: var(--sapAccentBackgroundColor1);
+  --erp-module-billing: var(--sapAccentColor8);
+  --erp-module-billing-bg: var(--sapAccentBackgroundColor8);
+  --erp-module-finance: var(--sapAccentColor9);
+  --erp-module-finance-bg: var(--sapAccentBackgroundColor9);
+  --erp-module-hr: var(--sapAccentColor3);
+  --erp-module-hr-bg: var(--sapAccentBackgroundColor3);
+  --erp-module-plant: var(--sapAccentColor10);
+  --erp-module-plant-bg: var(--sapAccentBackgroundColor10);
+  --erp-module-rmc: var(--sapAccentColor4);
+  --erp-module-rmc-bg: var(--sapAccentBackgroundColor4);
+  --erp-module-quality: var(--sapAccentColor2);
+  --erp-module-quality-bg: var(--sapAccentBackgroundColor2);
+  --erp-module-hse: var(--sapAccentColor2);
+  --erp-module-hse-bg: var(--sapAccentBackgroundColor2);
+  --erp-module-admin: var(--sapAccentColor10);
+  --erp-module-admin-bg: var(--sapAccentBackgroundColor10);
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     PRIORITY LEVELS
+     Maps to indication colors 1-5
+     ═══════════════════════════════════════════════════════════════════════════ */
+
+  --erp-priority-critical: var(--sapIndicationColor_1);
+  --erp-priority-critical-bg: var(--sapIndicationColor_1b);
+  --erp-priority-high: var(--sapIndicationColor_2);
+  --erp-priority-high-bg: var(--sapIndicationColor_2b);
+  --erp-priority-medium: var(--sapIndicationColor_3);
+  --erp-priority-medium-bg: var(--sapIndicationColor_3b);
+  --erp-priority-low: var(--sapIndicationColor_5);
+  --erp-priority-low-bg: var(--sapIndicationColor_5b);
+  --erp-priority-none: var(--sapIndicationColor_10);
+  --erp-priority-none-bg: var(--sapIndicationColor_10b);
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     SPACING SCALE (4px base)
+     ═══════════════════════════════════════════════════════════════════════════ */
+
+  --erp-space-0: 0;
+  --erp-space-1: 0.25rem; /* 4px */
+  --erp-space-2: 0.5rem; /* 8px */
+  --erp-space-3: 0.75rem; /* 12px */
+  --erp-space-4: 1rem; /* 16px */
+  --erp-space-5: 1.5rem; /* 24px */
+  --erp-space-6: 2rem; /* 32px */
+  --erp-space-7: 3rem; /* 48px */
+  --erp-space-8: 4rem; /* 64px */
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     BORDER RADIUS
+     ═══════════════════════════════════════════════════════════════════════════ */
+
+  --erp-radius-field: 0.25rem; /* inputs */
+  --erp-radius-button: 0.5rem; /* buttons, chips */
+  --erp-radius-card: 0.75rem; /* panels, groups, object cards */
+  --erp-radius-tile: 1rem; /* launchpad tiles */
+  --erp-radius-pill: 624.9375rem; /* pill-shaped elements */
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     MOTION & ANIMATION
+     ═══════════════════════════════════════════════════════════════════════════ */
+
+  --erp-motion-instant: 100ms;
+  --erp-motion-fast: 150ms; /* hover, focus, color change */
+  --erp-motion-normal: 250ms; /* popover, dropdown, panel */
+  --erp-motion-slow: 350ms; /* full-page or drawer transition */
+
+  --erp-easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --erp-easing-decelerate: cubic-bezier(0, 0, 0.2, 1);
+  --erp-easing-accelerate: cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   REDUCED MOTION PREFERENCES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
