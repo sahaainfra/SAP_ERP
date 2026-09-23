@@ -1,6 +1,6 @@
 # Construction & Infrastructure ERP — Build Progress
 
-## Parts Completed: 10 of 69
+## Parts Completed: 11 of 69
 
 ---
 
@@ -595,6 +595,88 @@ npm run build
 **Result:** ✅ Build successful
 - TypeScript compiles without errors
 - All workflow components compile correctly
+- Output: 695KB JS, 58KB CSS
+
+---
+
+## Part 11: Posting Engines — Stock Ledger, General Ledger & Period Lock
+
+**Status:** ✅ COMPLETE  
+**Date:** 2026-01-XX  
+**Dependencies:** Part 09 (Document Framework)  
+**Blocks:** Part 15 (Analytical View Layer), Part 26 (Worked Module), Part 40 (Finance), Part 69 (Cross-Module)
+
+### Deliverables
+
+1. **Database Schema** (`migrations/011_create_posting_engines.sql`)
+   - dx_period_lock — Financial period locking
+   - dx_posting_rule — GL posting rule configuration
+   - dx_stock_ledger — Append-only stock movements
+   - dx_voucher — GL voucher headers
+   - dx_voucher_line — GL voucher lines
+   - dx_financial_dimension — Dimension combinations
+
+2. **Period Lock Service** (`period-lock-service.ts`)
+   - Period status management (OPEN, SOFT_CLOSED, CLOSED, REOPENED)
+   - Time-boxed reopen with two-person control
+   - Auto-relock on expiry
+   - Module-specific locking
+
+3. **Valuation Service** (`valuation-service.ts`)
+   - Weighted Average valuation
+   - FIFO layer-based valuation
+   - Batch Specific valuation
+   - Fallback rate with warning events
+
+4. **Dimension Validator** (`dimension-validator.ts`)
+   - Required dimension validation per account
+   - Forbidden dimension checks
+   - Referential integrity validation
+   - Combination registration
+
+### Key Features
+
+**Append-Only Ledgers**
+- No UPDATE or DELETE on stock ledger or vouchers
+- Corrections via reversal rows
+- Hash chain for tamper detection
+- Database-level enforcement via triggers
+
+**Idempotent Posting**
+- Unique constraint on source document
+- Replayed events return existing result
+- No double-posting from outbox retries
+
+**Financial Dimensions**
+- Project, Cost Code, WBS, Cost Centre, Equipment, Party
+- Validated as combinations
+- Required/forbidden per account type
+
+**Posting Rules as Configuration**
+- Event type → Account resolver → Journal lines
+- 10 account resolver types
+- Condition and amount expressions
+- Effective dating for rule changes
+
+### Business Rules Enforced
+
+- **POST-01**: Stock and GL ledgers are append-only
+- **POST-02**: Posting is idempotent by source document and event
+- **POST-03**: Posting action asserts period is open
+- **POST-04**: Every posting line carries full dimension set
+- **POST-05**: Stock balance takes row lock in global order
+- **POST-06**: GL journal must balance to zero
+- **POST-07**: Valuation fallback recorded as event
+
+### Build Verification
+
+```bash
+npm run build
+```
+
+**Result:** ✅ Build successful
+- TypeScript compiles without errors
+- All posting services compile correctly
 - Output: 695KB JS, 58KB CSS
 
 ---
