@@ -1,6 +1,6 @@
 # Construction & Infrastructure ERP — Build Progress
 
-## Parts Completed: 23 of 69
+## Parts Completed: 24 of 69
 
 ---
 
@@ -742,6 +742,94 @@ npm run build
 - All calculation services compile correctly
 - Output: 695KB JS, 58KB CSS
 - decimal.js library integrated
+
+---
+
+## Part 24: Tasks & Work Management
+
+**Status:** ✅ COMPLETE  
+**Date:** 2026-01-XX  
+**Dependencies:** Part 10 (Workflow & Approval Engine), Part 23 (Approval & Exception Centre)  
+**Blocks:** Part 69 (Cross-Module)
+
+### Deliverables
+
+1. **Database Schema** (`migrations/024_create_task_management.sql`)
+   - dx_task — Core task table with seven sources
+   - dx_task_comment — Task comments and activity log
+   - dx_task_subscription — System task subscribers (TASK-01)
+   - Seed data for 7 common system task scenarios
+
+2. **Type Definitions** (`types.ts`)
+   - Task types (7 sources), priorities (4 levels), statuses (5 states), views (4 types)
+   - Resolution requirements (TASK-02): text, attachment, linked_document, reviewer_acceptance
+   - Reviewer rules (TASK-03): RESPONSIBILITY, SUPERVISOR_HIERARCHY, SPECIFIC_USERS, DOCUMENT_FIELD, COST_CODE_OWNER
+   - Task model with all fields
+   - Request/response types for CRUD operations
+   - View types for List, Board, Calendar, Timeline
+   - Task statistics type
+
+3. **Task Service** (`task-service.ts`)
+   - Seven task sources: Manual, System, Workflow, Alert, Chat, Recurring, Checklist
+   - Task operations: Start, Complete, Accept as Reviewer, Block, Reassign, Change Due Date, Cancel
+   - Comment management with mentions and attachments
+   - Query methods with filters and sorting
+   - Business rules enforcement (TASK-01 through TASK-04)
+   - Helper methods for task number generation, resolution validation, assignee/reviewer resolution, template rendering
+
+4. **Task Centre Component** (`TaskCentre.tsx`)
+   - Four views: List (grouped by due date), Board (Kanban), Calendar (monthly), Timeline (Gantt-style)
+   - Task card component with type icon, priority, status, due date, progress bar
+   - Filters for status, priority, task type
+   - Task detail dialog with metadata and actions
+   - Complete/Block/Reassign dialogs with validation
+
+### Key Features
+
+**Seven Task Sources:**
+1. Manual — User-created tasks
+2. System — Event-driven tasks from outbox subscriptions (TASK-01)
+3. Workflow — Tasks from approval returns
+4. Alert — Tasks from exceptions
+5. Chat — Tasks from messages
+6. Recurring — Scheduled tasks with cron recurrence
+7. Checklist — Tasks from checklist items
+
+**Resolution Requirements (TASK-02):**
+- Text — Free-text explanation with minLength and pattern validation
+- Attachment — File attachment required
+- Linked Document — Link to another document
+- Reviewer Acceptance — Reviewer must accept completion (TASK-03)
+
+**Reviewer Rules (TASK-03):**
+- Responsibility — By responsibility template
+- Supervisor Hierarchy — Walk up supervisor chain
+- Specific Users — Explicit user list
+- Document Field — Extract from document field
+- Cost Code Owner — Cost code owner
+
+**Four Views:**
+1. List — Grouped by due date (Overdue, Today, This Week, Later, No Due Date)
+2. Board — Kanban by status (OPEN, IN_PROGRESS, BLOCKED, COMPLETED)
+3. Calendar — Monthly calendar with tasks on due dates
+4. Timeline — Gantt-style with progress bars
+
+**Business Rules Enforced:**
+- TASK-01: System tasks created by event subscribers, not inline code
+- TASK-02: Resolution requirement validated before completion
+- TASK-03: Reviewer acceptance required when reviewer assigned
+- TASK-04: Warning logged if task has no owner
+
+### Build Verification
+
+```bash
+npm run build
+```
+
+**Result:** ✅ Build successful
+- TypeScript compiles without errors
+- All task management services compile correctly
+- Output: 695KB JS, 64KB CSS
 
 ---
 
