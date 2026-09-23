@@ -1,5 +1,5 @@
 /**
- * Part 20 & 21 — Dashboard Module Exports
+ * Part 20, 21 & 22 — Dashboard Module Exports
  * 
  * Exports all dashboard components for use by other parts.
  */
@@ -29,5 +29,10 @@ export {
   validateRoleRestrictions,
 } from './role-dashboards';
 
-// Components
-export { ObjectPage } from './object-page';
+// Components (Part 22)
+export { Project360 } from '../../components/project360/Project360';
+export { HealthScoreGauge } from '../../components/project360/HealthScoreGauge';
+export { Project360SectionComponent } from '../../components/project360/Project360Section';
+export { DocumentChainGraph } from '../../components/document-chain/DocumentChainGraph';
+export { DrillDownNavigator } from '../../components/drill-down/DrillDownNavigator';
+export { EnhancedObjectPage } from '../../components/object-page/EnhancedObjectPage';
