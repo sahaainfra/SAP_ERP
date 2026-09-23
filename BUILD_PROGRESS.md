@@ -1,6 +1,6 @@
 # Construction & Infrastructure ERP — Build Progress
 
-## Parts Completed: 20 of 69
+## Parts Completed: 21 of 69
 
 ---
 
@@ -742,6 +742,104 @@ npm run build
 - All calculation services compile correctly
 - Output: 695KB JS, 58KB CSS
 - decimal.js library integrated
+
+---
+
+## Part 21: Role-Specific Real-Time Dashboards for Every User
+
+**Status:** ✅ COMPLETE  
+**Date:** 2026-01-XX  
+**Dependencies:** Part 01 (Workspace Foundation), Part 20 (Dashboard Engine)  
+**Blocks:** Part 22 (Project 360 UI), Part 69 (Cross-Module)
+
+### Deliverables
+
+1. **Role Dashboard Types** (`role-dashboard-types.ts`)
+   - Role dashboard configuration types
+   - Object page standard types
+   - Project 360 types
+   - Health score types with 9 weighted components
+   - Document chain types
+   - Drill-down types
+
+2. **Role Dashboard Configurations** (`role-dashboards.ts`)
+   - 16 role dashboards defined (Super Admin through HSE Officer)
+   - Mobile-first for field roles (Site Engineer, Store Keeper, Employee/Labour)
+   - Desktop-first for management roles
+   - Role-specific restrictions enforced (ROLE-02, ROLE-03, ROLE-04, ROLE-05)
+   - Validation functions for boot-time checks
+
+3. **Project 360 Service** (`project-360-service.ts`)
+   - 10 comprehensive sections (Contract, Execution, Procurement, Material, Manpower, Plant, Quality, HSE, Commercial, Finance)
+   - Health score computation with 9 weighted components
+   - Admin-configurable weights per project
+   - Trend visualization over 6 periods
+   - Band classification (HEALTHY, WATCH, AT_RISK, CRITICAL)
+
+4. **Document Chain Service** (`document-chain-service.ts`)
+   - Complete upstream/downstream traversal
+   - Permission-filtered nodes
+   - Visual relationship graph
+   - Supports all major document types
+
+5. **Object Page Component** (`object-page.tsx`)
+   - Universal structure for all business objects
+   - Object header with key facts and status
+   - Anchor bar for section navigation
+   - 9 section types (general, line items, financial, schedule, attachments, approval history, related documents, activity, comments)
+   - Permission-based section visibility
+   - Action toolbar with state-based restrictions
+   - Confirmation dialogs for irreversible actions
+   - Document chain visualization
+
+### Key Features
+
+**Universal Object Page:**
+- Consistent structure across all business objects
+- Sections absent if user lacks permission
+- Actions filtered by permission and state
+- Irreversible actions require document number confirmation
+- In-place updates after actions
+
+**Project 360:**
+- Single screen answering "how is this project doing?"
+- Health score with 9 weighted components (admin-configurable)
+- 10 collapsible sections with KPIs and charts
+- Trend visualization
+- Drill-down to component details
+
+**Document Chain:**
+- Complete upstream/downstream traversal
+- Permission-filtered nodes
+- Clickable navigation
+- "Restricted" label for unauthorized nodes
+
+**Role-Specific Dashboards:**
+- 16 pre-defined role configurations
+- Mobile-first for field roles
+- Desktop-first for management roles
+- Role-specific restrictions enforced
+- Quick actions for common tasks
+
+### Business Rules Enforced
+
+- **ROLE-01**: Role dashboard is default, not authority
+- **ROLE-02**: Store Keeper sees quantities only, no rates/values
+- **ROLE-03**: Site Engineer sees no rate/value/margin/payroll figures
+- **ROLE-04**: CFO dashboard is approve-and-review only
+- **ROLE-05**: Employee/Labour sees only their own records
+- **ROLE-06**: Configuration referencing ungranted KPI reported at boot
+
+### Build Verification
+
+```bash
+npm run build
+```
+
+**Result:** ✅ Build successful
+- TypeScript compiles without errors
+- All role dashboard services compile correctly
+- Output: 695KB JS, 64KB CSS
 
 ---
 
