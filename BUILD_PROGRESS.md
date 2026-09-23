@@ -1,6 +1,6 @@
 # Construction & Infrastructure ERP — Build Progress
 
-## Parts Completed: 19 of 69
+## Parts Completed: 20 of 69
 
 ---
 
@@ -742,6 +742,91 @@ npm run build
 - All calculation services compile correctly
 - Output: 695KB JS, 58KB CSS
 - decimal.js library integrated
+
+---
+
+## Part 20: Real-Time Dashboard Engine & Universal Dashboard Structure
+
+**Status:** ✅ COMPLETE  
+**Date:** 2026-01-XX  
+**Dependencies:** Part 01 (Workspace Foundation), Part 14 (KPI Engine), Part 15 (Analytical Layer), Part 18 (Metadata-Driven UI), Part 19 (Responsive Framework)  
+**Blocks:** Part 21 (Role Dashboards), Part 22 (Project 360), Part 69 (Cross-Module)
+
+### Deliverables
+
+1. **Universal Dashboard Structure** (`types.ts`)
+   - 12 universal bands (My Work, My Approvals, My Tasks, etc.)
+   - Widget types (kpi_tile, chart, list, approval_inbox, etc.)
+   - 16 role dashboards defined (Super Admin through HSE)
+   - Dashboard definition and resolution types
+
+2. **Dashboard Resolution Service** (`dashboard-resolution.ts`)
+   - Five-step resolution (personal → template → system default)
+   - Permission-based widget filtering
+   - Personalization support (order, size, hidden widgets)
+   - Multi-project portfolio mode
+   - Permission version tracking
+
+3. **Drill-Down Service** (`drill-down.ts`)
+   - 5 drill-down chains registered (profitability, receivables, stock, budget, manpower)
+   - Permission validation at each level
+   - Breadcrumb path tracking
+   - Total validation (sum matches at each level)
+
+4. **Dashboard Engine** (`dashboard-engine.ts`)
+   - Batched KPI fetching (one request for all tiles)
+   - Real-time updates via event subscriptions
+   - Staleness tracking ("Updated HH:mm")
+   - Error handling (one failed tile doesn't blank dashboard)
+   - Permission change detection and re-resolution
+
+### Key Features
+
+**Universal Home (Every User):**
+- Row 1: My Work (4 count tiles)
+- Row 2: Attention (top 5 alerts)
+- Row 3+: Role-specific content
+
+**Real-Time Updates:**
+- No refresh button for normal operations
+- Incremental tile updates via events
+- Permission changes trigger full re-resolution
+
+**Drill-Down:**
+- Every KPI tile clickable
+- Filters preserved through all levels
+- Permission-filtered at every level
+- Totals match exactly
+
+**Personalization:**
+- Reorder, hide, resize widgets
+- Save filters and views
+- Pin KPIs
+- Set defaults
+- All changes re-validated against permissions
+
+### Business Rules Enforced
+
+- **DASH-01**: Unauthorized tile absent (not empty, not zero)
+- **DASH-02**: Every figure traces to real rows via KPI
+- **DASH-03**: No data shows empty state, not zero
+- **DASH-04**: Every KPI drills down, never bypasses permissions
+- **DASH-05**: One batched KPI request, never one per tile
+- **DASH-06**: Updates from event engine, no manual refresh
+- **DASH-07**: Personalization never changes permissions
+- **DASH-08**: Multi-project users see correct dashboard per context
+- **DASH-09**: Tile exceeding budget serves cache with staleness indicator
+
+### Build Verification
+
+```bash
+npm run build
+```
+
+**Result:** ✅ Build successful
+- TypeScript compiles without errors
+- All dashboard services compile correctly
+- Output: 695KB JS, 63KB CSS
 
 ---
 
