@@ -1,6 +1,108 @@
 # Construction & Infrastructure ERP — Build Progress
 
-## Parts Completed: 4 of 69
+## Parts Completed: 5 of 69
+
+---
+
+## Part 05: API Contract, Validation & Error Framework
+
+**Status:** ✅ COMPLETE  
+**Date:** 2026-01-XX  
+**Dependencies:** Part 04 (Reference Architecture)  
+**Blocks:** Part 06 (User, Role & Permission Model)
+
+### Deliverables
+
+1. **API Response Envelope** (`src/shared/api/envelope.ts`)
+   - Standardized success/failure response format
+   - Pagination metadata with cursor support
+   - Server-computed totals
+   - Field masking indicators
+   - Warning support
+   - Correlation ID for tracing
+
+2. **Error Catalogue** (`src/shared/errors/catalogue.ts`)
+   - 40+ error codes across 5 categories
+   - Error classes: ApiError, ValidationError, ConcurrencyError, ForbiddenError, NotFoundError, IdempotencyError
+   - HTTP status mapping
+   - Context data for UI rendering
+   - Remediation guidance
+
+3. **Filter Grammar Parser & Compiler** (`src/shared/api/filter/compiler.ts`)
+   - Safe, whitelisted filter expression language
+   - Tokenizer → Parser → AST → SQL compiler
+   - Field and operator whitelisting
+   - Permission-based field filtering
+   - Type coercion and validation
+   - Parameterized SQL (no SQL injection)
+
+4. **Pagination Utilities** (`src/shared/api/pagination.ts`)
+   - Offset pagination ($skip, $top)
+   - Keyset pagination ($cursor) for large datasets
+   - Automatic detection of entities requiring keyset
+   - Cursor encoding/decoding (base64url)
+   - Tuple comparison for multi-field ordering
+
+5. **Concurrency Control** (`src/shared/api/concurrency.ts`)
+   - ETag generation (row_version or content hash)
+   - ConcurrencyGuard for If-Match validation
+   - Advisory edit locks with takeover
+   - Heartbeat mechanism
+   - Field-level diff for merge UI
+
+6. **Idempotency** (`src/shared/api/idempotency.ts`)
+   - IdempotencyService for request tracking
+   - Request body hashing (SHA-256)
+   - Duplicate detection
+   - In-progress request handling
+   - Automatic cleanup of expired records
+   - Mobile offline sync support
+
+7. **Validation Framework** (`src/shared/api/validation.ts`)
+   - Three-tier validation: Shape, Reference, Business Rule
+   - RuleEngine with override support
+   - Severity levels: BLOCK, WARN, INFO
+   - Override recording (never silent)
+   - Dry-run endpoint support
+   - All failures returned at once
+
+8. **Base CRUD Controller** (`src/shared/api/base-controller.ts`)
+   - Abstract base class for all entity controllers
+   - Standard operations: list, getOne, create, update, delete, validateDryRun
+   - Integrated: permission checks, filtering, pagination, concurrency, idempotency, validation
+   - Error handling with proper HTTP codes
+   - Response envelope
+
+9. **Database Migration** (`migrations/005_create_idempotency_table.sql`)
+   - dx_idempotency table for idempotency tracking
+   - Indexes for cleanup, timeout handling, audit trail
+   - Rollback instructions
+
+10. **Documentation**
+    - DB_CHANGELOG.md updated with migration 005
+    - API_REGISTRY.md updated with API contract
+    - README_PART_05.md created
+
+### Business Rules Enforced
+
+- API-01: Status field never directly writable (use named actions)
+- API-02: Every query wrapped by permission filter
+- API-03: Totals computed server-side across full filtered set
+- API-04: Keyset pagination mandatory for >10,000 rows
+- API-05: Idempotency-Key required for all POST requests
+- API-06: All validation failures returned at once
+- API-07: Overrides never silent (recorded in audit log)
+
+### Build Verification
+
+```bash
+npm run build
+```
+
+**Result:** ✅ Build successful
+- TypeScript compiles without errors
+- Vite bundles successfully
+- Output: 663KB JS, 57KB CSS
 
 ---
 

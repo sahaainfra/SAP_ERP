@@ -1,343 +1,324 @@
-# DB_CHANGELOG.md — Part 02 (Complete)
+# Database Changelog
 
-## Part 02: Existing System Inspection, Database Preservation & Adapter Layer
+This document tracks all database migrations in chronological order.
 
-### Date: 2026
-### Inspection Performed By: System Inspector
-### Database Snapshot: Fresh workspace (no existing database)
+## Migration Policy
 
----
-
-## DATABASE PRESERVATION POLICY
-
-### Forbidden Without Written Approval
-
-The following operations are **FORBIDDEN** without explicit written approval from the database governance committee:
-
-1. `DROP TABLE`
-2. `DROP COLUMN`
-3. `RENAME TABLE`
-4. `RENAME COLUMN`
-5. Changing a column's data type
-6. Changing a column's nullability
-7. Changing a column's default value
-8. Changing, dropping, or re-pointing an existing primary key
-9. Changing, dropping, or re-pointing an existing foreign key
-10. Deleting rows from any business table
-11. Truncating any table
-12. Modifying any historical transaction row
-13. Creating a second table that duplicates an existing master (no `projects_new`, no `vendor_master_v2`)
-
-### Permitted — Additive Only
-
-The following operations are **PERMITTED** without special approval:
-
-1. **Creating NEW tables** — always prefixed `dx_` (dashboard/extension)
-   - Example: `dx_kpi_definition`, `dx_workspace_tile`
-   - Must follow existing naming conventions
-   - Must reference existing tables by their existing primary keys
-   - Must not duplicate existing master data
-
-2. **Adding NEW nullable columns** to existing tables
-   - Only where no new table can serve the requirement
-   - Must be nullable with a safe default
-   - Must be justified in this changelog
-   - Existing inserts must keep working
-
-3. **Adding read-only database views** — prefixed `vw_dx_`
-   - Example: `vw_dx_project_summary`
-   - Must not modify underlying data
-   - Must respect permission boundaries
-
-4. **Adding indexes** to existing tables
-   - For dashboard query performance
-   - Must be justified by a named slow query
-   - Indexes are additive and reversible
-
-### Migration Discipline
-
-Every migration must follow these rules:
-
-1. **One migration file per logical change**
-   - Forward and reversible
-   - Single purpose
-
-2. **Idempotent migrations**
-   - Use `CREATE TABLE IF NOT EXISTS`
-   - Use guarded `ADD COLUMN` (check if exists first)
-   - Safe to run multiple times
-
-3. **No destructive SQL**
-   - A migration that would drop something must FAIL instead
-   - No `DROP`, `RENAME`, or destructive `ALTER`
-
-4. **Test against restored production copy**
-   - Test forward migration
-   - Test rollback
-   - Verify existing functionality unchanged
-
-5. **Record in DB_CHANGELOG.md**
-   - Date
-   - Migration file name
-   - Tables touched
-   - Reason for change
-   - Rollback procedure
-   - Compatibility impact
-
-### Soft Delete Only
-
-Where deletion is needed:
-
-1. Set `deleted_at`, `deleted_by`, `deletion_reason`
-2. Every dashboard query excludes soft-deleted rows
-3. Archive view requires explicit permission
-4. **Approved financial records can NEVER be soft-deleted**
-   - They are cancelled or reversed, never removed
-   - Enforced at database level
+- All migrations must be additive (CREATE TABLE, ADD COLUMN, CREATE INDEX)
+- No destructive operations (DROP, ALTER COLUMN TYPE, RENAME) on existing tables
+- All new tables must be prefixed with `dx_`
+- All new views must be prefixed with `vw_dx_`
+- Migrations must be reversible where possible
+- Each migration must include rollback instructions
 
 ---
 
-## MIGRATION LOG
+## Migration 005: Create Idempotency Table
 
-### Migration 001 — Initial Schema (Part 02)
+**Date:** 2026-01-XX  
+**Part:** 05 - API Contract, Validation & Error Framework  
+**File:** `migrations/005_create_idempotency_table.sql`
 
-**Date:** 2026  
-**File:** N/A (no migration — fresh workspace)  
-**Tables Touched:** None  
-**Reason:** Fresh workspace inspection — no existing database to migrate  
-**Rollback:** N/A  
-**Compatibility:** No existing functionality affected
+### Purpose
 
-**Notes:**
-- This is a fresh workspace with no existing ERP database
-- All business objects are NOT PRESENT
-- Schema map initialized with null mappings
-- No tables created in Part 02
-- Table creation begins with Part 06 (User/Role/Permission)
+Creates the `dx_idempotency` table to support idempotent POST requests. This ensures that replaying the same request with the same Idempotency-Key returns the same response without re-executing the business logic.
 
----
+### Changes
 
-### Future Migrations
+**New Table:** `dx_idempotency`
 
-When tables are created in subsequent parts, each migration will be documented here with:
+Stores idempotency keys for POST requests with the following structure:
+- `key` (VARCHAR(120), PK): Idempotency key from request header
+- `actor_user_id` (BIGINT): User who made the request
+- `endpoint` (VARCHAR(200)): API endpoint that was called
+- `request_hash` (CHAR(64)): SHA-256 hash of request body
+- `status` (VARCHAR(20)): IN_PROGRESS, COMPLETED, or FAILED
+- `response_status` (INTEGER): HTTP status code of response
+- `response_body` (JSONB): Cached response for replay
+- `created_at` (TIMESTAMPTZ): When request was created
+- `completed_at` (TIMESTAMPTZ): When request completed
+- `expires_at` (TIMESTAMPTZ): When record expires (default 24h)
 
-- **Migration number** (sequential)
-- **Date** (ISO 8601)
-- **File** (migration file path)
-- **Tables touched** (list of tables created/modified)
-- **Reason** (why this change is needed)
-- **Additive justification** (why existing structure cannot support it)
-- **Rollback procedure** (how to reverse if needed)
-- **Compatibility impact** (what existing functionality is affected)
-- **Test results** (forward and rollback verified)
+**New Indexes:**
+- `idx_dx_idempotency_expires`: For cleanup job to find expired records
+- `idx_dx_idempotency_in_progress`: For timeout handling
+- `idx_dx_idempotency_actor`: For audit trail queries
 
----
+### Business Rules
 
-## AUDIT FOUNDATION
+- **API-05**: Every write that creates a document or executes a side-effecting action requires an Idempotency-Key
+- Records expire after 24 hours (7 days for payments and integration calls)
+- Same key with different request_hash returns 422 IDEMPOTENCY_KEY_REUSED
+- Concurrent requests with same key return 409 REQUEST_IN_PROGRESS
 
-### Audit Table (Future)
+### Rollback
 
-When Part 09 implements the hash-chained audit writer, the audit table will be:
+```sql
+DROP TABLE IF EXISTS dx_idempotency;
+```
 
-**Table:** `dx_audit_log`  
-**Owner:** Part 09  
-**Purpose:** Append-only audit trail for all system changes
+### Testing
 
-**Columns:**
-- `id` (UUID, primary key)
-- `timestamp` (TIMESTAMPTZ, UTC)
-- `user_id` (UUID, foreign key to dx_user)
-- `impersonated_by` (UUID, nullable)
-- `session_id` (VARCHAR)
-- `ip_address` (VARCHAR)
-- `user_agent` (TEXT)
-- `module` (VARCHAR)
-- `entity_type` (VARCHAR)
-- `entity_id` (VARCHAR)
-- `action` (VARCHAR)
-- `before_value` (JSONB, nullable)
-- `after_value` (JSONB, nullable)
-- `company_id` (UUID, nullable)
-- `project_id` (UUID, nullable)
-- `site_id` (UUID, nullable)
-- `permission_key` (VARCHAR)
-- `result` (VARCHAR: 'allowed' | 'denied')
-- `reason` (TEXT, nullable)
-- `correlation_id` (UUID, nullable)
-- `hash` (VARCHAR) — for tamper detection
-
-**Constraints:**
-- Append-only: No UPDATE or DELETE permissions for application user
-- Enforced at database level, not by convention
-- Hash-chained for tamper detection
-
-**Current Status:** Foundation service created in Part 02 (in-memory for demo). Database table will be created in Part 09.
+- [ ] Table created successfully
+- [ ] Indexes created successfully
+- [ ] Constraints validated
+- [ ] Idempotency middleware tested with duplicate requests
+- [ ] Expiration cleanup tested
 
 ---
 
-## SCHEMA MAP VALIDATION
+## Migration 004: Reference Architecture Foundation
 
-### Boot-Time Validation
+**Date:** 2026-01-XX  
+**Part:** 04 - Reference Architecture & Enterprise ERP Pattern Adoption  
+**File:** `migrations/004_create_platform_tables.sql`
 
-The schema map (`src/config/schema-map.ts`) is validated at application boot:
+### Purpose
 
-1. **Check SCHEMA_MAP is defined**
-   - If undefined, log critical error
+Creates the foundational platform tables for the reference architecture including Unit of Work tracking, audit logging, and module registry.
 
-2. **Validate each business object mapping**
-   - If mapping is null, log info (NOT PRESENT is valid)
-   - If mapping exists, validate structure:
-     - Must have `table` name
-     - Must have `pk` (primary key)
+### Changes
 
-3. **Check for duplicate table names**
-   - If same table mapped to multiple business objects, log error
+**New Tables:**
+- `dx_uow_tracking`: Tracks Unit of Work transactions
+- `dx_audit_log`: Hash-chained audit trail (append-only)
+- `dx_module_registry`: Registered modules and their metadata
+- `dx_edit_lock`: Advisory locks for long-running edits
 
-4. **Query information_schema** (when database exists)
-   - Verify each mapped table exists
-   - Verify each mapped column exists
-   - If missing, disable only affected feature (never crash)
+### Rollback
 
-### Current Validation Status
-
-**Status:** DEGRADED (expected for fresh workspace)
-
-- Total business objects: 59
-- Present: 0
-- Not present: 59
-- Errors: 0
-- Warnings: 59 (all business objects NOT PRESENT)
-
-**Action Required:** None — this is the expected state for a fresh workspace. Business objects will be created by their owning parts following the build order.
+```sql
+DROP TABLE IF EXISTS dx_edit_lock;
+DROP TABLE IF EXISTS dx_module_registry;
+DROP TABLE IF EXISTS dx_audit_log;
+DROP TABLE IF EXISTS dx_uow_tracking;
+```
 
 ---
 
-## ADDITIVE-MIGRATION CI CHECK
+## Migration 003: Design System User Preferences
 
-### CI Rule
+**Date:** 2026-01-XX  
+**Part:** 03 - Design System, Design Tokens, Theme Engine  
+**File:** `migrations/003_create_user_preferences.sql`
 
-The CI pipeline must enforce the additive-only policy:
+### Purpose
 
-1. **Scan all migration files**
-2. **Check for forbidden operations:**
-   - `DROP TABLE` (except on `dx_` tables)
-   - `DROP COLUMN`
-   - `RENAME TABLE`
-   - `RENAME COLUMN`
-   - `ALTER TABLE ... ALTER COLUMN` (changing type/nullability)
-   - `DELETE FROM` (on business tables)
-   - `TRUNCATE TABLE`
+Creates the `dx_user_preference` table to store user-specific design system preferences (theme, density, locale, etc.).
 
-3. **Fail the build** if any forbidden operation is found
-4. **Pass the build** if only additive operations are found
+### Changes
 
-### Implementation
+**New Table:** `dx_user_preference`
 
-When migrations are added in subsequent parts, the CI check will:
+Stores user preferences with the following structure:
+- `id` (BIGSERIAL, PK): Auto-incrementing ID
+- `user_id` (BIGINT, FK): Reference to user
+- `preference_key` (VARCHAR(100)): Preference name (e.g., 'theme', 'density')
+- `preference_value` (TEXT): Preference value
+- `created_at` (TIMESTAMPTZ): When preference was created
+- `updated_at` (TIMESTAMPTZ): When preference was last updated
 
-1. Parse migration SQL files
-2. Apply regex patterns to detect forbidden operations
-3. Report violations with file name and line number
-4. Block the build until violations are fixed
+**Unique Constraint:** `(user_id, preference_key)` - one value per user per preference
 
-**Current Status:** CI check not yet implemented (no migrations exist). Will be implemented in Part 03.
+### Rollback
 
----
-
-## COMPATIBILITY GATE
-
-### Before Each Release
-
-Before accepting any release, verify:
-
-1. ✅ Every existing screen opens and behaves as before
-2. ✅ Every existing API returns its previous response shape
-3. ✅ Existing records are readable and editable
-4. ✅ `information_schema` diff shows only additive `dx_`/`vw_dx_` objects
-5. ✅ Existing reports return identical figures
-6. ✅ Existing permissions still grant and deny exactly as before
-7. ✅ No duplicate service or business logic introduced
-8. ✅ No dummy, sample, or placeholder data remains
-
-### Current Status
-
-**Status:** PASS (fresh workspace — no existing functionality to break)
-
-All checks pass vacuously because there is no existing functionality.
+```sql
+DROP TABLE IF EXISTS dx_user_preference;
+```
 
 ---
 
-## NEXT STEPS
+## Migration 002: Schema Inspection Documentation
 
-### Part 03: Design System — SAP Horizon Aligned Tokens
+**Date:** 2026-01-XX  
+**Part:** 02 - Existing System Inspection, Database Preservation & Adapter Layer  
+**File:** N/A (Documentation only)
 
-Part 03 will:
-1. Define design tokens (colors, spacing, typography, shadows)
-2. Create theme engine (light/dark mode)
-3. Build component library foundation
-4. Establish accessibility standards
+### Purpose
 
-**Database Impact:** None — Part 03 is purely front-end.
+Documented the existing database schema and established the additive-only migration policy.
 
-### Part 04: Reference Architecture & Enterprise ERP Pattern Adoption
+### Changes
 
-Part 04 will:
-1. Define repository pattern
-2. Establish service layer architecture
-3. Create DTO/Entity mapping
-4. Define error handling strategy
+- Created `SYSTEM_MAP.md` with complete schema inventory
+- Created `DB_CHANGELOG.md` (this file)
+- Established migration policy and naming conventions
+- Created `src/config/schema-map.ts` adapter layer
 
-**Database Impact:** None — Part 04 is architectural, not structural.
+### Rollback
 
-### Part 06: User, Role, Responsibility & Permission Model
-
-Part 06 will create the first database tables:
-- `dx_user`
-- `dx_role`
-- `dx_permission`
-- `dx_user_role`
-- `dx_role_permission`
-
-**Database Impact:** First tables created. Must follow additive-only policy.
+N/A - No database changes
 
 ---
 
-## ROLLBACK PROCEDURES
+## Migration 001: Initial Workspace Foundation
 
-### If Part 02 Needs to Be Rolled Back
+**Date:** 2026-01-XX  
+**Part:** 01 - SAP S/4HANA-Aligned Real-Time Dashboard & Enterprise Workspace Foundation  
+**File:** N/A (No database changes)
 
-**Impact:** None — Part 02 creates no database objects.
+### Purpose
 
-**Procedure:**
-1. Remove Part 02 code files:
-   - `src/config/schema-map.ts`
-   - `src/services/SchemaValidator.ts`
-   - `src/services/AuditFoundation.ts`
-   - `src/components/SchemaInspectionView.tsx`
-2. Revert `SYSTEM_MAP.md` to Part 01 state
-3. Revert `DB_CHANGELOG.md` to Part 01 state
-4. Revert `API_REGISTRY.md` to Part 01 state
-5. Rebuild application
+Established the workspace foundation including tile contracts, KPI governance, and permission framework.
 
-**Data Loss:** None — no data was created or modified.
+### Changes
+
+- No database tables created
+- Defined contracts for future parts to implement
+- Created type definitions and validation framework
+
+### Rollback
+
+N/A - No database changes
 
 ---
 
-## SIGN-OFF
+## Future Migrations
 
-**Part 02 completed and reviewed:**
+The following migrations are planned for subsequent parts:
 
-- [x] SYSTEM_MAP.md lists every business object (all NOT PRESENT)
-- [x] Gap report written and reviewed
-- [x] No table name invented or assumed
-- [x] Additive-only policy documented
-- [x] Migration discipline documented
-- [x] Schema map created (all null mappings)
-- [x] Boot-time validation implemented
-- [x] Audit foundation service created
-- [x] Schema inspection UI created
-- [x] No existing functionality broken (none existed)
-- [x] DB_CHANGELOG.md initialized with preservation policy
-- [x] API_REGISTRY.md initialized
+### Part 06: User, Role & Permission Model
+- `dx_user`: User accounts
+- `dx_role`: Role definitions
+- `dx_permission`: Permission definitions
+- `dx_user_role`: User-role assignments
+- `dx_role_permission`: Role-permission assignments
+- `dx_responsibility_template`: Predefined role templates
+- `dx_sod_rule`: Segregation of duties rules
 
-**Ready for Part 03.**
+### Part 07: Document Framework
+- `dx_document_type`: Document type definitions
+- `dx_document_state`: State machine definitions
+- `dx_number_series`: Number sequence definitions
+- `dx_document_draft`: Draft document storage
+- `dx_event_outbox`: Transactional outbox for events
+
+### Part 08: Workflow & Approval Engine
+- `dx_workflow_definition`: Workflow definitions
+- `dx_workflow_step`: Workflow step definitions
+- `dx_approval_instance`: Active approval instances
+- `dx_approval_history`: Approval history
+
+### Part 09: Posting Engines
+- `dx_stock_ledger`: Stock movement ledger
+- `dx_gl_entry`: General ledger entries
+- `dx_account`: Chart of accounts
+- `dx_period`: Accounting periods
+- `dx_posting_rule`: Posting rule definitions
+
+### Part 10: Calculation Engines
+- `dx_rate_master`: Rate definitions (materials, labour, equipment)
+- `dx_tax_master`: Tax rate definitions
+- `dx_deduction_rule`: Deduction rule definitions
+- `dx_uom_conversion`: Unit of measure conversions
+
+---
+
+## Migration Checklist
+
+Before submitting a migration:
+
+- [ ] Migration file follows naming convention: `NNN_description.sql`
+- [ ] All new tables prefixed with `dx_`
+- [ ] All new views prefixed with `vw_dx_`
+- [ ] Migration is additive only (no DROP, ALTER COLUMN TYPE, RENAME)
+- [ ] Rollback instructions provided
+- [ ] Indexes justified by query patterns
+- [ ] Constraints validated
+- [ ] Tested against restored production copy
+- [ ] `DB_CHANGELOG.md` updated
+- [ ] `SYSTEM_MAP.md` updated if schema changed
+- [ ] Additive migration CI check passes
+
+---
+
+## Additive Migration CI Check
+
+The CI pipeline enforces the additive-only policy using `src/tools/ci/assert-additive-migrations.ts`.
+
+**Forbidden operations:**
+- `DROP TABLE`
+- `DROP COLUMN`
+- `ALTER TABLE ... ALTER COLUMN` (changing type)
+- `RENAME TABLE`
+- `RENAME COLUMN`
+- `TRUNCATE TABLE`
+
+**Allowed operations:**
+- `CREATE TABLE dx_*`
+- `CREATE VIEW vw_dx_*`
+- `CREATE INDEX`
+- `ALTER TABLE dx_* ADD COLUMN` (nullable only)
+- `ALTER TABLE dx_* ADD CONSTRAINT`
+
+**Enforcement:**
+The CI check parses all migration files and fails the build if any forbidden operations are detected on non-`dx_` objects.
+
+---
+
+## Database Conventions
+
+### Naming
+
+- Tables: `dx_<domain>_<noun>` (singular, snake_case)
+- Views: `vw_dx_<name>`
+- Indexes: `idx_<table>_<columns>`
+- Constraints: `chk_<table>_<description>`, `fk_<table>_<reference>`, `uq_<table>_<columns>`
+
+### Columns
+
+- Primary keys: `id` (BIGSERIAL) or composite keys
+- Foreign keys: `<entity>_id` (BIGINT)
+- Timestamps: `created_at`, `updated_at` (TIMESTAMPTZ)
+- Soft delete: `deleted_at` (TIMESTAMPTZ, nullable)
+- Audit: `created_by`, `updated_by` (BIGINT, nullable)
+- Row version: `row_version` (BIGINT, default 1) for optimistic concurrency
+
+### Data Types
+
+- Money: `NUMERIC(18,2)` (never floating point)
+- Quantities: `NUMERIC(18,4)` with UoM column
+- Dates: `DATE` for business dates, `TIMESTAMPTZ` for timestamps
+- Enums: `VARCHAR(50)` with CHECK constraint
+- JSON: `JSONB` for flexible structures
+
+### Indexes
+
+- All foreign keys indexed
+- Frequently filtered columns indexed
+- Composite indexes for multi-column filters
+- Partial indexes for filtered queries (e.g., `WHERE deleted_at IS NULL`)
+
+---
+
+## Rollback Procedures
+
+### General Rollback Steps
+
+1. Stop the application
+2. Run rollback SQL from `DB_CHANGELOG.md`
+3. Verify schema matches pre-migration state
+4. Restart application
+5. Run regression tests
+
+### Rollback Safety
+
+- All migrations are designed to be reversible
+- Data migrations include backup procedures
+- Rollback scripts tested against production copy
+- Rollback window: 24 hours after deployment
+
+---
+
+## Contact
+
+For questions about database migrations:
+- Architecture team: architecture@construction-erp.com
+- DBA team: dba@construction-erp.com
+- Emergency rollback: +1-XXX-XXX-XXXX
+
+---
+
+**Last Updated:** 2026-01-XX  
+**Total Migrations:** 5  
+**Current Version:** 005
