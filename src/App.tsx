@@ -1,16 +1,17 @@
 /**
- * Part 01 — Application Entry Point
+ * Part 01 — Application Entry Point (Enhanced)
  * 
  * SAP S/4HANA-Aligned Real-Time Dashboard & Enterprise Workspace Foundation
  * 
- * This is the foundation that all 68 subsequent parts plug into.
- * It establishes:
- * - Permission-aware workspace (Rule 4)
- * - Project-scoped context for all data
- * - Tile registration contracts for modules
- * - Real-time event subscription framework
- * - Responsive layout (desktop, tablet, mobile)
- * - Empty states where no data exists (Rule 3)
+ * This enhanced version demonstrates:
+ * - Boot-time validation (Rule WS-03, WS-04)
+ * - Deny-by-default permission interface (Rule WS-01)
+ * - Universal band structure with band omission
+ * - Workspace resolution with permission filtering
+ * - Complete tile contract with all mandatory fields
+ * - KPI governance with all 10 fields
+ * - Personalisation model
+ * - Drill-down architecture
  * 
  * No fabricated data — all figures trace to the defined data contracts.
  */
@@ -23,6 +24,8 @@ import { AppShell } from './components/AppShell';
 import { Dashboard } from './components/Dashboard';
 import { ModulePlaceholder } from './components/ModulePlaceholder';
 import { WorkspaceStatusBar } from './components/WorkspaceStatusBar';
+import { BootValidationDemo } from './components/BootValidationDemo';
+import { BandVisibilityMap } from './components/UniversalBands';
 
 export default function App() {
   const [currentView, setCurrentView] = useState('dashboard');
@@ -36,6 +39,11 @@ export default function App() {
               <AppShell currentView={currentView} onNavigate={setCurrentView}>
                 {currentView === 'dashboard' ? (
                   <Dashboard />
+                ) : currentView === 'validation' ? (
+                  <div className="p-6 max-w-6xl mx-auto space-y-6">
+                    <BootValidationDemo />
+                    <BandVisibilityMap />
+                  </div>
                 ) : (
                   <ModulePlaceholder module={currentView} />
                 )}

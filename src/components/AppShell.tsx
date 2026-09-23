@@ -48,6 +48,7 @@ interface AppShellProps {
 
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, permission: 'project.project.view' },
+  { id: 'validation', label: 'Boot Validation', icon: Shield, permission: 'admin.workspace.view' },
   { id: 'projects', label: 'Projects', icon: Briefcase, permission: 'project.project.view' },
   { id: 'procurement', label: 'Procurement', icon: Package, permission: 'procure.po.view' },
   { id: 'execution', label: 'Site Execution', icon: HardHat, permission: 'project.dpr.view' },
