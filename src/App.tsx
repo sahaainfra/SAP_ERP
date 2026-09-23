@@ -17,6 +17,7 @@
  */
 
 import React, { useState } from 'react';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { PermissionProvider } from './contexts/PermissionContext';
 import { ProjectProvider } from './contexts/ProjectContext';
 import { WorkspaceProvider } from './contexts/WorkspaceContext';
@@ -27,19 +28,23 @@ import { WorkspaceStatusBar } from './components/WorkspaceStatusBar';
 import { BootValidationDemo } from './components/BootValidationDemo';
 import { BandVisibilityMap } from './components/UniversalBands';
 import { SchemaInspectionView } from './components/SchemaInspectionView';
+import { DesignSystemShowcase } from './components/DesignSystemShowcase';
 
 export default function App() {
   const [currentView, setCurrentView] = useState('dashboard');
 
   return (
-    <PermissionProvider>
-      <ProjectProvider>
-        <WorkspaceProvider>
-          <div className="h-screen flex flex-col">
-            <div className="flex-1 overflow-hidden">
-              <AppShell currentView={currentView} onNavigate={setCurrentView}>
+    <ThemeProvider>
+      <PermissionProvider>
+        <ProjectProvider>
+          <WorkspaceProvider>
+            <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--sapBackgroundColor)' }}>
+              <div className="flex-1 overflow-hidden">
+                <AppShell currentView={currentView} onNavigate={setCurrentView}>
                 {currentView === 'dashboard' ? (
                   <Dashboard />
+                ) : currentView === 'design-system' ? (
+                  <DesignSystemShowcase />
                 ) : currentView === 'validation' ? (
                   <div className="p-6 max-w-6xl mx-auto space-y-6">
                     <BootValidationDemo />
@@ -57,5 +62,6 @@ export default function App() {
         </WorkspaceProvider>
       </ProjectProvider>
     </PermissionProvider>
+    </ThemeProvider>
   );
 }

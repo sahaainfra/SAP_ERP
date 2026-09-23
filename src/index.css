@@ -1,11 +1,15 @@
 @import "tailwindcss";
 
+/* Import design system tokens */
+@import "./styles/tokens.css";
+@import "./styles/tokens-erp.css";
+
 /*
- * Part 01 — Design Tokens & Theme
+ * Part 03 — Design System
  * 
- * SAP Fiori-inspired enterprise design system.
- * These tokens will be extended by Part 03 (Design System & Theme Engine).
- * For Part 01, we establish the foundational palette and spacing.
+ * SAP Horizon-aligned enterprise design system.
+ * All color, spacing, and typography decisions come from tokens.
+ * No hard-coded hex values in components.
  */
 
 :root {
@@ -98,6 +102,16 @@ html, body {
 
 .animate-fade-in {
   animation: fadeIn 0.2s ease-out;
+}
+
+/* Skeleton shimmer animation */
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 /* Print styles */

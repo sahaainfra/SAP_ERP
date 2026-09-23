@@ -333,7 +333,7 @@ export function Dashboard() {
       {/* Empty state when no project selected */}
       {!activeProject && (
         <EmptyState
-          icon={<Activity size={48} />}
+          type="not-applicable"
           title="No Project Selected"
           description="Select a project from the header to view its dashboard, KPIs and worklists."
         />
@@ -397,7 +397,7 @@ export function Dashboard() {
       {/* No tiles visible */}
       {visibleTiles.length === 0 && activeProject && (
         <EmptyState
-          icon={<Activity size={48} />}
+          type="no-data"
           title="No Dashboard Content"
           description="No tiles are registered for your current role and permissions. Contact your administrator to configure your workspace."
         />
