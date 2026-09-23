@@ -26,6 +26,7 @@ import { ModulePlaceholder } from './components/ModulePlaceholder';
 import { WorkspaceStatusBar } from './components/WorkspaceStatusBar';
 import { BootValidationDemo } from './components/BootValidationDemo';
 import { BandVisibilityMap } from './components/UniversalBands';
+import { SchemaInspectionView } from './components/SchemaInspectionView';
 
 export default function App() {
   const [currentView, setCurrentView] = useState('dashboard');
@@ -44,6 +45,8 @@ export default function App() {
                     <BootValidationDemo />
                     <BandVisibilityMap />
                   </div>
+                ) : currentView === 'schema' ? (
+                  <SchemaInspectionView />
                 ) : (
                   <ModulePlaceholder module={currentView} />
                 )}

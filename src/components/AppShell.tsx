@@ -38,6 +38,7 @@ import {
   FlaskConical,
   FileCheck,
   BarChart3,
+  Database,
 } from 'lucide-react';
 
 interface AppShellProps {
@@ -48,6 +49,7 @@ interface AppShellProps {
 
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, permission: 'project.project.view' },
+  { id: 'schema', label: 'Schema Inspection', icon: Database, permission: 'admin.workspace.view' },
   { id: 'validation', label: 'Boot Validation', icon: Shield, permission: 'admin.workspace.view' },
   { id: 'projects', label: 'Projects', icon: Briefcase, permission: 'project.project.view' },
   { id: 'procurement', label: 'Procurement', icon: Package, permission: 'procure.po.view' },

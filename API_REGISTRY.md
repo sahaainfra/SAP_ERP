@@ -1,9 +1,108 @@
-# API_REGISTRY.md — Part 01 Update
+# API_REGISTRY.md — Part 02 Update
 
-## Part 01: No API Endpoints Created
+## Part 02: No API Endpoints Created
 
-Part 01 is a front-end workspace foundation. It does not create API endpoints.
+Part 02 is an inspection and adapter layer part. It does not create API endpoints.
 API contracts are defined by Part 05 (API Contract, Validation & Error Framework).
+
+### Part 02 Contributions
+
+Part 02 establishes:
+
+1. **Schema Map Adapter Layer** (`src/config/schema-map.ts`)
+   - Single place where physical table names appear
+   - All repositories read from SCHEMA_MAP
+   - No hard-coded table names in queries
+
+2. **Boot-Time Schema Validation** (`src/services/SchemaValidator.ts`)
+   - Validates SCHEMA_MAP against information_schema
+   - Missing tables disable only affected features
+   - Never crashes the application
+
+3. **Audit Foundation** (`src/services/AuditFoundation.ts`)
+   - In-memory audit log for demo
+   - Will be backed by `dx_audit_log` table in Part 09
+   - Append-only, enforced at database level
+
+4. **Schema Inspection UI** (`src/components/SchemaInspectionView.tsx`)
+   - Visualizes business object mapping
+   - Shows validation status
+   - Displays gap report
+
+### API Conventions (Established for Part 05)
+
+When Part 05 creates the API framework, all endpoints will follow:
+
+**Base Path:** `/api/dx/v1/`
+
+**Standard Envelope:**
+```json
+{
+  "success": true,
+  "data": {},
+  "meta": {
+    "page": 1,
+    "pageSize": 50,
+    "total": 0,
+    "generatedAt": "2026-01-01T00:00:00Z",
+    "scope": {
+      "companyId": 1,
+      "projectIds": [4, 7],
+      "siteIds": []
+    },
+    "fromCache": false,
+    "cacheAgeSeconds": 0
+  },
+  "errors": []
+}
+```
+
+**Error Envelope:**
+```json
+{
+  "success": false,
+  "data": null,
+  "meta": {},
+  "errors": [
+    {
+      "code": "VALIDATION_ERROR",
+      "message": "Field 'name' is required",
+      "field": "name",
+      "severity": "error"
+    }
+  ]
+}
+```
+
+**Query Parameters:**
+- `page` — page number (default: 1)
+- `pageSize` — items per page (max: 200, default: 50)
+- `sort` — sort field and direction (e.g., `name:asc`)
+- `filter` — filter expression (e.g., `status:active`)
+- `search` — full-text search query
+
+**HTTP Methods:**
+- `GET` — retrieve data (idempotent)
+- `POST` — create new resource
+- `PUT` — update existing resource (full replacement)
+- `PATCH` — partial update
+- `DELETE` — soft-delete (sets `deleted_at`)
+
+**State Changes:**
+- State changes happen only through named actions
+- Example: `POST /api/dx/v1/procure/po/123/actions/approve`
+- Never by writing a status field directly
+
+**Headers:**
+- `Authorization: Bearer <token>` — authentication
+- `If-None-Match: <etag>` — conditional GET
+- `Idempotency-Key: <uuid>` — for POST/PUT/PATCH
+
+**Permission Keys:**
+- Every endpoint declares a permission key
+- Checked server-side before any query runs
+- Format: `module.entity.action`
+- Example: `procure.po.view`, `procure.po.approve`
 
 ### Reserved API Paths
 

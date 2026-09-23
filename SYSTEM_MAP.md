@@ -1,11 +1,110 @@
-# SYSTEM_MAP.md — Part 01 (Complete)
+# SYSTEM_MAP.md — Part 02 (Complete)
+
+## Part 02: Existing System Inspection, Database Preservation & Adapter Layer
+
+### Inspection Findings (Step Zero)
+
+**Stack Inventory:**
+- Frontend: React 18.2.0 with TypeScript 5.7.0
+- Build tool: Vite 6.3.5
+- Styling: Tailwind CSS 4.1.7
+- State management: React Context API
+- Icons: lucide-react 0.294.0
+- Charts: recharts 2.10.0
+- Animation: framer-motion 11.16.1
+- Routing: react-router-dom 6.8.0
+
+**Database:**
+- Status: NO EXISTING DATABASE
+- This is a fresh workspace with no prior ERP database
+- All business objects are NOT PRESENT
+- Schema map (src/config/schema-map.ts) initialized with null mappings
+
+**Application:**
+- Fresh React application
+- No existing API endpoints
+- No existing authentication (demo user in Part 01)
+- No existing audit log (audit foundation created in Part 02)
+- No existing workflows, notifications, or dashboards
+
+### Business Object to Table Mapping
+
+| Business Object | Existing Table | Primary Key | Scope Columns | Notes |
+|---|---|---|---|---|
+| Company | NOT PRESENT | — | — | Will be created in Part 27 |
+| Branch | NOT PRESENT | — | — | Will be created in Part 27 |
+| Department | NOT PRESENT | — | — | Will be created in Part 27 |
+| User | NOT PRESENT | — | — | Will be created in Part 06 |
+| Role | NOT PRESENT | — | — | Will be created in Part 06 |
+| Permission | NOT PRESENT | — | — | Will be created in Part 06 |
+| Client | NOT PRESENT | — | — | Will be created in Part 29 |
+| Vendor | NOT PRESENT | — | — | Will be created in Part 29 |
+| Employee | NOT PRESENT | — | — | Will be created in Part 43 |
+| Labour | NOT PRESENT | — | — | Will be created in Part 43 |
+| Project | NOT PRESENT | — | — | Will be created in Part 27 |
+| Package | NOT PRESENT | — | — | Will be created in Part 27 |
+| Site | NOT PRESENT | — | — | Will be created in Part 27 |
+| Contract | NOT PRESENT | — | — | Will be created in Part 37 |
+| Tender | NOT PRESENT | — | — | Will be created in Part 32 |
+| BOQ Header | NOT PRESENT | — | — | Will be created in Part 31 |
+| BOQ Item | NOT PRESENT | — | — | Will be created in Part 31 |
+| WBS | NOT PRESENT | — | — | Will be created in Part 33 |
+| Activity | NOT PRESENT | — | — | Will be created in Part 33 |
+| Material Master | NOT PRESENT | — | — | Will be created in Part 28 |
+| Material Requisition | NOT PRESENT | — | — | Will be created in Part 35 |
+| Purchase Requisition | NOT PRESENT | — | — | Will be created in Part 35 |
+| RFQ | NOT PRESENT | — | — | Will be created in Part 35 |
+| Quotation | NOT PRESENT | — | — | Will be created in Part 35 |
+| Comparative Statement | NOT PRESENT | — | — | Will be created in Part 35 |
+| PO Header | NOT PRESENT | — | — | Will be created in Part 35 |
+| PO Item | NOT PRESENT | — | — | Will be created in Part 35 |
+| GRN | NOT PRESENT | — | — | Will be created in Part 36 |
+| Store | NOT PRESENT | — | — | Will be created in Part 36 |
+| Stock Ledger | NOT PRESENT | — | — | Will be created in Part 36 |
+| Material Issue | NOT PRESENT | — | — | Will be created in Part 36 |
+| Material Return | NOT PRESENT | — | — | Will be created in Part 36 |
+| Material Transfer | NOT PRESENT | — | — | Will be created in Part 36 |
+| DPR | NOT PRESENT | — | — | Will be created in Part 34 |
+| Measurement Book | NOT PRESENT | — | — | Will be created in Part 38 |
+| RA Bill | NOT PRESENT | — | — | Will be created in Part 39 |
+| Client Invoice | NOT PRESENT | — | — | Will be created in Part 39 |
+| Payment | NOT PRESENT | — | — | Will be created in Part 41 |
+| Receipt | NOT PRESENT | — | — | Will be created in Part 41 |
+| Journal Voucher | NOT PRESENT | — | — | Will be created in Part 40 |
+| Chart of Accounts | NOT PRESENT | — | — | Will be created in Part 40 |
+| Plant/Equipment | NOT PRESENT | — | — | Will be created in Part 46 |
+| Equipment Logbook | NOT PRESENT | — | — | Will be created in Part 46 |
+| Fuel | NOT PRESENT | — | — | Will be created in Part 46 |
+| RMC Batch | NOT PRESENT | — | — | Will be created in Part 47 |
+| Mix Design | NOT PRESENT | — | — | Will be created in Part 47 |
+| Attendance | NOT PRESENT | — | — | Will be created in Part 44 |
+| Payroll | NOT PRESENT | — | — | Will be created in Part 45 |
+| QA ITP | NOT PRESENT | — | — | Will be created in Part 48 |
+| QA WIR | NOT PRESENT | — | — | Will be created in Part 48 |
+| QA MIR | NOT PRESENT | — | — | Will be created in Part 48 |
+| QA NCR | NOT PRESENT | — | — | Will be created in Part 48 |
+| HSE Incident | NOT PRESENT | — | — | Will be created in Part 49 |
+| HSE Permit | NOT PRESENT | — | — | Will be created in Part 49 |
+| HSE Observation | NOT PRESENT | — | — | Will be created in Part 49 |
+| Document | NOT PRESENT | — | — | Will be created in Part 50 |
+| Task | NOT PRESENT | — | — | Will be created in Part 24 |
+| Approval Workflow | NOT PRESENT | — | — | Will be created in Part 10 |
+| Notification | NOT PRESENT | — | — | Will be created in Part 25 |
+| Audit Log | NOT PRESENT | — | — | Foundation created in Part 02 |
+
+### Gap Report
+
+**All 59 business objects are NOT PRESENT.**
+
+This is expected for a fresh workspace. Each business object will be created by the part that owns it, following the build order in 00_MASTER_INDEX.md.
+
+**Recommendation:** Proceed with Part 03 (Design System) and Part 04 (Reference Architecture) as planned. Table creation begins with Part 06 (User/Role/Permission).
+
+---
 
 ## Part 01: SAP S/4HANA-Aligned Real-Time Dashboard & Enterprise Workspace Foundation
 
 ### Inspection Findings
-
-This is a fresh workspace. No prior ERP code exists. Part 01 establishes the complete
-foundation from which all 68 subsequent parts will build.
 
 ### Architecture Overview
 
