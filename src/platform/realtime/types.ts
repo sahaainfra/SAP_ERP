@@ -178,7 +178,14 @@ export type EventType =
   | 'notification.created'
   | 'chat.message.sent'
   | 'system.maintenance'
-  | 'system.broadcast';
+  | 'system.broadcast'
+  
+  // KPI & Monitoring
+  | 'kpi.invalidated'
+  | 'alert.raised'
+  | 'alert.cleared'
+  | 'sla.at_risk'
+  | 'sla.breached';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CHANNEL TYPES

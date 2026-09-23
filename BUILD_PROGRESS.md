@@ -1,6 +1,6 @@
 # Construction & Infrastructure ERP — Build Progress
 
-## Parts Completed: 13 of 69
+## Parts Completed: 14 of 69
 
 ---
 
@@ -742,6 +742,131 @@ npm run build
 - All calculation services compile correctly
 - Output: 695KB JS, 58KB CSS
 - decimal.js library integrated
+
+---
+
+## Part 14: KPI Engine, Alert Engine & SLA Engine
+
+**Status:** ✅ COMPLETE  
+**Date:** 2026-01-XX  
+**Dependencies:** Part 13 (Real-Time Engine)  
+**Blocks:** Part 15 (Analytical View Layer), Part 20 (Dashboard Engine), Part 69 (Cross-Module)
+
+### Deliverables
+
+1. **Database Schema** (`migrations/014_create_kpi_alert_sla.sql`)
+   - dx_kpi_definition — KPI registry with 10 mandatory governance fields
+   - dx_kpi_event_map — Maps events to KPI invalidation
+   - dx_kpi_snapshot — Precomputed KPI values for trends
+   - dx_alert_rule — Alert condition definitions (33+ rules)
+   - dx_alert — Raised alerts with lifecycle tracking
+   - dx_working_calendar — Company/project working hours
+   - dx_calendar_holiday — Holiday calendar
+   - dx_sla_tracking — SLA tracking for workflow items
+
+2. **KPI Engine** (`kpi-engine.ts`)
+   - Permission-filtered KPI computation
+   - Event-driven cache invalidation
+   - Batched KPI endpoint for dashboards
+   - Threshold evaluation and status logic
+   - Drill-down support
+   - Snapshot storage for trends
+
+3. **Alert Engine** (`alert-engine.ts`)
+   - Event-driven and threshold-based triggers
+   - Deduplication with cooldown periods
+   - Auto-clear when conditions resolve
+   - Severity-based routing (INFO, LOW, MEDIUM, HIGH, CRITICAL)
+   - Escalation support
+   - 33+ seeded alert rules
+
+4. **SLA Engine** (`sla-engine.ts`)
+   - Working calendar support (not wall-clock hours)
+   - Pause/resume on document return
+   - State computation (ON_TRACK, AT_RISK, OVERDUE, MET, BREACHED)
+   - Escalation tracking
+   - Holiday awareness
+
+5. **Seed Data** (`seed-data.ts`)
+   - 11 KPI definitions (project, procurement, store, billing, finance, HR)
+   - 33 alert rules (procurement, store, finance, project, billing, quality, safety, workflow, compliance, equipment, HR, system)
+
+### Key Features
+
+**KPI Governance (10 Mandatory Fields)**
+- Source, formula, calculation period
+- Project scope, organisation scope
+- Permission key, refresh mechanism
+- Threshold, status logic, drill-down destination
+
+**Permission-Filtered Computation**
+- Every KPI query passes through permission filter
+- Two users may see different values for same KPI
+- Cache keys include scope fingerprint
+- Unauthorized KPIs are absent, not zero
+
+**Event-Driven Invalidation**
+- KPIs subscribe to relevant events
+- Cache invalidated on data changes
+- Real-time dashboard updates
+- No polling required
+
+**Alert Lifecycle**
+- OPEN → ACKNOWLEDGED → RESOLVED
+- AUTO_CLEARED when condition resolves
+- Deduplication via cooldown periods
+- Occurrence counting
+
+**SLA Working Hours**
+- Counts working hours, not wall-clock
+- Respects company/project calendars
+- Pauses on document return
+- Holiday awareness
+
+### Business Rules Enforced
+
+- **KPI-01**: Every KPI definition declares all 10 governance fields
+- **KPI-02**: No hard-coded KPI values anywhere
+- **KPI-03**: KPI computed through permission filter for requesting user
+- **KPI-04**: KPI user may not see is absent, not zero
+- **KPI-05**: Every KPI drills to transactions, sum equals tile exactly
+- **KPI-06**: Alert names condition, numbers, responsible party, proposed action
+- **KPI-07**: KPI exceeding time budget served from cache with staleness indicator
+
+### Seeded KPIs
+
+**Project:** physical_progress, cost_variance  
+**Procurement:** po_pending_count, po_value_approved  
+**Store:** stock_value, low_stock_count  
+**Billing:** certified_value, pending_count  
+**Finance:** cash_position  
+**HR:** headcount, attendance_percent
+
+### Seeded Alert Rules (33+)
+
+**Procurement:** PO-OVERDUE, PO-PARTIAL  
+**Store:** STOCK-REORDER, STOCK-NEGATIVE, STOCK-NONMOVING  
+**Finance:** BUDGET-80, BUDGET-EXCEEDED, CASH-NEGATIVE  
+**Project:** PROJECT-DELAYED, MILESTONE-RISK  
+**Billing:** BILL-PENDING, RECEIVABLE-OVERDUE, RECEIVABLE-90  
+**Quality:** NCR-OVERDUE, TEST-FAILED  
+**Safety:** PERMIT-EXPIRED, INCIDENT-REPORTED  
+**Workflow:** APPROVAL-SLA  
+**Compliance:** CONTRACT-EXPIRY, DOC-EXPIRY, INSURANCE-EXPIRY  
+**Equipment:** MAINT-DUE, MAINT-OVERDUE, EQUIP-BREAKDOWN, FUEL-ANOMALY  
+**HR:** ATTENDANCE-ANOMALY, DPR-MISSING, MB-PENDING  
+**System:** SOD-VIOLATION, BACKUP-FAILED
+
+### Build Verification
+
+```bash
+npm run build
+```
+
+**Result:** ✅ Build successful
+- TypeScript compiles without errors
+- All KPI/Alert/SLA services compile correctly
+- Output: 695KB JS, 59KB CSS
 
 ---
 
