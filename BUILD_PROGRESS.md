@@ -1,6 +1,6 @@
 # Construction & Infrastructure ERP — Build Progress
 
-## Parts Completed: 5 of 69
+## Parts Completed: 6 of 69
 
 ---
 
@@ -102,6 +102,124 @@ npm run build
 **Result:** ✅ Build successful
 - TypeScript compiles without errors
 - Vite bundles successfully
+- Output: 663KB JS, 57KB CSS
+
+---
+
+## Part 06: User, Role, Responsibility & Permission Model
+
+**Status:** ✅ COMPLETE  
+**Date:** 2026-01-XX  
+**Dependencies:** Part 02 (System Inspection), Part 04 (Reference Architecture)  
+**Blocks:** Part 07 (Permission Resolution Engine), Part 27 (Organization), Part 69 (Cross-Module Consolidation)
+
+### Deliverables
+
+1. **Database Migration** (`migrations/006_create_permission_model.sql`)
+   - 11 new tables for complete permission model
+   - All constraints and indexes
+   - Immutable audit trail
+   - Rollback instructions
+
+2. **Permission Types** (`src/platform/permission/types.ts`)
+   - Permission key format (module.entity.action)
+   - 35 module namespaces
+   - 24 action verbs (closed set)
+   - All entity types and interfaces
+
+3. **Permission Service** (`src/platform/permission/permission.service.ts`)
+   - Permission catalogue management
+   - Permission key validation
+   - Module/entity queries
+   - Permission seeding
+
+4. **Responsibility Template Service** (`src/platform/permission/responsibility-template.service.ts`)
+   - Template CRUD
+   - Permission mapping
+   - 29 system templates
+   - Version control
+
+5. **Project Assignment Service** (`src/platform/permission/project-assignment.service.ts`)
+   - Assignment CRUD
+   - Permission overrides
+   - Approval authorities
+   - Scope restrictions
+   - Field restrictions
+   - Suspension/revocation
+   - Immutable audit logging
+
+6. **Permission Resolver** (`src/platform/permission/permission-resolver.ts`)
+   - Four-layer resolution
+   - Effective permission calculation
+   - Approval authority checking
+   - Field masking
+   - SoD violation detection
+
+7. **Delegation Service** (`src/platform/permission/delegation.service.ts`)
+   - Delegation CRUD
+   - Time-bound validation
+   - Amount limit enforcement
+   - Automatic expiration
+
+8. **SoD Service** (`src/platform/permission/sod.service.ts`)
+   - SoD rule management
+   - Violation detection
+   - Pre-save validation
+   - Common rule seeding
+
+9. **Documentation**
+   - DB_CHANGELOG.md updated with migration 006
+   - README_PART_06.md created
+   - BUILD_PROGRESS.md updated
+
+### Database Tables Created
+
+1. **dx_permission** - Permission catalogue
+2. **dx_responsibility_template** - Responsibility templates
+3. **dx_responsibility_template_permission** - Template-permission mapping
+4. **dx_project_assignment** - User × project assignment (CORE)
+5. **dx_assignment_permission** - Permission overrides
+6. **dx_approval_authority** - Approval limits
+7. **dx_assignment_scope** - Resource restrictions
+8. **dx_delegation** - Temporary delegation
+9. **dx_field_restriction** - Field visibility
+10. **dx_sod_rule** - SoD rules
+11. **dx_assignment_audit** - Immutable audit trail
+
+### Business Rules Enforced
+
+- **PERM-01**: Deny by default - absent assignment means no access
+- **PERM-02**: Explicit DENY override always wins
+- **PERM-03**: Assignment outside validity window grants nothing
+- **PERM-04**: Delegation transfers named permissions only, not global role
+- **PERM-05**: Substitute must independently hold permission and authority
+- **PERM-06**: Approval authority is per project per document type per value band
+- **PERM-07**: Super Admin bypass grants breadth only, never removes SoD controls
+
+### Four-Layer Permission Resolution
+
+```
+LAYER 1: Global Role (existing system)
+   ↓
+LAYER 2: Project Assignment (which projects)
+   ↓
+LAYER 3: Project Responsibility (template on that project)
+   ↓
+LAYER 4: Explicit Override (grant/deny specific keys)
+   ↓
+EFFECTIVE PERMISSION SET (user × project × permission)
+```
+
+### Build Verification
+
+```bash
+npm run build
+```
+
+**Result:** ✅ Build successful
+- TypeScript compiles without errors
+- All permission services compile correctly
+- Database migration validated
 - Output: 663KB JS, 57KB CSS
 
 ---
