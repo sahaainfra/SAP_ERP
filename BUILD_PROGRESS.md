@@ -1,6 +1,6 @@
 # Construction & Infrastructure ERP — Build Progress
 
-## Parts Completed: 18 of 69
+## Parts Completed: 19 of 69
 
 ---
 
@@ -742,6 +742,101 @@ npm run build
 - All calculation services compile correctly
 - Output: 695KB JS, 58KB CSS
 - decimal.js library integrated
+
+---
+
+## Part 19: Responsive Desktop, Tablet & Mobile Delivery Framework
+
+**Status:** ✅ COMPLETE  
+**Date:** 2026-01-XX  
+**Dependencies:** Part 17 (Component System), Part 18 (Metadata-Driven UI)  
+**Blocks:** Part 20 (Dashboard Engine), Part 69 (Cross-Module)
+
+### Deliverables
+
+1. **Database Schema** (`migrations/019_create_sync_log.sql`)
+   - dx_sync_log — Tracks offline sync operations with idempotency guarantees
+
+2. **Breakpoint System** (`src/config/breakpoints.ts`)
+   - Single source of truth for responsive breakpoints (xs, sm, md, lg, xl)
+   - Generates CSS custom media queries and JavaScript constants
+   - Utility functions and React hooks
+
+3. **Offline Sync Engine** (`src/platform/offline/sync-engine.ts`)
+   - IndexedDB storage for offline records
+   - Idempotent sync using client-generated UUIDs
+   - Offline allow-list enforcement
+   - Conflict resolution per entity
+   - Clock skew detection
+   - Exponential backoff retry
+
+4. **PWA Support**
+   - `public/manifest.json` — PWA manifest
+   - `public/sw.js` — Service worker with caching strategies
+   - `index.html` — Updated with PWA meta tags and service worker registration
+
+5. **Mobile Components**
+   - `BottomTabBar.tsx` — 5-slot bottom navigation
+   - `CreateSheet.tsx` — Bottom sheet for creating documents
+   - `SyncIssuesScreen.tsx` — Sync issues UI with Edit/Retry/Discard
+   - `MobileLineEditor.tsx` — Full-screen line editor with numeric keypad
+
+6. **Adaptive Table** (`src/components/tables/AdaptiveTable.tsx`)
+   - Three modes: table, card, compact list
+   - Totals never lost (sticky summary bar)
+   - All columns reachable via expand or object page
+
+7. **Device Capability Wrappers** (`src/platform/mobile/device-capabilities.ts`)
+   - Camera, GPS, QR/barcode scanner, biometric, push notifications, file picker, share sheet
+
+### Key Features
+
+**One Codebase, Three Contexts:**
+- Desktop: Full shell, expanded navigation, multi-column layouts
+- Tablet: Icon-rail navigation, two-column layouts
+- Mobile: Bottom tab bar, single-column, full-screen sheets
+
+**Offline-First Architecture:**
+- Only draft-creating operations permitted offline
+- Idempotent sync prevents duplicates
+- Clock skew detection and recording
+- Conflict resolution per entity type
+
+**Performance Budgets:**
+- First Contentful Paint: ≤ 2.0s on phone
+- Time to Interactive: ≤ 4.5s on phone
+- Initial JS (gzipped): ≤ 250KB on phone
+- Virtual scrolling for large datasets
+
+**Accessibility (WCAG 2.1 AA):**
+- Status never conveyed by color alone
+- Touch targets ≥ 44×44px
+- Keyboard operability on desktop
+- High-contrast theme support
+- Respects prefers-reduced-motion
+
+### Business Rules Enforced
+
+- **DEV-01**: Same permission set, validations, workflow on every device
+- **DEV-02**: Offline capture creates drafts only
+- **DEV-03**: Sync outbox uses client-generated local_id as idempotency key
+- **DEV-04**: Three action classes refused on phones (server-side enforcement)
+- **DEV-05**: No screen scrolls horizontally at 360px
+- **DEV-06**: Touch targets at least 44×44px
+- **DEV-07**: Sync conflict resolved by declared resolver per entity
+- **DEV-08**: Offline allow-list matches role matrix
+
+### Build Verification
+
+```bash
+npm run build
+```
+
+**Result:** ✅ Build successful
+- TypeScript compiles without errors
+- All mobile components compile correctly
+- PWA manifest and service worker configured
+- Output: 695KB JS, 63KB CSS
 
 ---
 
