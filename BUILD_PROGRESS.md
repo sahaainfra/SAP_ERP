@@ -1,6 +1,6 @@
 # Construction & Infrastructure ERP — Build Progress
 
-## Parts Completed: 12 of 69
+## Parts Completed: 13 of 69
 
 ---
 
@@ -742,6 +742,107 @@ npm run build
 - All calculation services compile correctly
 - Output: 695KB JS, 58KB CSS
 - decimal.js library integrated
+
+---
+
+## Part 13: Real-Time Event Engine, Gateway & Delivery Guarantees
+
+**Status:** ✅ COMPLETE  
+**Date:** 2026-01-XX  
+**Dependencies:** Part 08 (Permission Engine), Part 09 (Document Framework)  
+**Blocks:** Part 14 (KPI Engine), Part 25 (Notification Engine), Part 61 (Internal Chat), Part 69 (Cross-Module)
+
+### Deliverables
+
+1. **Event Types & Catalogue** (`types.ts`)
+   - 70+ event types across all modules
+   - Channel types for routing
+   - Event catalogue with metadata
+   - Connection state tracking
+
+2. **Event Bus Service** (`event-bus.ts`)
+   - Publish/subscribe event distribution
+   - Permission-filtered fan-out
+   - Sequence tracking for gap recovery
+   - Throttling (2s per KPI per subscriber)
+   - Batching (500ms window)
+   - Duplicate protection
+
+3. **WebSocket Client** (`websocket-client.ts`)
+   - Automatic reconnection with exponential backoff
+   - Heartbeat mechanism (30s interval)
+   - Gap recovery using sequence numbers
+   - Channel subscription management
+   - Connection state tracking
+
+4. **Channel Manager** (`channel-manager.ts`)
+   - Channel registration and lifecycle
+   - User subscription tracking
+   - Permission-based authorization
+   - Helper methods for channel IDs
+
+5. **Outbox Relay Service** (`outbox-relay.ts`)
+   - Polls outbox every 500ms
+   - Batch publishing (200 events)
+   - Exponential backoff on failure
+   - Event pruning (7 days)
+
+6. **React Hook** (`use-websocket.ts`)
+   - useWebSocket hook for components
+   - Automatic connection lifecycle
+   - Subscription management
+   - Message handler registration
+
+7. **Connection Status Indicator** (`ConnectionStatusIndicator.tsx`)
+   - Visual status (Live/Reconnecting/Offline)
+   - Shows reconnect attempts and missed events
+   - Accessible with ARIA labels
+
+### Key Features
+
+**Permission-Filtered Fan-Out**
+- Every payload built per subscriber from permission set
+- Unauthorized fields absent from payload (not null)
+- Channel subscription requires permission check
+
+**Delivery Guarantees**
+- Events published only after transaction commits
+- Monotonic per-channel sequence numbers
+- Gap recovery on reconnect
+- Duplicate protection (at-least-once delivery)
+- Event buffering for offline scenarios
+
+**Throttling & Batching**
+- Max 1 update per KPI per subscriber per 2 seconds
+- Multiple KPI updates batched within 500ms window
+- Burst mode for bulk operations
+
+**Reconnection & Recovery**
+- Exponential backoff: 1s → 30s max
+- Heartbeat ping/pong every 30s
+- Gap recovery: replay missed events
+- Full refresh if gap too large
+
+### Business Rules Enforced
+
+- **RT-01**: Publish only after commit (outbox relay is only publisher)
+- **RT-02**: Every payload filtered per subscriber against permission set
+- **RT-03**: permission.invalidated forces client to re-fetch menu and dashboard
+- **RT-04**: Every event carries monotonic per-channel sequence
+- **RT-05**: Subscribers are idempotent (at-least-once delivery)
+- **RT-06**: Subscriber falling behind buffer gets full-refresh instruction
+- **RT-07**: Socket connection authenticated and re-authorized on reconnect
+
+### Build Verification
+
+```bash
+npm run build
+```
+
+**Result:** ✅ Build successful
+- TypeScript compiles without errors
+- All real-time components compile correctly
+- Output: 695KB JS, 59KB CSS
 
 ---
 
